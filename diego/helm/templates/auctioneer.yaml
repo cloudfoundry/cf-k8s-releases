@@ -23,6 +23,9 @@ spec:
       containers:
         - name: auctioneer
           image: {{ .Values.auctioneer.image.repository }}:{{ default .Chart.AppVersion .Values.auctioneer.image.tag }}
+          args:
+            - "-config"
+            - "/auctioneer/auctioneer.json"
           imagePullPolicy: {{ .Values.auctioneer.image.imagePullPolicy }}
           ports:
             - containerPort: 8889

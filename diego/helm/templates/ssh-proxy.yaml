@@ -23,6 +23,9 @@ spec:
       containers:
         - name: ssh-proxy
           image: {{ .Values.sshProxy.image.repository }}:{{ default .Chart.AppVersion .Values.sshProxy.image.tag }}
+          args:
+            - "-config"
+            - "/ssh-proxy/ssh-proxy.json"
           imagePullPolicy: {{ .Values.sshProxy.image.imagePullPolicy }}
           ports:
             - containerPort: 2222

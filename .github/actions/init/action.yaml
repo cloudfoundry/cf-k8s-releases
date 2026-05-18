@@ -4,15 +4,30 @@ description: Common setup steps
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v6
+    - name: retrieve secret from Vault
+      id: vault
+      uses: hashicorp/vault-action@v3
+      with:
+        method: jwt
+        url: https://vault.tools.sap/
+        namespace: scp/teams/cki
+        role: actions
+        secrets: |
+          jenkins/data/GITHUB_COM token | GH_COM_TOKEN ;
     - name: checkout kind-deployment
       uses: actions/checkout@v6
       with:
+        github-server-url: https://github.com
         repository: cloudfoundry/kind-deployment
+        ref: main
         path: kind
+        token: ${{ steps.vault.outputs.GH_COM_TOKEN }}
     - uses: docker/setup-buildx-action@v4
+      with:
+        buildkitd-config-inline: |
+          [registry."docker.io"]
+            mirrors = ["dockerio.int.repositories.cloud.sap"]
     - name: Set kernel settings
-      if: steps.check_changes.outputs.skip != 'true'
       shell: bash
       run: |
         docker run --rm \
@@ -20,11 +35,10 @@ runs:
           --pid host \
           alpine sh -c "sysctl -w fs.inotify.max_user_instances=512"
     - uses: actions/setup-go@v6
-    - uses: helmfile/helmfile-action@v2.2.0
       with:
-        helmfile-args: init --force
+        go-version: stable
+    - uses: azure/setup-helm@v5
     - name: Install dependencies
-      if: steps.check_changes.outputs.skip != 'true'
       shell: bash
       run: |
         mkdir -p $HOME/.local/bin && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
@@ -32,8 +46,16 @@ runs:
         chmod +x $HOME/.local/bin/kind
         curl -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=${CF_CLI_VERSION}&source=github" | tar -zx
         mv cf8 $HOME/.local/bin/cf
+        curl -L https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_amd64.tar.gz | tar -xz -C $HOME/.local/bin helmfile
       env:
         # renovate: dataSource=github-releases depName=cloudfoundry/cli
         CF_CLI_VERSION: "8.18.3"
         # renovate: dataSource=github-releases depName=kubernetes-sigs/kind
         KIND_VERSION: "0.31.0"
+        # renovate: dataSource=github-releases depName=helmfile/helmfile
+        HELMFILE_VERSION: "1.5.1"
+    - name: helmfile init
+      shell: bash
+      run: |
+        helm plugin install ./plugin
+        helmfile init --force

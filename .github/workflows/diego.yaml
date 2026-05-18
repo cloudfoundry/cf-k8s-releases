@@ -9,19 +9,28 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  REGISTRY_PREFIX: europe-west3-docker.pkg.dev/sap-se-gcp-istio-dev/public/cf/
-
 jobs:
-  create-landscape:
+  verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write
       contents: read
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/init
       - name: Build Images
-        if: steps.check_changes.outputs.skip != 'true'
-        run: docker buildx bake diego
+        working-directory: diego
+        run: docker buildx bake --load
       - name: Create KinD Cluster
         run: make -C kind create-kind init
+      - name: Load Images into KinD
+        working-directory: diego
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Deploy
+        run: |
+          . ./kind/temp/secrets.sh
+          docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
+          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.diego.url=${{ github.workspace }}/diego/helm --post-renderer kustomize --post-renderer-args ${{ github.workspace }}/diego/kustomize

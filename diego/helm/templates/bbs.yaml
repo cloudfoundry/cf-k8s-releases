@@ -23,6 +23,9 @@ spec:
       containers:
         - name: bbs
           image: {{ .Values.bbs.image.repository }}:{{ default .Chart.AppVersion .Values.bbs.image.tag }}
+          args:
+            - "-config"
+            - "/bbs/bbs.json"
           imagePullPolicy: {{ .Values.bbs.image.imagePullPolicy }}
           ports:
             - containerPort: 8889

@@ -23,6 +23,9 @@ spec:
       containers:
         - name: locket
           image: {{ .Values.locket.image.repository }}:{{ default .Chart.AppVersion .Values.locket.image.tag }}
+          args:
+            - "-config"
+            - "/locket/locket.json"
           imagePullPolicy: {{ .Values.locket.image.imagePullPolicy }}
           ports:
             - containerPort: 8891
