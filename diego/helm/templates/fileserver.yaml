@@ -38,7 +38,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: {{ .Values.fileserver.image.repository }}:{{ .Values.fileserver.image.tag }}
+          image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.AppVersion .Values.fileserver.image.tag }}
           imagePullPolicy: {{ .Values.fileserver.image.imagePullPolicy }}
           ports:
             - name: http
@@ -48,6 +48,10 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+          {{- range $key, $val := .Values.fileserver.buildpacks }}
+            - name: {{ $key }}
+              mountPath: /fileserver/{{ $key }}
+          {{- end }}
           {{- if .Values.fileserver.resources }}
           resources:
             {{- toYaml .Values.fileserver.resources | nindent 12 }}
@@ -64,6 +68,12 @@ spec:
         - name: nginx-config
           configMap:
             name: fileserver-config
+        {{- range $key, $val := .Values.fileserver.buildpacks }}
+        - name: {{ $key }}
+          image:
+            reference: {{ $val.image }}:{{ $val.tag }}
+            pullPolicy: IfNotPresent
+        {{- end }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

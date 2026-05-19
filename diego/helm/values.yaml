@@ -25,12 +25,18 @@ fileserver:
   hostname: "fileserver.127-0-0-1.nip.io"
   image:
     repository: ghcr.io/cloudfoundry/k8s/fileserver
-    # sync: release=cf-deployment
-    tag: "56.4.0"
+    tag: ""
     imagePullPolicy: IfNotPresent
+  # buildpacks:
+  #   java-buildpack:
+  #     image: java-buildpack
+  #     tag: "5.0.2"
+  #   binary-buildpack:
+  #     image: binary-buildpack
+  #     tag: "1.1.21"
   nodeSelector: ~
   tolerations: ~
-  
+
 locket:
   enabled: false
   certificateSecret: ""

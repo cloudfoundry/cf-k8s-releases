@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'diego/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'diego/**'
   workflow_dispatch:
 
 jobs:

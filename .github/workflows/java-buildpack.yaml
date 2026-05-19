@@ -1,0 +1,29 @@
+name: Java Buildpack Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'java-buildpack/**'
+      - 'shared/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'java-buildpack/**'
+      - 'shared/**'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/init
+      - name: Build Images
+        working-directory: java-buildpack
+        run: docker buildx bake  --allow=fs.read=../shared/buildpack.Dockerfile --load

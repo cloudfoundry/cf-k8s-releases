@@ -42,12 +42,8 @@ target "diego" {
 
 target "fileserver" {
     dockerfile = "fileserver.Dockerfile"
-    tags = [ "${REGISTRY_PREFIX}fileserver:${CF_DEPLOYMENT_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}fileserver:${DIEGO_RELEASE_VERSION}" ]
     args = {
-        "CF_DEPLOYMENT_VERSION" = CF_DEPLOYMENT_VERSION
-    }
-
-    contexts = {
-        "files" = "files"
+        "DIEGO_RELEASE_VERSION" = DIEGO_RELEASE_VERSION
     }
 }
