@@ -34,6 +34,7 @@ fileserver:
   #   binary-buildpack:
   #     image: binary-buildpack
   #     tag: "1.1.21"
+  #
   nodeSelector: ~
   tolerations: ~
 
