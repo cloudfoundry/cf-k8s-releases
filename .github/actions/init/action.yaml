@@ -54,8 +54,3 @@ runs:
         KIND_VERSION: "0.31.0"
         # renovate: dataSource=github-releases depName=helmfile/helmfile
         HELMFILE_VERSION: "1.5.1"
-    - name: helmfile init
-      shell: bash
-      run: |
-        helm plugin install ./plugin
-        helmfile init --force

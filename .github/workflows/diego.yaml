@@ -36,9 +36,19 @@ jobs:
           for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
             kind load docker-image --name cfk8s ${image}
           done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: diego
+        run: |
+          yq -e -i '.auctioneer.image.repository = "auctioneer"' helm/values.yaml
+          yq -e -i '.bbs.image.repository = "bbs"' helm/values.yaml
+          yq -e -i '.locket.image.repository = "locket"' helm/values.yaml
+          yq -e -i '.sshProxy.image.repository = "ssh-proxy"' helm/values.yaml
+          yq -e -i '.routeEmitter.image.repository = "route-emitter"' helm/values.yaml
+          yq -e -i '.fileserver.image.repository = "fileserver"' helm/values.yaml
       - name: Deploy
         if: steps.check.outputs.should_run == 'true'
         run: |
           . ./kind/temp/secrets.sh
           docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
-          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.diego.url=${{ github.workspace }}/diego/helm --post-renderer kustomize --post-renderer-args ${{ github.workspace }}/diego/kustomize
+          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.diego.url=${{ github.workspace }}/diego/helm
