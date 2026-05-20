@@ -18,7 +18,12 @@
       "matchStrings": [
         "# renovate: dataSource=(?<datasource>.*?) depName=(?<depName>.*?)( packageName=(?<packageName>.*?))?\\s+\\S+?(: | = | \\?= )\"?(?<currentValue>\\d+\\.\\d+\\.\\d+)\"?"
       ],
-      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["regex"],
       "bumpVersions": [
         {
           "name": "Chart",
