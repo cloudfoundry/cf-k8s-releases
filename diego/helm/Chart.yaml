@@ -3,4 +3,5 @@ version: 0.21.0
 description: Helm chart for Diego components
 type: application
 apiVersion: v2
-appVersion: 2.136.0
+# renovate: dataSource=github-releases depName=cloudfoundry/diego-release
+appVersion: 2.135.0

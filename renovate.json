@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/helm/Chart.yaml$/",
+        "/helm/values.yaml$/",
+        "/docker-bake.hcl$/", 
+        "/^\\.github/workflows/.+\\.yaml$/"
+      ],
+      "matchStrings": [
+        "# renovate: dataSource=(?<datasource>.*?) depName=(?<depName>.*?)( packageName=(?<packageName>.*?))?\\s+\\S+?(: | = | \\?= )\"?(?<currentValue>\\d+\\.\\d+\\.\\d+)\"?"
+      ],
+      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "bumpVersions": [
+        {
+          "name": "Chart",
+          "filePatterns": ["{{packageFileDir}}/Chart.yaml"],
+          "matchStrings": ["version:\\s(?<version>\\d+\\.\\d+\\.\\d+)"],
+          "bumpType": "minor"
+        }
+      ]
+    }
+  ],
+  "helm-values": {
+    "enabled": false
+  }
+}
