@@ -1,4 +1,4 @@
-name: Java Buildpack Release
+name: Verify Java Buildpack
 
 on:
   pull_request:

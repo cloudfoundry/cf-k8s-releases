@@ -1,4 +1,4 @@
-name: Diego Release
+name: Verify Diego
 
 on:
   pull_request:

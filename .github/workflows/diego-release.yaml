@@ -1,0 +1,45 @@
+name: Release Diego
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'diego/helm/Chart.yaml'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+  HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
+
+
+jobs:
+  release:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Determine Versions
+        working-directory: diego
+        run: |
+          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> GITHUB_ENV
+      - name: Release Images
+        working-directory: diego
+        run: |
+          # Check if chart available
+          if docker pull $REGISTRY_PREFIX/auctioneer:$VERSION > /dev/null 2>&1; then
+             echo "auctioneer image already exists in version $VERSION."
+          else
+            docker buildx bake #--push
+          fi
+      - name: Publish Helm Chart
+        working-directory: diego
+        run: |
+          # Check if chart available
+          if helm show chart oci://$HELM_REGISTRY_PREFIX/diego --version $VERSION > /dev/null 2>&1; then
+             echo "Helm chart already exists in version $VERSION."
+          else
+            helm package ./diego/helm -d ${{ runner.temp }}
+            # helm push ${{ runner.temp }}/diego-*.tgz oci://$HELM_REGISTRY_PREFIX/
+          fi

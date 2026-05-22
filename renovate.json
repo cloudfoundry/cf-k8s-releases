@@ -21,19 +21,6 @@
       "extractVersionTemplate": "^v?(?<version>.*)$"
     }
   ],
-  "packageRules": [
-    {
-      "matchManagers": ["custom.regex"],
-      "bumpVersions": [
-        {
-          "name": "Chart",
-          "filePatterns": ["{{packageFileDir}}/Chart.yaml"],
-          "matchStrings": ["version:\\s(?<version>\\d+\\.\\d+\\.\\d+)"],
-          "bumpType": "minor"
-        }
-      ]
-    }
-  ],
   "helm-values": {
     "enabled": false
   }
