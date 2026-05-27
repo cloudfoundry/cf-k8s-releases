@@ -1,0 +1,62 @@
+policyServer:
+  enabled: false
+  resources: ~
+  certificateSecret: ""
+  hostname: "policy-server.127-0-0-1.nip.io"
+  externalDomain: api.127-0-0-1.nip.io
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/policy-server
+    tag: ""
+    imagePullPolicy: IfNotPresent
+  oauthClientsSecret: ""
+  networkpolicydb:
+    name: network_policy
+    password: ~
+    user: postgres
+    port: 5432
+    address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+    caCertificateSecret: ""
+    skipSSLVerify: true
+  nats:
+    address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
+  nodeSelector: ~
+  tolerations: ~
+serviceDiscoveryController:
+  enabled: false
+  resources: ~
+  certificateSecret: ""
+  hostname: service-discovery-controller.{{ .Release.Namespace }}.svc.cluster.local
+  port: 8054
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/service-discovery-controller
+    tag: ""
+    imagePullPolicy: IfNotPresent
+  nats:
+    host: nats.{{ .Release.Namespace }}.svc.cluster.local
+    port: 4222
+  nodeSelector: ~
+  tolerations: ~
+boshDnsAdapter:
+  enabled: false
+  resources: ~
+  certificateSecret: ""
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/bosh-dns-adapter
+    tag: ""
+    imagePullPolicy: IfNotPresent
+boshDns:
+  resources: ~
+  certificateSecret: ""
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/bosh-dns
+    # renovate: dataSource=docker depName=bosh-dns-release packageName=ghcr.io/cloudfoundry/k8s/bosh-dns
+    tag: "1.39.21"
+    imagePullPolicy: IfNotPresent
+  nodeSelector: ~
+  tolerations: ~
+routeRegistrar:
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/route-registrar
+    # renovate: dataSource=docker depName=routing-release packageName=ghcr.io/cloudfoundry/k8s/route-registrar
+    tag: "0.380.0"
+    imagePullPolicy: IfNotPresent

@@ -1,0 +1,52 @@
+name: Verify Loggregator Agent
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  loggregator-agent:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v3
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'loggregator-agent/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: docker buildx bake --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load Images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  loggregator-agent
+        run: |
+          yq -e -i '.forwarderAgent.image.repository = "forwarder-agent"' helm/values.yaml
+          yq -e -i '.loggregatorAgent.image.repository = "loggregator-agent"' helm/values.yaml
+          yq -e -i '.syslogAgent.image.repository = "syslog-agent"' helm/values.yaml
+          yq -e -i '.syslogBindingCache.image.repository = "syslog-binding-cache"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          . ./kind/temp/secrets.sh
+          docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
+          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.loggregatorAgent.url=${{ github.workspace }}/loggregator-agent/helm

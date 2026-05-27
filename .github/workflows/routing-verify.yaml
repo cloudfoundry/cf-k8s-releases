@@ -1,0 +1,52 @@
+name: Verify Routing
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  routing:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v3
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'routing/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: docker buildx bake --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load Images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  routing
+        run: |
+          yq -e -i '.gorouter.image.repository = "gorouter"' helm/values.yaml
+          yq -e -i '.routingApi.image.repository = "routing-api"' helm/values.yaml
+          yq -e -i '.tcpRouter.image.repository = "cf-tcp-router"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          . ./kind/temp/secrets.sh
+          docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
+          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.routing.url=${{ github.workspace }}/routing/helm

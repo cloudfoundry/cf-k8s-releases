@@ -1,0 +1,53 @@
+name: Verify CAPI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  capi:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v3
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'capi/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: capi
+        run: docker buildx bake --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load Images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: capi
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  capi
+        run: |
+          yq -e -i '.ccUploader.image.repository = "cc-uploader"' helm/values.yaml
+          yq -e -i '.cloudController.image.repository = "cloud-controller"' helm/values.yaml
+          yq -e -i '.localWorker.image.repository = "cloud-controller"' helm/values.yaml
+          yq -e -i '.nginx.image.repository = "cc-nginx"' helm/values.yaml
+          yq -e -i '.tpsWatcher.image.repository = "tps-watcher"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          . ./kind/temp/secrets.sh
+          docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
+          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.capi.url=${{ github.workspace }}/capi/helm

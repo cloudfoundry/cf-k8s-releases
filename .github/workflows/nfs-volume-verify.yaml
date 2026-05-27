@@ -1,0 +1,50 @@
+name: Verify NFS Volume
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  nfs-volume:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v3
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'nfs-volume/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: nfs-volume
+        run: docker buildx bake --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load Images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: nfs-volume
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  nfs-volume
+        run: |
+          yq -e -i '.nfsbroker.image.repository = "nfsbroker"' helm/values.yaml
+          yq -e -i '.nfsv3driver.image.repository = "nfsv3driver"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          . ./kind/temp/secrets.sh
+          docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
+          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.nfsVolume.url=${{ github.workspace }}/nfs-volume/helm

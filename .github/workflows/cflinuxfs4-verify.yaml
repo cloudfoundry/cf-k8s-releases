@@ -1,0 +1,29 @@
+name: Verify cflinuxfs4
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  cflinuxfs4:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v3
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'cflinuxfs4/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: cflinuxfs4
+        run: docker buildx bake --load
+
