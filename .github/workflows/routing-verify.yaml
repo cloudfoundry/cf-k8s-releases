@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  routing:
+  routing-verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

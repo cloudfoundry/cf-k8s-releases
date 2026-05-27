@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  log-cache:
+  log-cache-verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

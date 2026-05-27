@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  cf-networking:
+  cf-networking-verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

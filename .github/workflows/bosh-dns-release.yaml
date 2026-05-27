@@ -12,7 +12,7 @@ env:
 
 
 jobs:
-  release:
+  bosh-dns-release:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

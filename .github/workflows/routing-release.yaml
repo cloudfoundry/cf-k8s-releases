@@ -13,7 +13,7 @@ env:
 
 
 jobs:
-  release:
+  routing-release:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

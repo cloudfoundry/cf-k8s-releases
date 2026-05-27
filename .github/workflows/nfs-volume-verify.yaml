@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  nfs-volume:
+  nfs-volume-verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

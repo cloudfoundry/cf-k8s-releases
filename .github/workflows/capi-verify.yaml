@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  capi:
+  capi-verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

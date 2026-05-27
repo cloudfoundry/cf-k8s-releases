@@ -12,7 +12,7 @@ env:
 
 
 jobs:
-  release:
+  cflinuxfs4-release:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write

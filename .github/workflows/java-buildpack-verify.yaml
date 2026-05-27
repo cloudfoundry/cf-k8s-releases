@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  java-buildpack:
+  java-buildpack-verify:
     runs-on: [self-hosted, solinas]
     permissions:
       id-token: write
