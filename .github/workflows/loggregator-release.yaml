@@ -1,11 +1,11 @@
-name: Release Diego
+name: Release loggregator
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'diego/helm/Chart.yaml'
+      - 'loggregator/helm/Chart.yaml'
       
 env:
   REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
@@ -21,25 +21,25 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Determine Versions
-        working-directory: diego
+        working-directory: loggregator
         run: |
           echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> GITHUB_ENV
       - name: Release Images
-        working-directory: diego
+        working-directory: loggregator
         run: |
           # Check if image available
-          if docker pull $REGISTRY_PREFIX/auctioneer:$VERSION > /dev/null 2>&1; then
-             echo "auctioneer image already exists in version $VERSION."
+          if docker pull $REGISTRY_PREFIX/doppler:$VERSION > /dev/null 2>&1; then
+             echo "doppler image already exists in version $VERSION."
           else
             docker buildx bake #--push
           fi
       - name: Publish Helm Chart
-        working-directory: diego
+        working-directory: loggregator
         run: |
           # Check if chart available
-          if helm show chart oci://$HELM_REGISTRY_PREFIX/diego --version $VERSION > /dev/null 2>&1; then
+          if helm show chart oci://$HELM_REGISTRY_PREFIX/loggregator --version $VERSION > /dev/null 2>&1; then
              echo "Helm chart already exists in version $VERSION."
           else
-            helm package ./diego/helm -d ${{ runner.temp }}
-            # helm push ${{ runner.temp }}/diego-*.tgz oci://$HELM_REGISTRY_PREFIX/
+            helm package ./loggregator/helm -d ${{ runner.temp }}
+            # helm push ${{ runner.temp }}/loggregator-*.tgz oci://$HELM_REGISTRY_PREFIX/
           fi
