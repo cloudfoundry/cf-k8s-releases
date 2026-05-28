@@ -40,6 +40,6 @@ jobs:
           if helm show chart oci://$HELM_REGISTRY_PREFIX/cf-networking --version $VERSION > /dev/null 2>&1; then
              echo "Helm chart already exists in version $VERSION."
           else
-            helm package ./cf-networking/helm -d ${{ runner.temp }}
+            helm package ./helm -d ${{ runner.temp }}
             # helm push ${{ runner.temp }}/cf-networking-*.tgz oci://$HELM_REGISTRY_PREFIX/
           fi
