@@ -72,7 +72,7 @@ spec:
               mountPath: /tmp
             {{- end }}
         - name: route-registrar
-          image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
+          image: {{ .Values.routeRegistrar.image.repository }}:{{ default .Chart.AppVersion .Values.routeRegistrar.image.tag }}
           imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
           env:
           - name: POD_IP

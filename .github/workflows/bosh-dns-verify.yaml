@@ -26,23 +26,3 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: bosh-dns
         run: docker buildx bake --load
-      - name: Create KinD Cluster
-        if: steps.check.outputs.should_run == 'true'
-        run: make -C kind create-kind init
-      - name: Load Images into KinD
-        if: steps.check.outputs.should_run == 'true'
-        run: kind load docker-image --name cfk8s bosh-dns
-      # bosh-dns is used by cf-networking via bosh-dns-adapter
-      # therefore we use cf-networking to validate bosh-dns
-      - name: Use Images
-        if: steps.check.outputs.should_run == 'true'
-        working-directory:  cf-networking
-        run: |
-          yq -e -i '.boshDns.image.repository = "bosh-dns"' helm/values.yaml
-          yq -e -i '.boshDns.image.tag = "latest"' helm/values.yaml
-      - name: Deploy
-        if: steps.check.outputs.should_run == 'true'
-        run: |
-          . ./kind/temp/secrets.sh
-          docker run --rm -v ${{ github.workspace }}:/workspace --privileged -w /workspace alpine sh -c "chown -R 1000:1000 ./kind/temp"
-          helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.cfNetworking.url=${{ github.workspace }}/cf-networking/helm

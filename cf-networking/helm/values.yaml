@@ -49,7 +49,7 @@ boshDns:
   certificateSecret: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/bosh-dns
-    # renovate: dataSource=docker depName=bosh-dns-release packageName=ghcr.io/cloudfoundry/k8s/bosh-dns
+    # renovate: dataSource=github-releases depName=cloudfoundry/bosh-dns-release
     tag: "1.39.21"
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
@@ -57,6 +57,6 @@ boshDns:
 routeRegistrar:
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
-    # renovate: dataSource=docker depName=routing-release packageName=ghcr.io/cloudfoundry/k8s/route-registrar
+    # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
     tag: "0.380.0"
     imagePullPolicy: IfNotPresent

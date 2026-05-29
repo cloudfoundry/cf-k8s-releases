@@ -22,27 +22,57 @@ jobs:
               - 'cf-networking/**'
       - uses: ./.github/actions/init
         if: steps.check.outputs.should_run == 'true'
-      - name: Build Images
+      - name: Determine Versions
+        working-directory: cf-networking
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          echo "ROUTING_RELEASE_VERSION=$(yq -r '.routeRegistrar.image.tag' helm/values.yaml)" >> $GITHUB_ENV
+          echo "BOSH_DNS_RELEASE_VERSION=$(yq -r '.boshDns.image.tag' helm/values.yaml)" >> $GITHUB_ENV
+      - name: Build cf-networking images
         if: steps.check.outputs.should_run == 'true'
         working-directory: cf-networking
         run: docker buildx bake --load
+      - name: Build route-registrar image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: docker buildx bake route-registrar --load
+      - name: Build bosh-dns image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: bosh-dns
+        run: docker buildx bake bosh-dns --load
       - name: Create KinD Cluster
         if: steps.check.outputs.should_run == 'true'
         run: make -C kind create-kind init
-      - name: Load Images into KinD
+      - name: Load cf-networking images into KinD
         if: steps.check.outputs.should_run == 'true'
         working-directory: cf-networking
         run: |
           for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
             kind load docker-image --name cfk8s ${image}
           done
-      - name: Use Images
+      - name: Load route-registrar image into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: |
+          for image in $(docker buildx bake route-registrar --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Load bosh-dns image into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: bosh-dns
+        run: |
+          for image in $(docker buildx bake bosh-dns --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use images
         if: steps.check.outputs.should_run == 'true'
         working-directory:  cf-networking
         run: |
           yq -e -i '.policyServer.image.repository = "policy-server"' helm/values.yaml
           yq -e -i '.serviceDiscoveryController.image.repository = "service-discovery-controller"' helm/values.yaml
           yq -e -i '.boshDnsAdapter.image.repository = "bosh-dns-adapter"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+          yq -e -i '.boshDns.image.repository = "bosh-dns"' helm/values.yaml
       - name: Deploy
         if: steps.check.outputs.should_run == 'true'
         run: |
