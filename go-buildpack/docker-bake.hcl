@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
     # renovate: dataSource=github-releases depName=cloudfoundry/go-buildpack
-    default = "1.10.24"
+    default = "1.10.47"
 }
 
 group "default" {
