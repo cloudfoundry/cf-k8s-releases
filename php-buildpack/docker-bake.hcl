@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
     # renovate: dataSource=github-releases depName=cloudfoundry/php-buildpack
-    default = "4.6.23"
+    default = "4.6.28"
 }
 
 group "default" {
