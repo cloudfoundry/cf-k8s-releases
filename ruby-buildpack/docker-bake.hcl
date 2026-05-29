@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
     # renovate: dataSource=github-releases depName=cloudfoundry/ruby-buildpack
-    default = "1.10.15"
+    default = "1.11.1"
 }
 
 group "default" {
