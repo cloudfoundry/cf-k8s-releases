@@ -14,16 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: check changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: check
         with:
           filters: |
             should_run:
               - 'java-buildpack/**'
-              - 'shared/**'
       - uses: ./.github/actions/init
         if: steps.check.outputs.should_run == 'true'
       - name: Build Images
         if: steps.check.outputs.should_run == 'true'
         working-directory: java-buildpack
-        run: docker buildx bake  --allow=fs.read=../shared/buildpack.Dockerfile --load
+        run: docker buildx bake --load

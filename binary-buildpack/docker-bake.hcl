@@ -12,11 +12,10 @@ group "default" {
 }
 
 target "binary-buildpack" {
-    dockerfile = "../shared/buildpack.Dockerfile"
     tags = [ "${REGISTRY_PREFIX}binary-buildpack:${BUILDPACK_VERSION}" ]
 
-    args = {
-        NAME = "binary-buildpack"
-        VERSION = BUILDPACK_VERSION
+    contexts = {
+      "src" = "https://github.com/cloudfoundry/binary-buildpack.git#v${BUILDPACK_VERSION}"
+      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
     }
 }

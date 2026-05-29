@@ -12,11 +12,10 @@ group "default" {
 }
 
 target "java-buildpack" {
-    dockerfile = "../shared/buildpack.Dockerfile"
     tags = [ "${REGISTRY_PREFIX}java-buildpack:${BUILDPACK_VERSION}" ]
 
-    args = {
-        NAME = "java-buildpack"
-        VERSION = BUILDPACK_VERSION
+    contexts = {
+      "src" = "https://github.com/cloudfoundry/java-buildpack.git#v${BUILDPACK_VERSION}"
+      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
     }
 }
