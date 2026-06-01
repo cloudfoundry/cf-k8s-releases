@@ -1,8 +1,8 @@
 name: uaa
 # renovate: dataSource=github-releases depName=cloudfoundry/uaa-release
-version: 78.15.0
+version: 78.16.0
 description: A Helm chart for UAA
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/uaa-release
-appVersion: 78.15.0
+appVersion: 78.16.0
