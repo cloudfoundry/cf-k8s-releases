@@ -32,7 +32,7 @@ jobs:
         working-directory: python-buildpack
         run: |
           # Check if image available
-          if docker pull $REGISTRY_PREFIX/python-buildpack:$VERSION > /dev/null 2>&1; then
+          if docker pull ${REGISTRY_PREFIX}python-buildpack:$VERSION > /dev/null 2>&1; then
              echo "python-buildpack image already exists in version $VERSION."
           else
             docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
