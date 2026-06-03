@@ -1,6 +1,7 @@
 name: Release Staticfile Buildpack
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
