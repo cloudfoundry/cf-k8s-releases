@@ -20,6 +20,9 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v6
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Determine Versions
         working-directory: dotnet-core-buildpack
         run: |
