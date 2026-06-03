@@ -1,0 +1,39 @@
+name: Release bosh-dns
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bosh-dns/docker-bake.hcl'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+
+
+jobs:
+  bosh-dns-release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Versions
+        working-directory: bosh-dns
+        run: |
+          echo "VERSION=$(docker buildx bake --print | jq -r '.target | to_entries[] | .value.tags[]' | grep -v ':latest$' | head -n1 | awk -F: '{print $NF}')" >> $GITHUB_ENV
+      - name: Release Images
+        working-directory: bosh-dns
+        run: |
+          # Check if image available
+          if docker pull $REGISTRY_PREFIX/bosh-dns:$VERSION > /dev/null 2>&1; then
+             echo "bosh-dns image already exists in version $VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi
