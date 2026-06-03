@@ -28,7 +28,7 @@ jobs:
       - name: Determine Versions
         working-directory: nfs-volume
         run: |
-          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> GITHUB_ENV
+          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
       - name: Release Images
         working-directory: nfs-volume
         run: |
