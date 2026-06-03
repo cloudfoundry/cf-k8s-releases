@@ -1,4 +1,4 @@
-name: nfs-volume-release
+name: nfs-volume
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
 version: 7.60.0
