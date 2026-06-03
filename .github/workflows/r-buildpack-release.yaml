@@ -1,0 +1,35 @@
+name: Release R Buildpack
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'r-buildpack/docker-bake.hcl'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+
+
+jobs:
+  r-buildpack-release:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Determine Versions
+        working-directory: r-buildpack
+        run: |
+          echo "VERSION=$(docker buildx bake --print | jq -r '.target | to_entries[] | .value.tags[]' | grep -v ':latest$' | head -n1 | awk -F: '{print $NF}')" >> $GITHUB_ENV
+      - name: Release Images
+        working-directory: r-buildpack
+        run: |
+          # Check if image available
+          if docker pull $REGISTRY_PREFIX/r-buildpack:$VERSION > /dev/null 2>&1; then
+             echo "r-buildpack image already exists in version $VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi

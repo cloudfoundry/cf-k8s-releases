@@ -1,0 +1,32 @@
+name: Verify R Buildpack
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  r-buildpack-verify:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v4
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'r-buildpack/**'
+              - '.github/workflows/r-buildpack-verify.yaml'
+              - '.github/actions/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: r-buildpack
+        run: docker buildx bake --load

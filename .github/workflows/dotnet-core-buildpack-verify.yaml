@@ -1,0 +1,32 @@
+name: Verify dotnet-core Buildpack
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dotnet-core-buildpack-verify:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v4
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'dotnet-core-buildpack/**'
+              - '.github/workflows/dotnet-core-buildpack-verify.yaml'
+              - '.github/actions/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: dotnet-core-buildpack
+        run: docker buildx bake --load

@@ -1,0 +1,35 @@
+name: Release Ruby Buildpack
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ruby-buildpack/docker-bake.hcl'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+
+
+jobs:
+  ruby-buildpack-release:
+    runs-on: [self-hosted, solinas]
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Determine Versions
+        working-directory: ruby-buildpack
+        run: |
+          echo "VERSION=$(docker buildx bake --print | jq -r '.target | to_entries[] | .value.tags[]' | grep -v ':latest$' | head -n1 | awk -F: '{print $NF}')" >> $GITHUB_ENV
+      - name: Release Images
+        working-directory: ruby-buildpack
+        run: |
+          # Check if image available
+          if docker pull $REGISTRY_PREFIX/ruby-buildpack:$VERSION > /dev/null 2>&1; then
+             echo "ruby-buildpack image already exists in version $VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi
