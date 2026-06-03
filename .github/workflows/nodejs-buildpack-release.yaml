@@ -1,6 +1,7 @@
 name: Release Node.js Buildpack
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

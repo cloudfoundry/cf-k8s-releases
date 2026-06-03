@@ -1,6 +1,7 @@
 name: Release dotnet-core Buildpack
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

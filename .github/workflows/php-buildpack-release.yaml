@@ -1,6 +1,7 @@
 name: Release PHP Buildpack
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
