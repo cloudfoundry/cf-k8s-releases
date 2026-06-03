@@ -38,7 +38,9 @@ target "diego" {
 target "fileserver" {
     dockerfile = "fileserver.Dockerfile"
     tags = [ "${REGISTRY_PREFIX}fileserver:${DIEGO_RELEASE_VERSION}" ]
-    args = {
-        "DIEGO_RELEASE_VERSION" = DIEGO_RELEASE_VERSION
+
+    contexts = {
+        "src"    = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
+        "config" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:config"
     }
 }
