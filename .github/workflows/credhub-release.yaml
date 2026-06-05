@@ -1,0 +1,49 @@
+name: Release CredHub
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'credhub/helm/Chart.yaml'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+  HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
+
+
+jobs:
+  credhub-release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Versions
+        working-directory: credhub
+        run: |
+          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
+      - name: Release Images
+        working-directory: credhub
+        run: |
+          # Check if image available
+          if docker pull $REGISTRY_PREFIX/credhub:$VERSION > /dev/null 2>&1; then
+             echo "credhub image already exists in version $VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi
+      - name: Publish Helm Chart
+        working-directory: credhub
+        run: |
+          # Check if chart available
+          if helm show chart oci://$HELM_REGISTRY_PREFIX/credhub --version $VERSION > /dev/null 2>&1; then
+             echo "Helm chart already exists in version $VERSION."
+          else
+            helm package ./helm -d ${{ runner.temp }}
+            helm push ${{ runner.temp }}/credhub-*.tgz oci://$HELM_REGISTRY_PREFIX/
+          fi
