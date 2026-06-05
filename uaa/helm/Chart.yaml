@@ -4,4 +4,3 @@ version: 78.16.0
 description: A Helm chart for UAA
 type: application
 apiVersion: v2
-# renovate: dataSource=github-releases depName=cloudfoundry/uaa-release

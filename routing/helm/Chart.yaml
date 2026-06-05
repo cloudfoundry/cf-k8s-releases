@@ -4,4 +4,3 @@ version: 0.382.0
 description: Helm chart for Gorouter components
 type: application
 apiVersion: v2
-# renovate: dataSource=github-releases depName=cloudfoundry/routing-release
