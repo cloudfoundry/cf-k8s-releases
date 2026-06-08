@@ -1,6 +1,7 @@
 name: Release loggregator-agent
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

@@ -1,6 +1,7 @@
 name: Release loggregator
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

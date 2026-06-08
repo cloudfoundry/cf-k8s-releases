@@ -1,6 +1,7 @@
 name: Release Diego
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
