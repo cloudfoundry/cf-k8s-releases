@@ -36,7 +36,6 @@ runs:
     - uses: actions/setup-go@v6
       with:
         go-version: stable
-    - uses: azure/setup-helm@v5
     - name: Install dependencies
       shell: bash
       run: |
