@@ -8,7 +8,7 @@ on:
       - 'cflinuxfs4/docker-bake.hcl'
       
 env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s
 
 
 jobs:
