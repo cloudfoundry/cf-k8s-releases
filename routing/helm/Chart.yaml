@@ -1,0 +1,6 @@
+name: routing
+# renovate: dataSource=github-releases depName=cloudfoundry/routing-release
+version: 0.382.0
+description: Helm chart for Gorouter components
+type: application
+apiVersion: v2

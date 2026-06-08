@@ -1,0 +1,6 @@
+name: log-cache
+# renovate: dataSource=github-releases depName=cloudfoundry/log-cache-release
+version: 3.2.8
+description: Helm chart for Log Cache components
+type: application
+apiVersion: v2

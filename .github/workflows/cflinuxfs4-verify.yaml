@@ -1,0 +1,33 @@
+name: Verify cflinuxfs4
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  cflinuxfs4-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v4
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'cflinuxfs4/**'
+              - '.github/workflows/cflinuxfs4-verify.yaml'
+              - '.github/actions/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: cflinuxfs4
+        run: docker buildx bake --load
+

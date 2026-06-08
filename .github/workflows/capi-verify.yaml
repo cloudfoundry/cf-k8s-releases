@@ -1,0 +1,81 @@
+name: Verify CAPI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  capi-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v4
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'capi/**'
+              - '.github/workflows/capi-verify.yaml'
+              - '.github/actions/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Versions
+        working-directory: capi
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          echo "ROUTING_RELEASE_VERSION=$(yq -r '.routeRegistrar.image.tag' helm/values.yaml)" >> $GITHUB_ENV
+      - name: Build capi images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: capi
+        run: docker buildx bake --load
+      - name: Build route-registrar image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: docker buildx bake route-registrar --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load capi images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: capi
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Load route-registrar image into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: |
+          for image in $(docker buildx bake route-registrar --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  capi
+        run: |
+          yq -e -i '.ccUploader.image.repository = "cc-uploader"' helm/values.yaml
+          yq -e -i '.cloudController.image.repository = "cloud-controller"' helm/values.yaml
+          yq -e -i '.localWorker.image.repository = "cloud-controller"' helm/values.yaml
+          yq -e -i '.nginx.image.repository = "cc-nginx"' helm/values.yaml
+          yq -e -i '.tpsWatcher.image.repository = "tps-watcher"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
+          docker run --rm --net=host --env-file kind/temp/secrets.env \
+            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
+            -v "${{ github.workspace }}:/wd" \
+            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
+            --workdir /wd ghcr.io/helmfile/helmfile:$HELMFILE_VERSION \
+            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.capi.url=../capi/helm
+        env:
+          # renovate: dataSource=docker packageName=ghcr.io/helmfile/helmfile depName=helmfile/helmfile
+          HELMFILE_VERSION: "v1.5.1"

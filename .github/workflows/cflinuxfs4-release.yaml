@@ -1,0 +1,38 @@
+name: Release cflinuxfs4
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cflinuxfs4/docker-bake.hcl'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+
+
+jobs:
+  cflinuxfs4-release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Versions
+        working-directory: cflinuxfs4
+        run: |
+          echo "VERSION=$(docker buildx bake --print | jq -r '.target | to_entries[] | .value.tags[]' | grep -v ':latest$' | head -n1 | awk -F: '{print $NF}')" >> $GITHUB_ENV
+      - name: Release Images
+        working-directory: cflinuxfs4
+        run: |
+          # Check if image available
+          if docker pull $REGISTRY_PREFIX/cflinuxfs4:$VERSION > /dev/null 2>&1; then
+             echo "cflinuxfs4 image already exists in version $VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi

@@ -1,0 +1,60 @@
+name: Verify UAA
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  uaa-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v4
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'uaa/**'
+              - '.github/workflows/uaa-verify.yaml'
+              - '.github/actions/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: uaa
+        run: docker buildx bake --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load Images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: uaa
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  uaa
+        run: |
+          yq -e -i '.image.repository = "uaa"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
+          docker run --rm --net=host --env-file kind/temp/secrets.env \
+            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
+            -v "${{ github.workspace }}:/wd" \
+            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
+            --workdir /wd ghcr.io/helmfile/helmfile:$HELMFILE_VERSION \
+            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.uaa.url=../uaa/helm
+        env:
+          # renovate: dataSource=docker packageName=ghcr.io/helmfile/helmfile depName=helmfile/helmfile
+          HELMFILE_VERSION: "v1.5.1"

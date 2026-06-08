@@ -1,0 +1,49 @@
+name: Release CAPI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'capi/helm/Chart.yaml'
+      
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+  HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
+
+
+jobs:
+  capi-release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Determine Versions
+        working-directory: capi
+        run: |
+          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release Images
+        working-directory: capi
+        run: |
+          # Check if image available
+          if docker pull $REGISTRY_PREFIX/cloud-controller:$VERSION > /dev/null 2>&1; then
+             echo "cloud-controller image already exists in version $VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi
+      - name: Publish Helm Chart
+        working-directory: capi
+        run: |
+          # Check if chart available
+          if helm show chart oci://$HELM_REGISTRY_PREFIX/capi --version $VERSION > /dev/null 2>&1; then
+             echo "Helm chart already exists in version $VERSION."
+          else
+            helm package ./helm -d ${{ runner.temp }}
+            helm push ${{ runner.temp }}/capi-*.tgz oci://$HELM_REGISTRY_PREFIX/
+          fi

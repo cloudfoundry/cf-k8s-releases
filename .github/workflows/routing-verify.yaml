@@ -1,0 +1,80 @@
+name: Verify Routing
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  routing-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: check changes
+        uses: dorny/paths-filter@v4
+        id: check
+        with:
+          filters: |
+            should_run:
+              - 'routing/**'
+              - '.github/workflows/routing-verify.yaml'
+              - '.github/actions/**'
+      - uses: ./.github/actions/init
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Versions
+        working-directory: routing
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          echo "LOGGREGATOR_AGENT_RELEASE_VERSION=$(yq -r '.udpForwarder.image.tag' helm/values.yaml)" >> $GITHUB_ENV
+      - name: Build routing images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: docker buildx bake --load
+      - name: Build udp-forwarder image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: docker buildx bake udp-forwarder --load
+      - name: Create KinD Cluster
+        if: steps.check.outputs.should_run == 'true'
+        run: make -C kind create-kind init
+      - name: Load routing images into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: |
+          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Load udp-forwarder image into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: |
+          for image in $(docker buildx bake udp-forwarder --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
+      - name: Use Images
+        if: steps.check.outputs.should_run == 'true'
+        working-directory:  routing
+        run: |
+          yq -e -i '.gorouter.image.repository = "gorouter"' helm/values.yaml
+          yq -e -i '.routingApi.image.repository = "routing-api"' helm/values.yaml
+          yq -e -i '.tcpRouter.image.repository = "cf-tcp-router"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+          yq -e -i '.udpForwarder.image.repository = "udp-forwarder"' helm/values.yaml
+      - name: Deploy
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
+          docker run --rm --net=host --env-file kind/temp/secrets.env \
+            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
+            -v "${{ github.workspace }}:/wd" \
+            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
+            --workdir /wd ghcr.io/helmfile/helmfile:$HELMFILE_VERSION \
+            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.routing.url=../routing/helm
+        env:
+          # renovate: dataSource=docker packageName=ghcr.io/helmfile/helmfile depName=helmfile/helmfile
+          HELMFILE_VERSION: "v1.5.1"
