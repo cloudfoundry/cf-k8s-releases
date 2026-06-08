@@ -31,5 +31,5 @@ jobs:
         token: ${{ secrets.SERVICE_USER_GITHUB_TOKEN }}
         configurationFile: .github/renovate-config.js
       env:
-        RENOVATE_GIT_AUTHOR: ${{ secrets.SERVICE_USER_AUTHOR_EMAIL }}
+        RENOVATE_GIT_AUTHOR: "ARD WG k8s Git Bot <${{ secrets.SERVICE_USER_AUTHOR_EMAIL }}>"
         LOG_LEVEL: ${{ github.event.inputs.logLevel || 'info' }}
