@@ -8,8 +8,8 @@ on:
       - 'cf-networking/helm/Chart.yaml'
       
 env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
-  HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s
+  HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm
 
 
 jobs:
