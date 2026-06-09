@@ -13,6 +13,49 @@ env:
 
 
 jobs:
+  delete-package:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Delete package version
+        run: |
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sbosh-dns
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8snfsbroker
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8snfsv3driver
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8scc-uploader
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8stps-watcher
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sbinary-buildpack
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8scf-tcp-router
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sgorouter
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8srouting-api
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sroute-registrar
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8scc-nginx
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sssh-proxy
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sgateway
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8slog-cache
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8scf-auth-proxy
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sroute-emitter
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8slocket
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8ssyslog-server
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sreverse-log-proxy
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sauctioneer
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sdoppler
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8straffic-controller
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sreverse-log-proxy-gateway
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sbbs
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sbosh-dns-adapter
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sservice-discovery-controller
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8spolicy-server
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sudp-forwarder
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sloggregator-agent
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8ssyslog-agent
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8ssyslog-binding-cache
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sforwarder-agent
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/k8sfileserver
+
   binary-buildpack-release:
     runs-on: ubuntu-latest
     permissions:
