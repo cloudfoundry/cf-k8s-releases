@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: uaa
-          image: {{ .Values.image.repository }}:{{ default .Chart.Version .Values.image.tag }}
+          image: {{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           ports:
             - containerPort: 8443

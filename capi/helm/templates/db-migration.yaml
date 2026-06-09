@@ -20,7 +20,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: capi-db-migration
-          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.Version .Values.cloudController.image.tag }}
+          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
           command: ["/usr/bin/setup-db.sh"]
           env:

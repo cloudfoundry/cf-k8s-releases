@@ -75,7 +75,7 @@ spec:
               mountPath: /tmp
       containers:
         - name: route-emitter
-          image: {{ .Values.routeEmitter.image.repository }}:{{ default .Chart.Version .Values.routeEmitter.image.tag }}
+          image: {{ .Values.routeEmitter.image.repository }}:{{ default .Chart.AppVersion .Values.routeEmitter.image.tag }}
           imagePullPolicy: {{ .Values.routeEmitter.image.imagePullPolicy }}
           args:
           - --config

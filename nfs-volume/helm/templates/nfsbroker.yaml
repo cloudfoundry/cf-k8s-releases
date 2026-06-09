@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: nfsbroker
-          image: {{ .Values.nfsbroker.image.repository }}:{{ default .Chart.Version .Values.nfsbroker.image.tag }}
+          image: {{ .Values.nfsbroker.image.repository }}:{{ default .Chart.AppVersion .Values.nfsbroker.image.tag }}
           imagePullPolicy: {{ .Values.nfsbroker.image.imagePullPolicy }}
           ports:
             - containerPort: 8080

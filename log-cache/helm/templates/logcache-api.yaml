@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: cf-auth-proxy
-          image: {{ .Values.logCacheApi.cfAuthProxy.image.repository }}:{{ default .Chart.Version .Values.logCacheApi.cfAuthProxy.image.tag }}
+          image: {{ .Values.logCacheApi.cfAuthProxy.image.repository }}:{{ default .Chart.AppVersion .Values.logCacheApi.cfAuthProxy.image.tag }}
           imagePullPolicy: {{ .Values.logCacheApi.cfAuthProxy.image.imagePullPolicy }}
           ports:
             - containerPort: 8083
@@ -51,7 +51,7 @@ spec:
               mountPath: /etc/ssl/certs/log-cache-api
               readOnly: true
         - name: gateway
-          image: {{ .Values.logCacheApi.gateway.image.repository }}:{{ default .Chart.Version .Values.logCacheApi.gateway.image.tag }}
+          image: {{ .Values.logCacheApi.gateway.image.repository }}:{{ default .Chart.AppVersion .Values.logCacheApi.gateway.image.tag }}
           imagePullPolicy: {{ .Values.logCacheApi.gateway.image.imagePullPolicy }}
           ports:
             - containerPort: 8081

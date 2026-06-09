@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: locket
-          image: {{ .Values.locket.image.repository }}:{{ default .Chart.Version .Values.locket.image.tag }}
+          image: {{ .Values.locket.image.repository }}:{{ default .Chart.AppVersion .Values.locket.image.tag }}
           args:
             - "-config"
             - "/locket/locket.json"

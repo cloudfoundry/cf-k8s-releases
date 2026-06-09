@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: tps-watcher
-          image: {{ .Values.tpsWatcher.image.repository }}:{{ default .Chart.Version .Values.tpsWatcher.image.tag }}
+          image: {{ .Values.tpsWatcher.image.repository }}:{{ default .Chart.AppVersion .Values.tpsWatcher.image.tag }}
           imagePullPolicy: {{ .Values.tpsWatcher.image.imagePullPolicy }}
           {{- if .Values.tpsWatcher.resources }}
           resources:

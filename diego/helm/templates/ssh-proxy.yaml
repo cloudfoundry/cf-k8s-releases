@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: ssh-proxy
-          image: {{ .Values.sshProxy.image.repository }}:{{ default .Chart.Version .Values.sshProxy.image.tag }}
+          image: {{ .Values.sshProxy.image.repository }}:{{ default .Chart.AppVersion .Values.sshProxy.image.tag }}
           args:
             - "-config"
             - "/ssh-proxy/ssh-proxy.json"

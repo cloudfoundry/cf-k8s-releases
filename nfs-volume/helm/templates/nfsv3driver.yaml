@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: nfsv3driver
-          image: {{ .Values.nfsv3driver.image.repository }}:{{ default .Chart.Version .Values.nfsv3driver.image.tag }}
+          image: {{ .Values.nfsv3driver.image.repository }}:{{ default .Chart.AppVersion .Values.nfsv3driver.image.tag }}
           imagePullPolicy: {{ .Values.nfsv3driver.image.imagePullPolicy }}
           env:
             - name: POD_IP

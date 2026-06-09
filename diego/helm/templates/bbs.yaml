@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: bbs
-          image: {{ .Values.bbs.image.repository }}:{{ default .Chart.Version .Values.bbs.image.tag }}
+          image: {{ .Values.bbs.image.repository }}:{{ default .Chart.AppVersion .Values.bbs.image.tag }}
           args:
             - "-config"
             - "/bbs/bbs.json"

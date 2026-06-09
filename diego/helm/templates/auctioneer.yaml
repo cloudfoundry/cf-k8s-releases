@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: auctioneer
-          image: {{ .Values.auctioneer.image.repository }}:{{ default .Chart.Version .Values.auctioneer.image.tag }}
+          image: {{ .Values.auctioneer.image.repository }}:{{ default .Chart.AppVersion .Values.auctioneer.image.tag }}
           args:
             - "-config"
             - "/auctioneer/auctioneer.json"

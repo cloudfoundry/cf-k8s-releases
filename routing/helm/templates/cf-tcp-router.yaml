@@ -46,7 +46,7 @@ spec:
               subPath: haproxy.conf
       containers:
         - name: cf-tcp-router
-          image: {{ .Values.tcpRouter.image.repository }}:{{ default .Chart.Version .Values.tcpRouter.image.tag }}
+          image: {{ .Values.tcpRouter.image.repository }}:{{ default .Chart.AppVersion .Values.tcpRouter.image.tag }}
           imagePullPolicy: {{ .Values.tcpRouter.image.imagePullPolicy }}
           args:
           - -logLevel=info

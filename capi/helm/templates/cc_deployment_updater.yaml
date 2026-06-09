@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: cc-deployment-updater
-          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.Version .Values.cloudController.image.tag }}
+          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
           command: ["bundle", "exec", "rake", "deployment_updater:start"]
           envFrom:

@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: doppler
-          image: {{ .Values.doppler.image.repository }}:{{ default .Chart.Version .Values.doppler.image.tag }}
+          image: {{ .Values.doppler.image.repository }}:{{ default .Chart.AppVersion .Values.doppler.image.tag }}
           imagePullPolicy: {{ .Values.doppler.image.imagePullPolicy }}
           {{- if .Values.doppler.resources }}
           resources:

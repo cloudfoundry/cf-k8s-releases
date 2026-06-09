@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: credhub-server
-        image: {{ .Values.image.repository }}:{{ default .Chart.Version .Values.image.tag }}
+        image: {{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         {{- if .Values.resources }}
         resources:
