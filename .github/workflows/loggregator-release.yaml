@@ -33,7 +33,7 @@ jobs:
         working-directory: loggregator
         run: |
           # Check if image available
-          if docker pull $REGISTRY_PREFIX/doppler:$VERSION > /dev/null 2>&1; then
+          if docker pull ${REGISTRY_PREFIX}doppler:$VERSION > /dev/null 2>&1; then
              echo "doppler image already exists in version $VERSION."
           else
             docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
@@ -42,9 +42,9 @@ jobs:
         working-directory: loggregator
         run: |
           # Check if chart available
-          if helm show chart oci://$HELM_REGISTRY_PREFIX/loggregator --version $VERSION > /dev/null 2>&1; then
+          if helm show chart oci://${HELM_REGISTRY_PREFIX}loggregator --version $VERSION > /dev/null 2>&1; then
              echo "Helm chart already exists in version $VERSION."
           else
             helm package ./helm -d ${{ runner.temp }}
-            helm push ${{ runner.temp }}/loggregator-*.tgz oci://$HELM_REGISTRY_PREFIX/
+            helm push ${{ runner.temp }}/loggregator-*.tgz oci://${HELM_REGISTRY_PREFIX}
           fi
