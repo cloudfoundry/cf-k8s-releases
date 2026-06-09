@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: bosh-dns-adapter
-          image: {{ .Values.boshDnsAdapter.image.repository }}:{{ default .Chart.Version .Values.boshDnsAdapter.image.tag }}
+          image: {{ .Values.boshDnsAdapter.image.repository }}:{{ default .Chart.AppVersion .Values.boshDnsAdapter.image.tag }}
           imagePullPolicy: {{ .Values.boshDnsAdapter.image.imagePullPolicy }}
           {{- if .Values.boshDnsAdapter.resources }}
           resources:

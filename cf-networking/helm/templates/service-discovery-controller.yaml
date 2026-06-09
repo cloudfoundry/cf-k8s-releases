@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: service-discovery-controller
-          image: {{ .Values.serviceDiscoveryController.image.repository }}:{{ default .Chart.Version .Values.serviceDiscoveryController.image.tag }}
+          image: {{ .Values.serviceDiscoveryController.image.repository }}:{{ default .Chart.AppVersion .Values.serviceDiscoveryController.image.tag }}
           imagePullPolicy: {{ .Values.serviceDiscoveryController.image.imagePullPolicy }}
           {{- if .Values.serviceDiscoveryController.resources }}
           resources:

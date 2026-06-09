@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: reverse-log-proxy
-          image: {{ .Values.reverseLogProxy.image.repository }}:{{ default .Chart.Version .Values.reverseLogProxy.image.tag }}
+          image: {{ .Values.reverseLogProxy.image.repository }}:{{ default .Chart.AppVersion .Values.reverseLogProxy.image.tag }}
           imagePullPolicy: {{ .Values.reverseLogProxy.image.imagePullPolicy }}
           {{- if .Values.reverseLogProxy.resources }}
           resources:
@@ -49,7 +49,7 @@ spec:
             - name: reverse-log-proxy
               mountPath: /etc/ssl/certs/reverse-log-proxy
         - name: reverse-log-proxy-gateway
-          image: {{ .Values.reverseLogProxyGateway.image.repository }}:{{ default .Chart.Version .Values.reverseLogProxyGateway.image.tag }}
+          image: {{ .Values.reverseLogProxyGateway.image.repository }}:{{ default .Chart.AppVersion .Values.reverseLogProxyGateway.image.tag }}
           imagePullPolicy: {{ .Values.reverseLogProxyGateway.image.imagePullPolicy }}
           {{- if .Values.reverseLogProxyGateway.resources }}
           resources:
@@ -102,7 +102,7 @@ spec:
             - name: reverse-log-proxy-gateway
               mountPath: /etc/ssl/certs/reverse-log-proxy-gateway
         - name: trafficcontroller
-          image: {{ .Values.trafficcontroller.image.repository }}:{{ default .Chart.Version .Values.trafficcontroller.image.tag }}
+          image: {{ .Values.trafficcontroller.image.repository }}:{{ default .Chart.AppVersion .Values.trafficcontroller.image.tag }}
           imagePullPolicy: {{ .Values.trafficcontroller.image.imagePullPolicy }}
           {{- if .Values.trafficcontroller.resources }}
           resources:

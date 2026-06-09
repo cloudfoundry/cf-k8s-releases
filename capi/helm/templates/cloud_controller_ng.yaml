@@ -70,7 +70,7 @@ spec:
     spec:
       containers:
         - name: cloud-controller
-          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.Version .Values.cloudController.image.tag }}
+          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
           command: ["bundle", "exec", "bin/cloud_controller", "-c", "/etc/cloud-controller/config.yaml"]
           envFrom:
@@ -126,7 +126,7 @@ spec:
             - name: tmpdir
               mountPath: /tmp
         - name: local-worker
-          image: {{ .Values.localWorker.image.repository }}:{{ default .Chart.Version .Values.localWorker.image.tag }}
+          image: {{ .Values.localWorker.image.repository }}:{{ default .Chart.AppVersion .Values.localWorker.image.tag }}
           imagePullPolicy: {{ .Values.localWorker.image.imagePullPolicy }}
           command: ["bundle", "exec", "rake", "jobs:local"]
           {{- if .Values.cloudController.blobstore.storage_cli }}
@@ -156,7 +156,7 @@ spec:
             - name: tmpdir
               mountPath: /tmp
         - name: nginx
-          image: {{ .Values.nginx.image.repository }}:{{ default .Chart.Version .Values.nginx.image.tag }}
+          image: {{ .Values.nginx.image.repository }}:{{ default .Chart.AppVersion .Values.nginx.image.tag }}
           imagePullPolicy: {{ .Values.nginx.image.imagePullPolicy }}
           ports:
             - name: http

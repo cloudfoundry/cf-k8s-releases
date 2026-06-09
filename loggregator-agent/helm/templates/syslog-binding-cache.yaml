@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: syslog-binding-cache
-          image: {{ .Values.syslogBindingCache.image.repository }}:{{ default .Chart.Version .Values.syslogBindingCache.image.tag }}
+          image: {{ .Values.syslogBindingCache.image.repository }}:{{ default .Chart.AppVersion .Values.syslogBindingCache.image.tag }}
           imagePullPolicy: {{ .Values.syslogBindingCache.image.imagePullPolicy }}
           ports:
             - containerPort: 9000

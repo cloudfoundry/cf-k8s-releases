@@ -38,7 +38,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.Version .Values.fileserver.image.tag }}
+          image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.AppVersion .Values.fileserver.image.tag }}
           imagePullPolicy: {{ .Values.fileserver.image.imagePullPolicy }}
           ports:
             - name: http

@@ -62,7 +62,7 @@ spec:
                 key: tls.key
       containers:
         - name: gorouter
-          image: {{ .Values.gorouter.image.repository }}:{{ default .Chart.Version .Values.gorouter.image.tag }}
+          image: {{ .Values.gorouter.image.repository }}:{{ default .Chart.AppVersion .Values.gorouter.image.tag }}
           imagePullPolicy: {{ .Values.gorouter.image.imagePullPolicy }}
           args:
           - -c

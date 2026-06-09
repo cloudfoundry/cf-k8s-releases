@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: policy-server
-          image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.Version .Values.policyServer.image.tag }}
+          image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.AppVersion .Values.policyServer.image.tag }}
           imagePullPolicy: {{ .Values.policyServer.image.imagePullPolicy }}
           command: [ "/usr/local/bin/policy-server" ]
           args:
@@ -44,7 +44,7 @@ spec:
             {{- toYaml .Values.policyServer.resources | nindent 12 }}
           {{- end }}
         - name: policy-server-internal
-          image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.Version .Values.policyServer.image.tag }}
+          image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.AppVersion .Values.policyServer.image.tag }}
           imagePullPolicy: {{ .Values.policyServer.image.imagePullPolicy }}
           command: [ "/usr/local/bin/policy-server-internal" ]
           args:
@@ -66,7 +66,7 @@ spec:
             {{- toYaml .Values.policyServer.resources | nindent 12 }}
           {{- end }}
         - name: asg-syncer
-          image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.Version .Values.policyServer.image.tag }}
+          image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.AppVersion .Values.policyServer.image.tag }}
           imagePullPolicy: {{ .Values.policyServer.image.imagePullPolicy }}
           command: [ "/usr/local/bin/policy-server-asg-syncer" ]
           args:

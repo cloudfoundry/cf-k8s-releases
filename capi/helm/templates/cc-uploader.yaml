@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: cc-uploader
-          image: {{ .Values.ccUploader.image.repository }}:{{ default .Chart.Version .Values.ccUploader.image.tag }}
+          image: {{ .Values.ccUploader.image.repository }}:{{ default .Chart.AppVersion .Values.ccUploader.image.tag }}
           imagePullPolicy: {{ .Values.ccUploader.image.imagePullPolicy }}
           ports:
             - containerPort: 9091
