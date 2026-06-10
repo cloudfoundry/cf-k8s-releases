@@ -101,6 +101,7 @@ diegodb:
   address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
   caCertificateSecret: ""
   skipSSLVerify: true
+  skipHostnameVerify: false
 
 locketdb:
   name: locket
@@ -110,6 +111,7 @@ locketdb:
   address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
   caCertificateSecret: ""
   skipSSLVerify: true
+  skipHostnameVerify: false
 
 sshProxyHostKey: ~
 diegoSSHCredentials: ~
