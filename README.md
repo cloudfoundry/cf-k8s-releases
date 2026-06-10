@@ -1,6 +1,6 @@
 # cf-k8s-releases
 
-This repository contains the assets to install the common components of cloud foundry on kubernetes.
+This repository contains the assets to install the common components of Cloud Foundry on Kubernetes.
 
 Those assets are used when installing it on `kind` (see [kind-deployment](https://github.com/cloudfoundry/kind-deployment))
 
