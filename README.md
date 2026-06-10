@@ -2,7 +2,7 @@
 
 This repository contains the assets to install the common components of Cloud Foundry on Kubernetes.
 
-Those assets are used when installing it on `kind` (see [kind-deployment](https://github.com/cloudfoundry/kind-deployment))
+Those assets are used when installing it on `kind` (see [kind-deployment](https://github.com/cloudfoundry/kind-deployment)).
 
 The kubernetes specific components can be found here:
 - [k8s-garden-client](https://github.com/cloudfoundry/k8s-garden-client)
