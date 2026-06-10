@@ -27,13 +27,7 @@ fileserver:
     repository: ghcr.io/cloudfoundry/k8s/fileserver
     tag: ""
     imagePullPolicy: IfNotPresent
-  buildpacks:
-    nodejs-buildpack:
-      image: ghcr.io/cloudfoundry/k8s/nodejs-buildpack
-      tag: "1.9.2"
-    binary-buildpack:
-      image: ghcr.io/cloudfoundry/k8s/binary-buildpack
-      tag: "1.1.26"
+  buildpacks: {}
   nodeSelector: ~
   tolerations: ~
 
