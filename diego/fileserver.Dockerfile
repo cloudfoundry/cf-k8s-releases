@@ -45,8 +45,8 @@ RUN <<-EOF
     
     # envoy proxy
     ENVOY_VERSION=$(sed -nE 's#^proxy/envoy-.*-([0-9]+\.[0-9]+\.[0-9]+)\.tgz:$#\1#p' /diego/config/blobs.yml)
-    wget -O /tmp/envoy-${ENVOY_VERSION}-${ENVOY_ARCH} https://github.com/envoyproxy/envoy/releases/download/v${ENVOY_VERSION}/envoy-${ENVOY_VERSION}-${ENVOY_ARCH}
-    tar -czf /tmp/final/cf-assets/proxy.tgz -C /tmp envoy-${ENVOY_VERSION}-${ENVOY_ARCH}
+    wget -O /tmp/envoy https://github.com/envoyproxy/envoy/releases/download/v${ENVOY_VERSION}/envoy-${ENVOY_VERSION}-${ENVOY_ARCH}
+    tar -czf /tmp/final/cf-assets/proxy.tgz -C /tmp envoy
 
     # lifecycles
     ## cnbapplifecycle
