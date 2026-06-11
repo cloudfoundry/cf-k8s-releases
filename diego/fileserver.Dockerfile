@@ -18,14 +18,28 @@ RUN <<-EOF
       *)        echo "unsupported architecture ${TARGETARCH}" ;;
     esac
 
+    mkdir -p /tmp/cnb_app_lifecycle
+    mkdir -p /tmp/buildpack_app_lifecycle
+    mkdir -p /tmp/docker_app_lifecycle
     mkdir -p /tmp/final/cf-assets
+    mkdir -p /tmp/final/v1/static/cnb_app_lifecycle
+    mkdir -p /tmp/final/v1/static/buildpack_app_lifecycle
+    mkdir -p /tmp/final/v1/static/docker_app_lifecycle
 
     # sshd
-    CGO_ENABLED=0 go build -o /tmp/final/diego-sshd -a -installsuffix static code.cloudfoundry.org/diego-ssh/cmd/sshd
+    CGO_ENABLED=0 go build -o /tmp/diego-sshd -a -installsuffix static code.cloudfoundry.org/diego-ssh/cmd/sshd
+
+    cp /tmp/diego-sshd /tmp/cnb_app_lifecycle
+    cp /tmp/diego-sshd /tmp/buildpack_app_lifecycle
+    cp /tmp/diego-sshd /tmp/docker_app_lifecycle
 
     # healthcheck
-    CGO_ENABLED=0 go build -o /tmp/final/healthcheck -a -installsuffix static code.cloudfoundry.org/healthcheck/cmd/healthcheck
-    tar -czf /tmp/final/cf-assets/healthcheck.tgz -C /tmp/final healthcheck
+    CGO_ENABLED=0 go build -o /tmp/healthcheck -a -installsuffix static code.cloudfoundry.org/healthcheck/cmd/healthcheck
+    tar -czf /tmp/final/cf-assets/healthcheck.tgz -C /tmp healthcheck
+
+    cp /tmp/healthcheck /tmp/cnb_app_lifecycle
+    cp /tmp/healthcheck /tmp/buildpack_app_lifecycle
+    cp /tmp/healthcheck /tmp/docker_app_lifecycle
 
     # cf-pcap
     LIBPCAP_VERSION=$(sed -nE 's#^libpcap/libpcap-([0-9]+\.[0-9]+\.[0-9]+)\.tar\.xz:$#\1#p' /diego/config/blobs.yml)
@@ -41,7 +55,11 @@ RUN <<-EOF
   
     export CGO_CFLAGS="-I$LIBPCAP_DIR"
     export CGO_LDFLAGS="-L$LIBPCAP_DIR -static"
-    go build -ldflags '-linkmode external' -o /tmp/final/cf-pcap -a -installsuffix static code.cloudfoundry.org/cf-pcap
+    go build -ldflags '-linkmode external' -o /tmp/cf-pcap -a -installsuffix static code.cloudfoundry.org/cf-pcap
+
+    cp /tmp/cf-pcap /tmp/cnb_app_lifecycle
+    cp /tmp/cf-pcap /tmp/buildpack_app_lifecycle
+    cp /tmp/cf-pcap /tmp/docker_app_lifecycle
     
     # envoy proxy
     ENVOY_VERSION=$(sed -nE 's#^proxy/envoy-.*-([0-9]+\.[0-9]+\.[0-9]+)\.tgz:$#\1#p' /diego/config/blobs.yml)
@@ -51,29 +69,23 @@ RUN <<-EOF
     # lifecycles
     ## cnbapplifecycle
     cd /diego/src/cnbapplifecycle
-    CGO_ENABLED=0 go build -o /tmp/final/cnb_app_lifecycle/ -ldflags "-s -w" -a -installsuffix static code.cloudfoundry.org/cnbapplifecycle/cmd/builder code.cloudfoundry.org/cnbapplifecycle/cmd/launcher
+    CGO_ENABLED=0 go build -o /tmp/cnb_app_lifecycle/ -ldflags "-s -w" -a -installsuffix static code.cloudfoundry.org/cnbapplifecycle/cmd/builder code.cloudfoundry.org/cnbapplifecycle/cmd/launcher
     
-    cp /tmp/final/healthcheck /tmp/final/cnb_app_lifecycle/healthcheck
-    cp /tmp/final/diego-sshd /tmp/final/cnb_app_lifecycle/diego-sshd
-    cp /tmp/final/cf-pcap /tmp/final/cnb_app_lifecycle/cf-pcap
+    tar -czf /tmp/final/v1/static/cnb_app_lifecycle/cnb_app_lifecycle.tgz -C /tmp/cnb_app_lifecycle builder launcher healthcheck diego-sshd cf-pcap
 
     ## buildpack_app_lifecycle
     cd /diego/src/code.cloudfoundry.org
-    CGO_ENABLED=0 go build -o /tmp/final/buildpack_app_lifecycle/builder -a -installsuffix static code.cloudfoundry.org/buildpackapplifecycle/builder
-    CGO_ENABLED=0 go build -o /tmp/final/buildpack_app_lifecycle/launcher -a -installsuffix static code.cloudfoundry.org/buildpackapplifecycle/launcher
-    CGO_ENABLED=0 go build -o /tmp/final/buildpack_app_lifecycle/shell -a -installsuffix static code.cloudfoundry.org/buildpackapplifecycle/shell/shell
+    CGO_ENABLED=0 go build -o /tmp/buildpack_app_lifecycle/builder -a -installsuffix static code.cloudfoundry.org/buildpackapplifecycle/builder
+    CGO_ENABLED=0 go build -o /tmp/buildpack_app_lifecycle/launcher -a -installsuffix static code.cloudfoundry.org/buildpackapplifecycle/launcher
+    CGO_ENABLED=0 go build -o /tmp/buildpack_app_lifecycle/shell -a -installsuffix static code.cloudfoundry.org/buildpackapplifecycle/shell/shell
 
-    cp /tmp/final/healthcheck /tmp/final/buildpack_app_lifecycle/healthcheck
-    cp /tmp/final/diego-sshd /tmp/final/buildpack_app_lifecycle/diego-sshd
-    cp /tmp/final/cf-pcap /tmp/final/buildpack_app_lifecycle/cf-pcap
+    tar -czf /tmp/final/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz -C /tmp/buildpack_app_lifecycle builder launcher shell healthcheck diego-sshd cf-pcap
 
     ## docker_app_lifecycle
-    CGO_ENABLED=0 go build -o /tmp/final/docker_app_lifecycle/builder  -a -installsuffix static code.cloudfoundry.org/dockerapplifecycle/builder
-    CGO_ENABLED=0 go build -o /tmp/final/docker_app_lifecycle/launcher -a -installsuffix static code.cloudfoundry.org/dockerapplifecycle/launcher
+    CGO_ENABLED=0 go build -o /tmp/docker_app_lifecycle/builder  -a -installsuffix static code.cloudfoundry.org/dockerapplifecycle/builder
+    CGO_ENABLED=0 go build -o /tmp/docker_app_lifecycle/launcher -a -installsuffix static code.cloudfoundry.org/dockerapplifecycle/launcher
 
-    cp /tmp/final/healthcheck /tmp/final/docker_app_lifecycle/healthcheck
-    cp /tmp/final/diego-sshd /tmp/final/docker_app_lifecycle/diego-sshd
-    cp /tmp/final/cf-pcap /tmp/final/docker_app_lifecycle/cf-pcap
+    tar -czf /tmp/final/v1/static/docker_app_lifecycle/docker_app_lifecycle.tgz -C /tmp/docker_app_lifecycle builder launcher healthcheck diego-sshd cf-pcap
 EOF
 
 

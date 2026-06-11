@@ -12,6 +12,6 @@ RUN cd /buildpack-packager && go build -o /usr/local/buildpack-packager packager
 RUN /usr/local/buildpack-packager build -any-stack
 RUN  mv *.zip ruby-buildpack.zip
 
-FROM gcr.io/distroless/static:latest
+FROM scratch
 
-COPY --from=builder --chmod=0755 /*.zip /buildpack
+COPY --from=builder --chmod=0755 /buildpack/src/*.zip /
