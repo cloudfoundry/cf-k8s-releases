@@ -1,3 +1,4 @@
+ARG BUILDPLATFORM=linux/amd64
 FROM --platform=$BUILDPLATFORM golang:1.26 AS builder
 
 ARG TARGETARCH
@@ -12,9 +13,8 @@ SHELL ["/usr/bin/env", "bash", "-eux", "-o", "pipefail", "-c"]
 
 
 RUN <<-EOF
-    case ${TARGETARCH} in
+    case ${BUILDPLATFORM} in
       "amd64")  export ENVOY_ARCH=linux-x86_64  ;;
-      "arm64")  export ENVOY_ARCH=linux-aarch_64 ;;
       *)        echo "unsupported architecture ${TARGETARCH}" ;;
     esac
 
