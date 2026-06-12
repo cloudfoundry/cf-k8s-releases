@@ -29,15 +29,21 @@ jobs:
       - uses: ./.github/actions/init
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Release Images
+      - name: Check Images
         working-directory: capi
         run: |
           # Check if image available
           if docker pull ${REGISTRY_PREFIX}cloud-controller:$VERSION > /dev/null 2>&1; then
              echo "cloud-controller image already exists in version $VERSION."
+             echo "build-images=false" >> $GITHUB_ENV
           else
-            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+            echo "build-images=true" >> $GITHUB_ENV
           fi
+      - name: Build Images
+        if: ${{ env.build-images == 'true' }}
+        uses: ./.github/workflows/reusable-matrix-image-build.yaml
+        with:
+          target: capi
       - name: Publish Helm Chart
         working-directory: capi
         run: |
