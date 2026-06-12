@@ -7,30 +7,39 @@ on:
         description: 'Target to build'
         required: true
         type: string
+      registry-prefix:
+        description: 'Registry prefix for the built images'
+        required: false
+        type: string
+        default: ghcr.io/cloudfoundry/k8s/
   workflow_dispatch:
     inputs:
       target:
         description: 'Target to build'
         required: true
         type: string
+      registry-prefix:
+        description: 'Registry prefix for the built images'
+        required: false
+        type: string
+        default: ghcr.io/cloudfoundry/k8s/
 
 env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+  REGISTRY_PREFIX: ${{ inputs.registry-prefix }}
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      target: ${{ steps.determine-target.outputs.target }}
       targets: ${{ steps.determine-target.outputs.targets }}
     steps:
       - uses: actions/checkout@v6
       - name: Determine target
         id: determine-target
+        working-directory: ${{ inputs.target }}
         run: |
-          TARGET="${{ inputs.target }}"
+          TARGET=${{ inputs.target }}
           ACTUAL_TARGETS=$(docker buildx bake "$TARGET" --print --progress quiet | jq -r '.target | keys | join(" ")')
-          echo "target=$TARGET" >> $GITHUB_OUTPUT
           echo "targets=$ACTUAL_TARGETS" >> $GITHUB_OUTPUT
           echo "Building target: $TARGET (resolves to: $ACTUAL_TARGETS)"
 
@@ -64,8 +73,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         id: bake
+        working-directory: ${{ inputs.target }}
         run: |
-          docker buildx bake "${{ needs.prepare.outputs.target }}" --print --progress quiet | \
+          docker buildx bake "${{ inputs.target }}" --print --progress quiet | \
             jq --arg targets "${{ needs.prepare.outputs.targets }}" '
               ($targets | split(" ")) as $tlist |
               .target |= with_entries(
@@ -77,7 +87,7 @@ jobs:
           docker buildx bake -f ${{ runner.temp }}/bake.json \
             --set '*.output=type=image,push-by-digest=true,name-canonical=true,push=true' \
             --set '*.platform=${{ matrix.platform }}' \
-            --metadata-file ${{ runner.temp }}/metadata.json ${{ needs.prepare.outputs.target }}
+            --metadata-file ${{ runner.temp }}/metadata.json ${{ inputs.target }}
       - name: Export digest
         id: export
         run: |
@@ -101,8 +111,9 @@ jobs:
         uses: docker/setup-buildx-action@v4
       - name: Prepare tags
         id: tags
+        working-directory: ${{ inputs.target }}
         run: |
-          TAGS_DATA=$(docker buildx bake "${{ needs.prepare.outputs.target }}" --print --progress quiet | \
+          TAGS_DATA=$(docker buildx bake "${{ inputs.target }}" --print --progress quiet | \
             jq -c --arg targets "${{ needs.prepare.outputs.targets }}" '
               ($targets | split(" ")) as $tlist |
               .target | to_entries |
