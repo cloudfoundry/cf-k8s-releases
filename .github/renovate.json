@@ -23,5 +23,13 @@
   ],
   "helm-values": {
     "enabled": false
-  }
+  },
+  "packageRules": [
+    {
+      "matchManagers": [
+        "regex"
+      ],
+      "automerge": true
+    }
+  ]
 }
