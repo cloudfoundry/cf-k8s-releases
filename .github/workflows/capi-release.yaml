@@ -45,7 +45,7 @@ jobs:
   capi-image-release:
     needs: capi-release
     if: needs.capi-release.outputs.build-images == 'true'
-    uses: cloudfoundry/cf-k8s-releases/.github/workflows/reusable-matrix-image-build.yaml@matrix-build
+    uses: ./.github/workflows/reusable-matrix-image-build.yaml
     with:
       target: capi
   capi-helm-release:
