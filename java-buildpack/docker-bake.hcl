@@ -12,7 +12,7 @@ group "default" {
 }
 
 target "java-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}java-buildpack:${BUILDPACK_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}java-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}java-buildpack:latest" ]
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/java-buildpack.git#v${BUILDPACK_VERSION}"

@@ -12,7 +12,7 @@ group "default" {
 }
 
 target "dotnet-core-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}dotnet-core-buildpack:${BUILDPACK_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}dotnet-core-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}dotnet-core-buildpack:latest" ]
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/dotnet-core-buildpack.git#v${BUILDPACK_VERSION}"

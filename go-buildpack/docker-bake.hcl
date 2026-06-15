@@ -12,7 +12,7 @@ group "default" {
 }
 
 target "go-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}go-buildpack:${BUILDPACK_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}go-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}go-buildpack:latest" ]
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/go-buildpack.git#v${BUILDPACK_VERSION}"
