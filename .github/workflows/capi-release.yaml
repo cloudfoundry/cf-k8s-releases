@@ -68,7 +68,7 @@ jobs:
         run: |
           # Check if chart available
           if helm show chart oci://${HELM_REGISTRY_PREFIX}capi --version $VERSION > /dev/null 2>&1; then
-              echo "Helm chart already exists in version $VERSION."
+             echo "Helm chart already exists in version $VERSION."
           else
             helm package ./helm -d ${{ runner.temp }}
             helm push ${{ runner.temp }}/capi-*.tgz oci://${HELM_REGISTRY_PREFIX}
