@@ -12,7 +12,7 @@ group "default" {
 }
 
 target "r-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}r-buildpack:${BUILDPACK_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}r-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}r-buildpack:latest" ]
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/r-buildpack.git#v${BUILDPACK_VERSION}"

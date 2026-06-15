@@ -13,7 +13,7 @@ group "default" {
 
 target "cflinuxfs4" {
   dockerfile = "cflinuxfs4.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}cflinuxfs4:${CFLINUXFS4_VERSION}" ]
+  tags = [ "${REGISTRY_PREFIX}cflinuxfs4:${CFLINUXFS4_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4:latest" ]
 
   args = {
     "CFLINUXFS4_VERSION" = CFLINUXFS4_VERSION

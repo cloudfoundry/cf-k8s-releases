@@ -12,7 +12,7 @@ group "default" {
 }
 
 target "binary-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}binary-buildpack:${BUILDPACK_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}binary-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}binary-buildpack:latest" ]
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/binary-buildpack.git#v${BUILDPACK_VERSION}"

@@ -18,7 +18,7 @@ function "targetname" {
 
 target "diego" {
     dockerfile = "Dockerfile"
-    tags = [ "${REGISTRY_PREFIX}${targetname(component)}:${DIEGO_RELEASE_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}${targetname(component)}:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}${targetname(component)}:latest" ]
     name = targetname(component)
   
     matrix = {
@@ -37,7 +37,7 @@ target "diego" {
 
 target "fileserver" {
     dockerfile = "fileserver.Dockerfile"
-    tags = [ "${REGISTRY_PREFIX}fileserver:${DIEGO_RELEASE_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}fileserver:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}fileserver:latest" ]
 
     contexts = {
         "src"    = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",

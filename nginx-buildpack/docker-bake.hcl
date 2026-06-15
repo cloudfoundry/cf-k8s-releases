@@ -12,7 +12,7 @@ group "default" {
 }
 
 target "nginx-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}nginx-buildpack:${BUILDPACK_VERSION}" ]
+    tags = [ "${REGISTRY_PREFIX}nginx-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}nginx-buildpack:latest" ]
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/nginx-buildpack.git#v${BUILDPACK_VERSION}"
