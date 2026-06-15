@@ -16,30 +16,55 @@ env:
 jobs:
   capi-release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.determine-versions.outputs.version }}
+      build-images: ${{ steps.check-images.outputs.build-images }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Determine Versions
+        id: determine-versions
+        working-directory: capi
+        run: |
+          echo "version=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_OUTPUT
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check Images
+        id: check-images
+        working-directory: capi
+        env:
+          VERSION: ${{ steps.determine-versions.outputs.version }}
+        run: |
+          # Check if image available
+          if docker pull ${REGISTRY_PREFIX}cloud-controller:$VERSION > /dev/null 2>&1; then
+             echo "cloud-controller image already exists in version $VERSION."
+             echo "build-images=false" >> $GITHUB_OUTPUT
+          else
+            echo "build-images=true" >> $GITHUB_OUTPUT
+          fi
+  capi-image-release:
+    needs: capi-release
+    if: needs.capi-release.outputs.build-images == 'true'
+    uses: cloudfoundry/cf-k8s-releases/.github/workflows/reusable-matrix-image-build.yaml@matrix-build
+    with:
+      target: capi
+  capi-helm-release:
+    needs: [capi-image-release, capi-release]
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
       packages: write
     steps:
       - uses: actions/checkout@v6
-      - name: Determine Versions
-        working-directory: capi
-        run: |
-          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
       - uses: ./.github/actions/init
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Release Images
-        working-directory: capi
-        run: |
-          # Check if image available
-          if docker pull ${REGISTRY_PREFIX}cloud-controller:$VERSION > /dev/null 2>&1; then
-             echo "cloud-controller image already exists in version $VERSION."
-          else
-            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
-          fi
       - name: Publish Helm Chart
         working-directory: capi
+        env:
+          VERSION: ${{ needs.capi-release.outputs.version }}
+          HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
         run: |
           # Check if chart available
           if helm show chart oci://${HELM_REGISTRY_PREFIX}capi --version $VERSION > /dev/null 2>&1; then
