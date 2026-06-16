@@ -42,7 +42,7 @@ jobs:
 
           TARGET=${{ inputs.target }}
           TAGS=$(docker buildx bake "$TARGET" --print --progress quiet | jq -r '.target | keys | join(" ")')
-          VERSION=$(yq e '.version' helm/Chart.yaml)
+          VERSION=$(yq e '.appVersion' helm/Chart.yaml)
 
           echo "Building target: $TARGET (resolved targets: $TAGS)"
           for TAG in $TAGS; do

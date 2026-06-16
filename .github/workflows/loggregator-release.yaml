@@ -28,13 +28,14 @@ jobs:
       - name: Determine Versions
         working-directory: loggregator
         run: |
-          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
+          echo "CHART_VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
+          echo "APP_VERSION=$(cat helm/Chart.yaml | yq e '.appVersion')" >> $GITHUB_ENV
       - name: Release Images
         working-directory: loggregator
         run: |
           # Check if image available
-          if docker pull ${REGISTRY_PREFIX}doppler:$VERSION > /dev/null 2>&1; then
-             echo "doppler image already exists in version $VERSION."
+          if docker pull ${REGISTRY_PREFIX}doppler:$APP_VERSION > /dev/null 2>&1; then
+             echo "doppler image already exists in version $APP_VERSION."
           else
             docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
           fi
@@ -42,8 +43,8 @@ jobs:
         working-directory: loggregator
         run: |
           # Check if chart available
-          if helm show chart oci://${HELM_REGISTRY_PREFIX}loggregator --version $VERSION > /dev/null 2>&1; then
-             echo "Helm chart already exists in version $VERSION."
+          if helm show chart oci://${HELM_REGISTRY_PREFIX}loggregator --version $CHART_VERSION > /dev/null 2>&1; then
+             echo "Helm chart already exists in version $CHART_VERSION."
           else
             helm package ./helm -d ${{ runner.temp }}
             helm push ${{ runner.temp }}/loggregator-*.tgz oci://${HELM_REGISTRY_PREFIX}
