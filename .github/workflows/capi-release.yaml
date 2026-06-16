@@ -6,50 +6,15 @@ on:
     branches:
       - main
     paths:
-      - 'capi/helm/Chart.yaml'
-      
-env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
-  HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
-
+      - "capi/helm/Chart.yaml"
 
 jobs:
-  capi-release:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.determine-versions.outputs.version }}
-      build-images: ${{ steps.check-images.outputs.build-images }}
-    steps:
-      - uses: actions/checkout@v6
-      - name: Determine Versions
-        id: determine-versions
-        working-directory: capi
-        run: |
-          echo "version=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_OUTPUT
-      - uses: ./.github/actions/init
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check Images
-        id: check-images
-        working-directory: capi
-        env:
-          VERSION: ${{ steps.determine-versions.outputs.version }}
-        run: |
-          # Check if image available
-          if docker pull ${REGISTRY_PREFIX}cloud-controller:$VERSION > /dev/null 2>&1; then
-             echo "cloud-controller image already exists in version $VERSION."
-             echo "build-images=false" >> $GITHUB_OUTPUT
-          else
-            echo "build-images=true" >> $GITHUB_OUTPUT
-          fi
   capi-image-release:
-    needs: capi-release
-    if: needs.capi-release.outputs.build-images == 'true'
     uses: ./.github/workflows/reusable-matrix-image-build.yaml
     with:
       target: capi
   capi-helm-release:
-    needs: [capi-image-release, capi-release]
+    needs: capi-image-release
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -63,13 +28,16 @@ jobs:
       - name: Publish Helm Chart
         working-directory: capi
         env:
-          VERSION: ${{ needs.capi-release.outputs.version }}
-          HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
+          REGISTRY_PREFIX: ghcr.io/cloudfoundry/
+          TARGET: capi
         run: |
-          # Check if chart available
-          if helm show chart oci://${HELM_REGISTRY_PREFIX}capi --version $VERSION > /dev/null 2>&1; then
+          VERSION=$(yq e '.version' helm/Chart.yaml)
+          HELM_REGISTRY="${REGISTRY_PREFIX}helm"
+          IMAGE="${HELM_REGISTRY}/${TARGET}:${VERSION}"
+
+          if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
              echo "Helm chart already exists in version $VERSION."
           else
             helm package ./helm -d ${{ runner.temp }}
-            helm push ${{ runner.temp }}/capi-*.tgz oci://${HELM_REGISTRY_PREFIX}
+            helm push ${{ runner.temp }}/capi-*.tgz oci://${HELM_REGISTRY}
           fi
