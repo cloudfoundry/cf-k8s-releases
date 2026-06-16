@@ -13,4 +13,6 @@ RUN GOARCH=amd64 /usr/local/buildpack-packager build -stack cflinuxfs4
 
 FROM scratch
 
-COPY --from=builder --chmod=0755 /buildpack/src/*.zip /binary-buildpack.zip
+ARG BUILDPACK_VERSION
+
+COPY --from=builder --chmod=0755 /buildpack/src/binary_buildpack-cflinuxfs4-v${BUILDPACK_VERSION}.zip /binary-buildpack-cflinuxfs4-v${BUILDPACK_VERSION}.zip

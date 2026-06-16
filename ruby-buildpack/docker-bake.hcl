@@ -14,6 +14,10 @@ group "default" {
 target "ruby-buildpack" {
     tags = [ "${REGISTRY_PREFIX}ruby-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}ruby-buildpack:latest" ]
 
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
+
     contexts = {
       "src" = "https://github.com/cloudfoundry/ruby-buildpack.git#v${BUILDPACK_VERSION}"
       "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"

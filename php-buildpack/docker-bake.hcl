@@ -14,6 +14,10 @@ group "default" {
 target "php-buildpack" {
     tags = [ "${REGISTRY_PREFIX}php-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}php-buildpack:latest" ]
 
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
+
     contexts = {
       "src" = "https://github.com/cloudfoundry/php-buildpack.git#v${BUILDPACK_VERSION}"
       "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"

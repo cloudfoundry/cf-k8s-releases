@@ -14,6 +14,10 @@ group "default" {
 target "binary-buildpack" {
     tags = [ "${REGISTRY_PREFIX}binary-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}binary-buildpack:latest" ]
 
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
+
     contexts = {
       "src" = "https://github.com/cloudfoundry/binary-buildpack.git#v${BUILDPACK_VERSION}"
       "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"

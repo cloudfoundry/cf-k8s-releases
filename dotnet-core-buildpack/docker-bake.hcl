@@ -14,6 +14,10 @@ group "default" {
 target "dotnet-core-buildpack" {
     tags = [ "${REGISTRY_PREFIX}dotnet-core-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}dotnet-core-buildpack:latest" ]
 
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
+
     contexts = {
       "src" = "https://github.com/cloudfoundry/dotnet-core-buildpack.git#v${BUILDPACK_VERSION}"
       "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"

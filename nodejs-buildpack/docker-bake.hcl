@@ -14,6 +14,10 @@ group "default" {
 target "nodejs-buildpack" {
     tags = [ "${REGISTRY_PREFIX}nodejs-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}nodejs-buildpack:latest" ]
 
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
+
     contexts = {
       "src" = "https://github.com/cloudfoundry/nodejs-buildpack.git#v${BUILDPACK_VERSION}"
       "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
