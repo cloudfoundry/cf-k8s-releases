@@ -28,13 +28,14 @@ jobs:
       - name: Determine Versions
         working-directory: cf-networking
         run: |
-          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
+          echo "CHART_VERSION=$(yq e '.version' helm/Chart.yaml)" >> $GITHUB_ENV
+          echo "APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)" >> $GITHUB_ENV
       - name: Release Images
         working-directory: cf-networking
         run: |
           # Check if image available
-          if docker pull ${REGISTRY_PREFIX}policy-server:$VERSION > /dev/null 2>&1; then
-             echo "policy-server image already exists in version $VERSION."
+          if docker manifest inspect ${REGISTRY_PREFIX}policy-server:$APP_VERSION > /dev/null 2>&1; then
+             echo "policy-server image already exists in version $APP_VERSION."
           else
             docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
           fi
@@ -42,8 +43,8 @@ jobs:
         working-directory: cf-networking
         run: |
           # Check if chart available
-          if helm show chart oci://${HELM_REGISTRY_PREFIX}cf-networking --version $VERSION > /dev/null 2>&1; then
-             echo "Helm chart already exists in version $VERSION."
+          if helm show chart oci://${HELM_REGISTRY_PREFIX}cf-networking --version $CHART_VERSION > /dev/null 2>&1; then
+             echo "Helm chart already exists in version $CHART_VERSION."
           else
             helm package ./helm -d ${{ runner.temp }}
             helm push ${{ runner.temp }}/cf-networking-*.tgz oci://${HELM_REGISTRY_PREFIX}

@@ -28,13 +28,14 @@ jobs:
       - name: Determine Versions
         working-directory: log-cache
         run: |
-          echo "VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
+          echo "CHART_VERSION=$(yq e '.version' helm/Chart.yaml)" >> $GITHUB_ENV
+          echo "APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)" >> $GITHUB_ENV
       - name: Release Images
         working-directory: log-cache
         run: |
           # Check if image available
-          if docker pull ${REGISTRY_PREFIX}log-cache:$VERSION > /dev/null 2>&1; then
-             echo "log-cache image already exists in version $VERSION."
+          if docker pull ${REGISTRY_PREFIX}log-cache:$APP_VERSION > /dev/null 2>&1; then
+             echo "log-cache image already exists in version $APP_VERSION."
           else
             docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
           fi
@@ -42,8 +43,8 @@ jobs:
         working-directory: log-cache
         run: |
           # Check if chart available
-          if helm show chart oci://${HELM_REGISTRY_PREFIX}log-cache --version $VERSION > /dev/null 2>&1; then
-             echo "Helm chart already exists in version $VERSION."
+          if helm show chart oci://${HELM_REGISTRY_PREFIX}log-cache --version $CHART_VERSION > /dev/null 2>&1; then
+             echo "Helm chart already exists in version $CHART_VERSION."
           else
             helm package ./helm -d ${{ runner.temp }}
             helm push ${{ runner.temp }}/log-cache-*.tgz oci://${HELM_REGISTRY_PREFIX}
