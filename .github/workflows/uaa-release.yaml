@@ -28,8 +28,8 @@ jobs:
       - name: Determine Versions
         working-directory: uaa
         run: |
-          echo "CHART_VERSION=$(cat helm/Chart.yaml | yq e '.version')" >> $GITHUB_ENV
-          echo "APP_VERSION=$(cat helm/Chart.yaml | yq e '.appVersion')" >> $GITHUB_ENV
+          echo "CHART_VERSION=$(yq e '.version' helm/Chart.yaml)" >> $GITHUB_ENV
+          echo "APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)" >> $GITHUB_ENV
       - name: Release Images
         working-directory: uaa
         run: |
