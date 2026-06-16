@@ -4,22 +4,22 @@ on:
   workflow_call:
     inputs:
       target:
-        description: 'Target to build'
+        description: "Target to build"
         required: true
         type: string
       registry-prefix:
-        description: 'Registry prefix for the built images'
+        description: "Registry prefix for the built images"
         required: false
         type: string
         default: ghcr.io/cloudfoundry/k8s/
   workflow_dispatch:
     inputs:
       target:
-        description: 'Target to build'
+        description: "Target to build"
         required: true
         type: string
       registry-prefix:
-        description: 'Registry prefix for the built images'
+        description: "Registry prefix for the built images"
         required: false
         type: string
         default: ghcr.io/cloudfoundry/k8s/
@@ -31,19 +31,33 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      targets: ${{ steps.determine-target.outputs.targets }}
+      build-images: ${{ steps.determine-target.outputs.build-images }}
     steps:
       - uses: actions/checkout@v6
       - name: Determine target
         id: determine-target
         working-directory: ${{ inputs.target }}
         run: |
-          TARGET=${{ inputs.target }}
-          ACTUAL_TARGETS=$(docker buildx bake "$TARGET" --print --progress quiet | jq -r '.target | keys | join(" ")')
-          echo "targets=$ACTUAL_TARGETS" >> $GITHUB_OUTPUT
-          echo "Building target: $TARGET (resolves to: $ACTUAL_TARGETS)"
+          echo "build-images=false" >> $GITHUB_OUTPUT
 
+          TARGET=${{ inputs.target }}
+          TAGS=$(docker buildx bake "$TARGET" --print --progress quiet | jq -r '.target | keys | join(" ")')
+          VERSION=$(yq e '.version' helm/Chart.yaml)
+
+          echo "Building target: $TARGET (resolved targets: $TAGS)"
+          for TAG in $TAGS; do
+            IMAGE="${REGISTRY_PREFIX}${TAG}:${VERSION}"
+
+            if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+              echo "$IMAGE already exists."
+            else
+              echo "$IMAGE is missing. At least one image is missing, so all targets will be built."
+              echo "build-images=true" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
   build:
+    if: needs.prepare.outputs.build-images == 'true'
     needs: prepare
     outputs:
       digest-amd64: ${{ steps.export.outputs.digest-amd64 }}
@@ -75,16 +89,7 @@ jobs:
         id: bake
         working-directory: ${{ inputs.target }}
         run: |
-          docker buildx bake "${{ inputs.target }}" --print --progress quiet | \
-            jq --arg targets "${{ needs.prepare.outputs.targets }}" '
-              ($targets | split(" ")) as $tlist |
-              .target |= with_entries(
-                select(.key as $k | $tlist | any(. == $k)) |
-                .value.tags |= (map(split(":")[0]) | unique)
-              )' \
-            > ${{ runner.temp }}/bake.json
-
-          docker buildx bake -f ${{ runner.temp }}/bake.json \
+          docker buildx bake ${{ inputs.target }} \
             --set '*.output=type=image,push-by-digest=true,name-canonical=true,push=true' \
             --set '*.platform=${{ matrix.platform }}' \
             --metadata-file ${{ runner.temp }}/metadata.json ${{ inputs.target }}
@@ -95,7 +100,6 @@ jobs:
           DIGESTS=$(jq -c 'map_values(."containerimage.digest")' ${{ runner.temp }}/metadata.json)
           echo "Digests: $DIGESTS"
           echo "digest-$PLATFORM=$(echo $DIGESTS | base64 -w 0)" >> $GITHUB_OUTPUT
-
   merge:
     runs-on: ubuntu-latest
     permissions:
@@ -114,10 +118,8 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           TAGS_DATA=$(docker buildx bake "${{ inputs.target }}" --print --progress quiet | \
-            jq -c --arg targets "${{ needs.prepare.outputs.targets }}" '
-              ($targets | split(" ")) as $tlist |
+            jq -c '
               .target | to_entries |
-              map(select(.key as $k | $tlist | any(. == $k))) |
               map({
                 name: .key,
                 tags: .value.tags,
@@ -138,7 +140,7 @@ jobs:
           ARM64_DIGESTS: ${{ needs.build.outputs.digest-arm64 }}
           TAGS_DATA: ${{ steps.tags.outputs.tags }}
         run: |
-          TARGETS="${{ needs.prepare.outputs.targets }}"
+          TARGETS=$(jq -r '.[].name' <<< "$TAGS_DATA")
           AMD64_DIGESTS=$(echo "$AMD64_DIGESTS" | base64 -d)
           ARM64_DIGESTS=$(echo "$ARM64_DIGESTS" | base64 -d)
 
@@ -152,12 +154,12 @@ jobs:
             IMAGE=$(jq -r --arg t "$target" '.[] | select(.name == $t) | .image' <<< "$TAGS_DATA")
             AMD64=$(jq -r --arg t "$target" '.[$t]' <<< "$AMD64_DIGESTS")
             ARM64=$(jq -r --arg t "$target" '.[$t]' <<< "$ARM64_DIGESTS")
-            
+
             echo "  Image: $IMAGE"
             echo "  Tags: $TAGS"
             echo "  AMD64 digest: $AMD64"
             echo "  ARM64 digest: $ARM64"
-            
+
             docker buildx imagetools create \
               $(tr ',' '\n' <<< "$TAGS" | sed 's/^/-t /') \
               "${IMAGE}@${AMD64}" "${IMAGE}@${ARM64}"
