@@ -6,34 +6,19 @@ on:
     branches:
       - main
     paths:
-      - 'binary-buildpack/docker-bake.hcl'
-      
-env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
-
+      - "binary-buildpack/docker-bake.hcl"
 
 jobs:
-  binary-buildpack-release:
+  delete-package:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: write
       packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/init
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: binary-buildpack
+      - name: Delete package version
         run: |
-          echo "VERSION=$(docker buildx bake --print | jq -r '.target | to_entries[] | .value.tags[]' | grep -v ':latest$' | head -n1 | awk -F: '{print $NF}')" >> $GITHUB_ENV
-      - name: Release Images
-        working-directory: binary-buildpack
-        run: |
-          # Check if image available
-          if docker pull ${REGISTRY_PREFIX}binary-buildpack:$VERSION > /dev/null 2>&1; then
-             echo "binary-buildpack image already exists in version $VERSION."
-          else
-            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
-          fi
+          # gh api --method DELETE /orgs/cloudfoundry/packages/container/cloud-controller
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/cc-uploader
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/tps-watcher
+          gh api --method DELETE /orgs/cloudfoundry/packages/container/cc-nginx
