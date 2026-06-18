@@ -10,7 +10,7 @@ runs:
   using: "composite"
   steps:
     - name: checkout kind-deployment
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         github-server-url: https://github.com
         repository: cloudfoundry/kind-deployment
