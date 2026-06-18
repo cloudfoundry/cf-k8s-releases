@@ -33,7 +33,7 @@ jobs:
     outputs:
       build-images: ${{ steps.determine-target.outputs.build-images }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Determine target
         id: determine-target
         working-directory: ${{ inputs.target }}
@@ -76,7 +76,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Authenticate to GitHub Container Registry
@@ -110,7 +110,7 @@ jobs:
       - prepare
       - build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Prepare tags
