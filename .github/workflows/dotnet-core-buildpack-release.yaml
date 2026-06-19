@@ -10,6 +10,7 @@ on:
       
 env:
   REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+  BUILDX_BAKE_ENTITLEMENTS_FS: "0"
 
 
 jobs:

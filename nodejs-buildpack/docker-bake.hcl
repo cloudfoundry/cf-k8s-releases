@@ -13,6 +13,7 @@ group "default" {
 
 target "nodejs-buildpack" {
     tags = [ "${REGISTRY_PREFIX}nodejs-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}nodejs-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
 
     args = {
         BUILDPACK_VERSION = BUILDPACK_VERSION

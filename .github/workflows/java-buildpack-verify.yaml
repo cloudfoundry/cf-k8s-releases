@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  BUILDX_BAKE_ENTITLEMENTS_FS: "0"
+
 jobs:
   java-buildpack-verify:
     runs-on: ubuntu-latest

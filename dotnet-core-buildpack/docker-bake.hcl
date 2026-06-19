@@ -13,6 +13,7 @@ group "default" {
 
 target "dotnet-core-buildpack" {
     tags = [ "${REGISTRY_PREFIX}dotnet-core-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}dotnet-core-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
 
     args = {
         BUILDPACK_VERSION = BUILDPACK_VERSION

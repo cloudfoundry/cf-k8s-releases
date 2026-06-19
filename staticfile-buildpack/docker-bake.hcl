@@ -13,6 +13,7 @@ group "default" {
 
 target "staticfile-buildpack" {
     tags = [ "${REGISTRY_PREFIX}staticfile-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}staticfile-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
 
     args = {
         BUILDPACK_VERSION = BUILDPACK_VERSION

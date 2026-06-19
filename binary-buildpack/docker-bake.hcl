@@ -13,6 +13,7 @@ group "default" {
 
 target "binary-buildpack" {
     tags = [ "${REGISTRY_PREFIX}binary-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}binary-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
 
     args = {
         BUILDPACK_VERSION = BUILDPACK_VERSION

@@ -13,6 +13,7 @@ group "default" {
 
 target "nginx-buildpack" {
     tags = [ "${REGISTRY_PREFIX}nginx-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}nginx-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
 
     args = {
         BUILDPACK_VERSION = BUILDPACK_VERSION
