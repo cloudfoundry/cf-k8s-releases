@@ -13,6 +13,11 @@ group "default" {
 
 target "python-buildpack" {
     tags = [ "${REGISTRY_PREFIX}python-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}python-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
+
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/python-buildpack.git#v${BUILDPACK_VERSION}"

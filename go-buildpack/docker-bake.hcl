@@ -13,6 +13,11 @@ group "default" {
 
 target "go-buildpack" {
     tags = [ "${REGISTRY_PREFIX}go-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}go-buildpack:latest" ]
+    dockerfile = "../buildpacks.Dockerfile"
+
+    args = {
+        BUILDPACK_VERSION = BUILDPACK_VERSION
+    }
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/go-buildpack.git#v${BUILDPACK_VERSION}"
