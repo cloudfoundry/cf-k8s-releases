@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'ruby-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/ruby-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

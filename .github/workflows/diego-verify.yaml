@@ -58,8 +58,8 @@ jobs:
             -v "${{ github.workspace }}/kind/temp/certs:/certs" \
             -v "${{ github.workspace }}:/wd" \
             -e KUBECONFIG=/wd/kind/temp/kubeconfig \
-            --workdir /wd ghcr.io/helmfile/helmfile:$HELMFILE_VERSION \
+            --workdir /wd ghcr.io/helmfile/helmfile:v$HELMFILE_VERSION \
             helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.diego.url=../diego/helm
         env:
-          # renovate: dataSource=docker packageName=ghcr.io/helmfile/helmfile depName=helmfile/helmfile
-          HELMFILE_VERSION: "v1.5.1"
+          # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
+          HELMFILE_VERSION: "1.5.1"

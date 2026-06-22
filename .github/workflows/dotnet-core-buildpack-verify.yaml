@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'dotnet-core-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/dotnet-core-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

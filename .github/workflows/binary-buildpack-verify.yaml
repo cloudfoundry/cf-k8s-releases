@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'binary-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/binary-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

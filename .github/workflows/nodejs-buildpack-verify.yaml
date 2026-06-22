@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'nodejs-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/nodejs-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

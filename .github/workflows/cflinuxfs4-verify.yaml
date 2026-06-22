@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  BUILDX_BAKE_ENTITLEMENTS_FS: "0"
+
 jobs:
   cflinuxfs4-verify:
     runs-on: ubuntu-latest
@@ -20,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'cflinuxfs4/**'
+              - 'stacks.Dockerfile'
               - '.github/workflows/cflinuxfs4-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

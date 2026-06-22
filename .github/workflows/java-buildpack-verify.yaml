@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'java-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/java-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init
