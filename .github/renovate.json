@@ -28,7 +28,7 @@
   "packageRules": [
     {
       "matchManagers": [
-        "regex"
+        "custom.regex"
       ],
       "automerge": true
     }
