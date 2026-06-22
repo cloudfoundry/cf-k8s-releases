@@ -11,10 +11,12 @@ stringData:
   config.yaml: |-
     {{- tpl (.Files.Get "files/cloud_controller_ng.yaml") . | nindent 4 }}
   stacks.yaml: |-
-    default: cflinuxfs4
+    default: {{ .Values.cloudController.default_stack }}
     stacks:
-    - description: Cloud Foundry Linux-based filesystem (Ubuntu 22.04)
-      name: cflinuxfs4
+    {{- range .Values.cloudController.stacks }}
+    - description: {{ .description }}
+      name: {{ .name }}
+    {{- end }}
     deprecated_stacks:  []
   {{- if .Values.cloudController.blobstore.storage_cli }}
   storage_cli_config_droplets.json: |-

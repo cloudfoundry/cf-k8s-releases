@@ -338,6 +338,33 @@
         "systemDomain": {
           "type": "string"
         },
+        "stacks": {
+          "type": ["array"],
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "default_stack": {
+          "type": "string"
+        },
+        "docker_staging_stack": {
+          "type": "string"
+        },
+        "lifecycle_bundles": {
+          "type": ["object"]
+        },
+        "droplet_destinations": {
+          "type": ["object"]
+        },
         "tolerations": {
           "type": ["array", "null"],
           "items": {
