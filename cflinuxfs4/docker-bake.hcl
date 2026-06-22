@@ -12,10 +12,11 @@ group "default" {
 }
 
 target "cflinuxfs4" {
-  dockerfile = "cflinuxfs4.Dockerfile"
+  dockerfile = "../stacks.Dockerfile"
   tags = [ "${REGISTRY_PREFIX}cflinuxfs4:${CFLINUXFS4_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4:latest" ]
 
   args = {
-    "CFLINUXFS4_VERSION" = CFLINUXFS4_VERSION
+    "STACK_VERSION" = CFLINUXFS4_VERSION
+    "STACK_NAME" = "cflinuxfs4"
   }
 }

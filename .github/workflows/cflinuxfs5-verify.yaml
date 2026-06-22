@@ -1,4 +1,4 @@
-name: Verify Go Buildpack
+name: Verify cflinuxfs5
 
 on:
   pull_request:
@@ -9,22 +9,22 @@ env:
   BUILDX_BAKE_ENTITLEMENTS_FS: "0"
 
 jobs:
-  go-buildpack-verify:
+  cflinuxfs5-verify:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v6
       - name: check changes
         uses: dorny/paths-filter@v4
         id: check
         with:
           filters: |
             should_run:
-              - 'go-buildpack/**'
-              - 'buildpack.Dockerfile'
-              - '.github/workflows/go-buildpack-verify.yaml'
+              - 'cflinuxfs5/**'
+              - 'stacks.Dockerfile'
+              - '.github/workflows/cflinuxfs5-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init
         if: steps.check.outputs.should_run == 'true'
@@ -32,5 +32,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Images
         if: steps.check.outputs.should_run == 'true'
-        working-directory: go-buildpack
+        working-directory: cflinuxfs5
         run: docker buildx bake --load
+

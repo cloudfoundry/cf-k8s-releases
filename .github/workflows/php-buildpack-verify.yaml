@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'php-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/php-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

@@ -23,6 +23,7 @@ jobs:
           filters: |
             should_run:
               - 'nginx-buildpack/**'
+              - 'buildpack.Dockerfile'
               - '.github/workflows/nginx-buildpack-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init

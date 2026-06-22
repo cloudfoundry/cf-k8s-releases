@@ -1,0 +1,4 @@
+ARG STACK_VERSION
+ARG STACK_NAME
+
+FROM --platform=amd64 cloudfoundry/${STACK_NAME}:${STACK_VERSION}
