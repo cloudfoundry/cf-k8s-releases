@@ -268,9 +268,9 @@ diego:
   use_privileged_containers_for_staging: false
   enable_declarative_asset_downloads: false
   lifecycle_bundles:
-    {{ .Values.cloudController.lifecycle_bundles | toYaml | nindent 4 }}
+    {{- .Values.cloudController.lifecycle_bundles | toYaml | nindent 4 }}
   droplet_destinations:
-    {{ .Values.cloudController.droplet_destinations | toYaml | nindent 4 }}
+    {{- .Values.cloudController.droplet_destinations | toYaml | nindent 4 }}
   insecure_docker_registry_list: []
   docker_staging_stack: {{ .Values.cloudController.docker_staging_stack }}
   bbs:
