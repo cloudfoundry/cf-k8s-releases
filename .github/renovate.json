@@ -13,7 +13,8 @@
         "/helm/Chart.yaml$/",
         "/helm/values.yaml$/",
         "/docker-bake.hcl$/", 
-        "/^\\.github/workflows/.+\\.yaml$/"
+        "/^\\.github/workflows/.+\\.yaml$/",
+        "/^\\.github/actions/init/action\\.yaml$/"
       ],
       "matchStrings": [
         "# renovate: dataSource=(?<datasource>.*?) depName=(?<depName>.*?)( packageName=(?<packageName>.*?))?\\s+\\S+?(: | = | \\?= )\"?(?<currentValue>\\d+\\.\\d+\\.\\d+)\"?"
