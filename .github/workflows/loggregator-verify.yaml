@@ -60,4 +60,4 @@ jobs:
             helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.loggregator.url=../loggregator/helm
         env:
           # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
-          HELMFILE_VERSION: "1.5.1"
+          HELMFILE_VERSION: "1.6.0"
