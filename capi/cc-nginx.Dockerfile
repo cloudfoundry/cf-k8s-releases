@@ -1,6 +1,6 @@
 ARG NGINX_VERSION=1.31.2
 
-FROM debian:trixie-20260610 AS builder
+FROM debian:trixie-20260623 AS builder
 ARG NGINX_VERSION
 
 WORKDIR /src
