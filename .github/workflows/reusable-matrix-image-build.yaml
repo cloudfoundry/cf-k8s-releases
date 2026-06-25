@@ -89,10 +89,15 @@ jobs:
         id: bake
         working-directory: ${{ inputs.target }}
         run: |
-          docker buildx bake ${{ inputs.target }} \
+          TARGET="${{ inputs.target }}"
+          docker buildx bake "$TARGET" --print --progress quiet | \
+          jq '.target |= with_entries(.value.tags |= (map(split(":")[0]) | unique))' \
+          > "$RUNNER_TEMP/bake.json"
+
+          docker buildx bake -f "$RUNNER_TEMP/bake.json" \
             --set '*.output=type=image,push-by-digest=true,name-canonical=true,push=true' \
-            --set '*.platform=${{ matrix.platform }}' \
-            --metadata-file ${{ runner.temp }}/metadata.json ${{ inputs.target }}
+            --set "*.platform=${{ matrix.platform }}" \
+            --metadata-file "$RUNNER_TEMP/metadata.json" "$TARGET"
       - name: Export digest
         id: export
         run: |
