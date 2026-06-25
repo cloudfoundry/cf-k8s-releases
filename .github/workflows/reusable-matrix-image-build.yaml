@@ -89,10 +89,20 @@ jobs:
         id: bake
         working-directory: ${{ inputs.target }}
         run: |
-          docker buildx bake ${{ inputs.target }} \
-            --set '*.output=type=image,push-by-digest=true,name-canonical=true,push=true' \
-            --set '*.platform=${{ matrix.platform }}' \
-            --metadata-file ${{ runner.temp }}/metadata.json ${{ inputs.target }}
+          TARGET="${{ inputs.target }}"
+          BAKE_CONFIG=$(docker buildx bake "$TARGET" --print --progress quiet)
+          RESOLVED_TARGETS=$(jq -r '.target | keys[]' <<< "$BAKE_CONFIG")
+
+          SET_ARGS=()
+          for RESOLVED_TARGET in $RESOLVED_TARGETS; do
+            IMAGE=$(jq -r --arg t "$RESOLVED_TARGET" '.target[$t].tags[0] | split(":")[0]' <<< "$BAKE_CONFIG")
+            SET_ARGS+=(--set "$RESOLVED_TARGET.output=type=image,name=$IMAGE,push-by-digest=true,name-canonical=true,push=true")
+          done
+
+          docker buildx bake "$TARGET" \
+            "${SET_ARGS[@]}" \
+            --set "*.platform=${{ matrix.platform }}" \
+            --metadata-file ${{ runner.temp }}/metadata.json "$TARGET"
       - name: Export digest
         id: export
         run: |
