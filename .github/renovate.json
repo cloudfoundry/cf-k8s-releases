@@ -30,7 +30,8 @@
       "matchManagers": [
         "dockerfile"
       ],
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     },
     {
       "matchManagers": [
