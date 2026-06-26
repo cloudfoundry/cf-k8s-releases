@@ -30,6 +30,10 @@
       "matchManagers": [
         "custom.regex"
       ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "cloudfoundry/*"
+      ],
       "automerge": true
     }
   ]
