@@ -28,6 +28,12 @@
   "packageRules": [
     {
       "matchManagers": [
+        "dockerfile"
+      ],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "matchManagers": [
         "custom.regex"
       ],
       "matchUpdateTypes": ["minor", "patch"],
