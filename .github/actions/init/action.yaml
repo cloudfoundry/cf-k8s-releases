@@ -47,6 +47,6 @@ runs:
         mv cf8 $HOME/.local/bin/cf
       env:
         # renovate: dataSource=github-releases depName=cloudfoundry/cli
-        CF_CLI_VERSION: "8.18.3"
+        CF_CLI_VERSION: "8.18.4"
         # renovate: dataSource=github-releases depName=kubernetes-sigs/kind
         KIND_VERSION: "0.32.0"
