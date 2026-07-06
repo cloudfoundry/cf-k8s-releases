@@ -456,6 +456,15 @@
           },
           "type": "object"
         },
+        "tcpRoute": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
         "nodeSelector": {
           "type": ["object", "null"]
         },

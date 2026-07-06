@@ -51,6 +51,8 @@ sshProxy:
     repository: ghcr.io/cloudfoundry/k8s/ssh-proxy
     tag: ""
     imagePullPolicy: IfNotPresent
+  tcpRoute:
+    enabled: true
   nodeSelector: ~
   tolerations: ~
 

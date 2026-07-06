@@ -73,6 +73,9 @@ cloudController:
     externalUrl: ""
   nats:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
+  httpRoute:
+    enabled: true
+    serviceName: gorouter
   nodeSelector: ~
   tolerations: ~
   enableCommaDelimitedDestinations: false

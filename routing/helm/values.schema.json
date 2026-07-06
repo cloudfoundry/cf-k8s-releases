@@ -63,6 +63,15 @@
           "title": "image",
           "type": "object"
         },
+        "httpRoute": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
         "nodeSelector": {
           "type": [
             "object",
