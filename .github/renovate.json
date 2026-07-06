@@ -39,7 +39,8 @@
       ],
       "matchUpdateTypes": ["minor", "patch"],
       "matchPackageNames": [
-        "cloudfoundry/*"
+        "cloudfoundry/*",
+        "pivotal/*"
       ],
       "automerge": true
     }
