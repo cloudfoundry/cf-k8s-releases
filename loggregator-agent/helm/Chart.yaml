@@ -1,8 +1,8 @@
 name: loggregator-agent
 # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
-version: 8.3.22
+version: 8.3.23
 description: Helm chart for Loggregator Agent components
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
-appVersion: 8.3.22
+appVersion: 8.3.23
