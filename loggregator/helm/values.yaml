@@ -46,3 +46,6 @@ trafficcontroller:
   tolerations: ~
 
 oauthClientsSecret: ~
+
+gatewayObjects:
+  enabled: true

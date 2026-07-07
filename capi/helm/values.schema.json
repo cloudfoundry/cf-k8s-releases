@@ -326,18 +326,6 @@
           },
           "type": "object"
         },
-        "httpRoute": {
-          "additionalProperties": false,
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "serviceName": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "nodeSelector": {
           "type": ["object", "null"]
         },
@@ -447,6 +435,15 @@
       },
       "type": "object"
     },
+    "gatewayObjects": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+   },
     "global": {
       "type": "object"
     },

@@ -71,6 +71,7 @@ spec:
       protocol: TCP
   selector:
     app: doppler
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
@@ -84,4 +85,5 @@ spec:
     - backendRefs:
       - name: doppler
         port: 8082
+{{- end }}
 {{- end }}

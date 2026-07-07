@@ -30,7 +30,7 @@ spec:
       targetPort: 9024
   selector:
     app.kubernetes.io/name: cloud-controller
-{{- if .Values.cloudController.httpRoute.enabled }}
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -43,7 +43,7 @@ spec:
     - "{{ .Values.cloudController.externalDomain }}"
   rules:
     - backendRefs:
-        - name: {{ .Values.cloudController.httpRoute.serviceName }}
+        - name: gorouter
           port: 443
 {{- end }}
 ---

@@ -10,8 +10,6 @@ gorouter:
     repository: ghcr.io/cloudfoundry/k8s/gorouter
     tag: ""
     imagePullPolicy: IfNotPresent
-  httpRoute:
-    enabled: true
   nodeSelector: ~
   tolerations: ~
 
@@ -78,3 +76,6 @@ routeRegistrar:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     tag: ""
     imagePullPolicy: IfNotPresent
+
+gatewayObjects:
+  enabled: true

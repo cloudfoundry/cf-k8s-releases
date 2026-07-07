@@ -67,7 +67,7 @@ spec:
       protocol: TCP
   selector:
     app: ssh-proxy
-{{- if .Values.sshProxy.tcpRoute.enabled }}
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute

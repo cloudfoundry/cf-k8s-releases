@@ -61,3 +61,6 @@ routeRegistrar:
     # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
     tag: "0.385.0"
     imagePullPolicy: IfNotPresent
+
+gatewayObjects:
+  enabled: true
