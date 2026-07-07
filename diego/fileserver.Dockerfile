@@ -63,7 +63,7 @@ RUN <<-EOF
 
     # lifecycles
     ## cnbapplifecycle
-    cd /diego/src/cnbapplifecycle
+    cd /diego/src/code.cloudfoundry.org/vendor/code.cloudfoundry.org/cnbapplifecycle
     CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=amd64 go build -o /tmp/cnb_app_lifecycle/ -ldflags "-s -w" -a -installsuffix static code.cloudfoundry.org/cnbapplifecycle/cmd/builder code.cloudfoundry.org/cnbapplifecycle/cmd/launcher
     
     tar -czf /tmp/final/v1/static/cnb_app_lifecycle/cnb_app_lifecycle.tgz -C /tmp/cnb_app_lifecycle builder launcher healthcheck diego-sshd cf-pcap
