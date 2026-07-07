@@ -1,7 +1,7 @@
 name: nfs-volume
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
-version: 7.63.0
+version: 7.64.0
 description: A Helm chart for deploying NFS Volume Release components
 # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
-appVersion: 7.63.0
+appVersion: 7.64.0
