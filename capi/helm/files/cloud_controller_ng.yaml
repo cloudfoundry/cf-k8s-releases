@@ -36,6 +36,7 @@ system_hostnames:
   - login
   - doppler
   - loggregator
+max_route_options_size: 1024
 jobs:
   global:
     timeout_in_seconds: 14400
@@ -95,6 +96,8 @@ instance_file_descriptor_limit: 16384
 login:
   url: "{{ .Values.cloudController.loginUrl }}"
   enabled: true
+lifecycle_type_backfill:
+  frequency_in_seconds: 3600
 nginx:
   use_nginx: true
   instance_socket: "/var/run/cloud_controller.sock"
