@@ -26,10 +26,19 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Versions
+        working-directory: routing
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          echo "LOGGREGATOR_AGENT_RELEASE_VERSION=$(yq -r '.udpForwarder.image.tag' helm/values.yaml)" >> $GITHUB_ENV
       - name: Build routing images
         if: steps.check.outputs.should_run == 'true'
         working-directory: routing
         run: docker buildx bake --load
+      - name: Build udp-forwarder image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: docker buildx bake udp-forwarder --load
       - name: Create KinD Cluster
         if: steps.check.outputs.should_run == 'true'
         run: make -C kind create-kind init
@@ -40,6 +49,13 @@ jobs:
           for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
             kind load docker-image --name cfk8s ${image}
           done
+      - name: Load udp-forwarder image into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: |
+          for image in $(docker buildx bake udp-forwarder --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
       - name: Use Images
         if: steps.check.outputs.should_run == 'true'
         working-directory:  routing
@@ -48,6 +64,7 @@ jobs:
           yq -e -i '.routingApi.image.repository = "routing-api"' helm/values.yaml
           yq -e -i '.tcpRouter.image.repository = "cf-tcp-router"' helm/values.yaml
           yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+          yq -e -i '.udpForwarder.image.repository = "udp-forwarder"' helm/values.yaml
       - name: Deploy
         if: steps.check.outputs.should_run == 'true'
         run: |
