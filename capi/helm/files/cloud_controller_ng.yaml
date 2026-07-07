@@ -96,6 +96,8 @@ instance_file_descriptor_limit: 16384
 login:
   url: "{{ .Values.cloudController.loginUrl }}"
   enabled: true
+lifecycle_type_backfill:
+  frequency_in_seconds: 3600
 nginx:
   use_nginx: true
   instance_socket: "/var/run/cloud_controller.sock"
