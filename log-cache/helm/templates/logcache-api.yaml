@@ -101,6 +101,7 @@ spec:
       protocol: TCP
   selector:
     app: log-cache-api
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -115,3 +116,4 @@ spec:
     - backendRefs:
         - name: log-cache-api
           port: 8083
+{{- end }}

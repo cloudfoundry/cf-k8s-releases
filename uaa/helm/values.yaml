@@ -24,3 +24,6 @@ uaadb:
   skipSSLVerify: true
 
 uaaConfigOverrides: {}
+
+gatewayObjects:
+  enabled: true

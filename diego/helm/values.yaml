@@ -108,3 +108,6 @@ locketdb:
 
 sshProxyHostKey: ~
 diegoSSHCredentials: ~
+
+gatewayObjects:
+  enabled: true

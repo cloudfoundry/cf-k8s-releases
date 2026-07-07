@@ -133,3 +133,6 @@ ccdb:
   skipHostnameVerify: false
 
 oauthClientsSecret: ~
+
+gatewayObjects:
+  enabled: true

@@ -76,3 +76,6 @@ routeRegistrar:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     tag: ""
     imagePullPolicy: IfNotPresent
+
+gatewayObjects:
+  enabled: true

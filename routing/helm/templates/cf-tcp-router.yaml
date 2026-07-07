@@ -193,6 +193,7 @@ spec:
     - name: tcp-20
       port: 32019
       targetPort: 32019
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
@@ -453,4 +454,5 @@ spec:
     - backendRefs:
       - name: cf-tcp-router
         port: 32019
+{{- end }}
 {{- end }}

@@ -193,6 +193,7 @@ spec:
       targetPort: 8081
   selector:
     app: log-api
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: BackendTLSPolicy
@@ -237,4 +238,5 @@ spec:
     - backendRefs:
         - name: log-api
           port: 8081
+{{- end }}
 {{- end }}

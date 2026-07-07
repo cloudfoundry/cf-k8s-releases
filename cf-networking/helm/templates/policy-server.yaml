@@ -146,6 +146,7 @@ spec:
     appProtocol: kubernetes.io/h2c
   selector:
     app: policy-server
+{{- if .Values.gatewayObjects.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
@@ -159,4 +160,5 @@ spec:
     - backendRefs:
         - name: policy-server
           port: 4003
+{{- end }}
 {{- end }}
