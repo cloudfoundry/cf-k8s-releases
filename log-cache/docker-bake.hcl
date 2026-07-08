@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "LOG_CACHE_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/log-cache-release
-  default = "3.2.11"
+  default = "3.2.12"
 }
 
 group "default" {
