@@ -1,8 +1,8 @@
 name: diego
 # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-version: 2.140.0
+version: 2.141.0
 description: Helm chart for Diego components
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-appVersion: 2.140.0
+appVersion: 2.141.0
