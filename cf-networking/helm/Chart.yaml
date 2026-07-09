@@ -1,8 +1,8 @@
 name: cf-networking
 # renovate: dataSource=github-releases depName=cloudfoundry/cf-networking-release
-version: 3.116.0
+version: 3.117.0
 description: Helm chart for CF Networking components
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/cf-networking-release
-appVersion: 3.116.0
+appVersion: 3.117.0
