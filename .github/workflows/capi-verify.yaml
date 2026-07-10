@@ -79,3 +79,20 @@ jobs:
         env:
           # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
           HELMFILE_VERSION: "1.6.0"
+      - name: Dump debug logs
+        if: failure() && steps.check.outputs.should_run == 'true'
+        run: |
+          echo "::group::Pods in cf-system"
+          kubectl get pods -n cf-system -o wide || true
+          echo "::endgroup::"
+
+          echo "::group::Logs job/capi-db-migration"
+          kubectl logs job/capi-db-migration -n cf-system --all-containers --prefix || true
+          echo "::endgroup::"
+
+          for deploy in cloud-controller cc-uploader tps-watcher cc-worker cc-deployment-updater cc-worker-clock; do
+            echo "::group::Logs deployment/${deploy}"
+            kubectl logs deployment/${deploy} -n cf-system --all-containers --prefix || true
+            kubectl logs deployment/${deploy} -n cf-system --all-containers --previous --prefix 2>/dev/null || true
+            echo "::endgroup::"
+          done
