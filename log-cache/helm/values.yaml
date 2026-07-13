@@ -29,6 +29,3 @@ logCacheBackend:
       imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
-
-gatewayObjects:
-  enabled: true

@@ -134,32 +134,3 @@ spec:
       targetPort: 8080
   selector:
     app: log-cache
-{{- if .Values.gatewayObjects.enabled }}
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: log-cache
-spec:
-  parentRefs:
-    - name: istio-gateway
-      sectionName: log-cache-api
-  rules:
-    - backendRefs:
-        - name: log-cache
-          port: 8080
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: log-cache-syslog
-spec:
-  parentRefs:
-    - name: istio-gateway
-      sectionName: log-cache-syslog
-  rules:
-    - backendRefs:
-        - name: log-cache-syslog
-          port: 8082
-
-{{- end }}
