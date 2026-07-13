@@ -77,4 +77,4 @@ jobs:
             helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.routing.url=../routing/helm
         env:
           # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
-          HELMFILE_VERSION: "1.6.0"
+          HELMFILE_VERSION: "1.7.0"
