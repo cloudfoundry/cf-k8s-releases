@@ -69,6 +69,20 @@ spec:
               value: 'true'
             - name: AGGREGATE_DRAINS_FILE
               value: /etc/aggregate-drains/aggregate_drains.yml
+            - name: LOGGREGATOR_AGENT_HOST
+              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+            - name: LOGGREGATOR_AGENT_PORT
+              value: "3458"
+            - name: LOGGREGATOR_AGENT_CA_FILE_PATH
+              value: /etc/ssl/syslog-binding-cache/ca.crt
+            - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
+              value: /etc/ssl/syslog-binding-cache/tls.crt
+            - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
+              value: /etc/ssl/syslog-binding-cache/tls.key
+            - name: BLACKLISTED_SYSLOG_RANGES
+              value: ""
+            - name: WARN_ON_INVALID_DRAINS
+              value: "true"
           {{- if .Values.syslogBindingCache.resources }}
           resources:
             {{- toYaml .Values.syslogBindingCache.resources | nindent 12 }}

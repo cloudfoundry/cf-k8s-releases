@@ -109,6 +109,8 @@ spec:
               value: /etc/ssl/certs/syslog-agent/tls.key
             - name: DRAIN_TRUSTED_CA_FILE
               value: /etc/ssl/certs/syslog-agent/ca.crt
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "localhost:3458"
             {{- if .Values.forwarderAgent.aggregateDrain }}
             - name: AGGREGATE_DRAIN_URLS
               value: "{{ .Values.syslogAgent.logCacheSyslog.address }}?include-metrics-deprecated=true"
