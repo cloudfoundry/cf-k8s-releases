@@ -23,7 +23,12 @@ uaadb:
   caCertificateSecret: ""
   skipSSLVerify: true
 
-uaaConfigOverrides: {}
+routeRegistrar:
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/route-registrar
+    # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
+    tag: "0.386.0"
+    imagePullPolicy: IfNotPresent
+  resources: ~
 
-gatewayObjects:
-  enabled: true
+uaaConfigOverrides: {}
