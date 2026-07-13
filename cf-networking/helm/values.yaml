@@ -63,4 +63,4 @@ routeRegistrar:
     imagePullPolicy: IfNotPresent
 
 gatewayObjects:
-  enabled: true
+  enabled: false

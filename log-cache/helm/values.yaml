@@ -31,4 +31,4 @@ logCacheBackend:
   tolerations: ~
 
 gatewayObjects:
-  enabled: true
+  enabled: false

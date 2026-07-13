@@ -48,4 +48,4 @@ trafficcontroller:
 oauthClientsSecret: ~
 
 gatewayObjects:
-  enabled: true
+  enabled: false

@@ -110,4 +110,4 @@ sshProxyHostKey: ~
 diegoSSHCredentials: ~
 
 gatewayObjects:
-  enabled: true
+  enabled: false

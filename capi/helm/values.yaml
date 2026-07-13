@@ -135,4 +135,4 @@ ccdb:
 oauthClientsSecret: ~
 
 gatewayObjects:
-  enabled: true
+  enabled: false
