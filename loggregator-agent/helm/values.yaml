@@ -35,7 +35,6 @@ syslogAgent:
     imagePullPolicy: IfNotPresent
 
 syslogBindingCache:
-  hostname: "syslog-binding-cache.127-0-0-1.nip.io"
   cache:
     commonName: "syslog-binding-cache"
   enabled: false
