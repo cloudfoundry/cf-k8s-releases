@@ -89,15 +89,6 @@
       },
       "type": "object"
     },
-    "gatewayObjects": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-   },
     "global": {
       "type": "object"
     },

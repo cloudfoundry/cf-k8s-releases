@@ -62,19 +62,4 @@ spec:
       protocol: TCP
   selector:
     app: service-discovery-controller
-{{- if .Values.gatewayObjects.enabled }}
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: service-discovery-controller
-spec:
-  parentRefs:
-    - name: istio-gateway
-      sectionName: service-discovery-controller
-  rules:
-    - backendRefs:
-        - name: service-discovery-controller
-          port: {{ .Values.serviceDiscoveryController.port }}
-{{- end }}
 {{- end }}
