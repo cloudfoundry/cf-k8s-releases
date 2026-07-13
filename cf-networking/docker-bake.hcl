@@ -8,7 +8,7 @@ group "default" {
 
 variable "CF_NETWORKING_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/cf-networking-release
-  default = "3.117.0"
+  default = "3.118.0"
 }
 
 target "cf-networking" {
