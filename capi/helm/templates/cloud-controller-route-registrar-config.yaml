@@ -22,7 +22,7 @@ data:
       "routes": [
         {
           "name": "api",
-          "port": 9022,
+          "tls_port": 9024,
           "registration_interval": "10s",
           "server_cert_domain_san": "{{ .Values.cloudController.externalDomain }}",
           "tags": {
