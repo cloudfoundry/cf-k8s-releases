@@ -23,12 +23,12 @@ data:
           "name": "log-cache-api",
           "port": 8083,
           "registration_interval": "10s",
-          "server_cert_domain_san": "{{ .Values.logCacheApi.hostname }}",
+          "server_cert_domain_san": "{{ .Values.logCacheBackend.hostname }}",
           "tags": {
             "component": "LogCache"
           },
           "uris": [
-            "{{ .Values.logCacheApi.hostname }}"
+            "{{ .Values.logCacheBackend.hostname }}"
           ]
         }
       ]
