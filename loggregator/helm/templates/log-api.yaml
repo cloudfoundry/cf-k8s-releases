@@ -156,6 +156,25 @@ spec:
           volumeMounts:
             - name: trafficcontroller
               mountPath: /etc/ssl/certs/trafficcontroller
+        - name: route-registrar
+          image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
+          imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          {{- if .Values.routeRegistrar.resources }}
+          resources:
+            {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: reverse-log-proxy-gateway
+              mountPath: /etc/ssl/certs/reverse-log-proxy-gateway
+            - name: etc-route-registrar
+              mountPath: /etc/route-registrar-template
+            - name: tmp
+              mountPath: /tmp
       {{- if .Values.trafficcontroller.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.trafficcontroller.nodeSelector | nindent 8 }}
@@ -176,6 +195,9 @@ spec:
         - name: reverse-log-proxy-gateway
           secret:
             secretName: {{ required "reverseLogProxyGateway.certificateSecret is required" .Values.reverseLogProxyGateway.certificateSecret }}
+        - name: etc-route-registrar
+          configMap:
+            name: log-api-route-registrar-config
 ---
 kind: Service
 apiVersion: v1
@@ -193,36 +215,4 @@ spec:
       targetPort: 8081
   selector:
     app: log-api
-{{- if .Values.gatewayObjects.enabled }}
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: BackendTLSPolicy
-metadata:
-  name: log-api
-spec:
-  targetRefs:
-    - kind: Service
-      group: ""
-      name: log-api
-  validation:
-    hostname: "log-api"
-    caCertificateRefs:
-      - kind: ConfigMap
-        group: ""
-        name: ca
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: log-stream
-spec:
-  parentRefs:
-    - name: istio-gateway
-  hostnames:
-    - "{{ .Values.logStream.address }}"
-  rules:
-    - backendRefs:
-        - name: log-api
-          port: 8088
-{{- end }}
 {{- end }}
