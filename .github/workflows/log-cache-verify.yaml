@@ -26,11 +26,6 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: log-cache
-        if: steps.check.outputs.should_run == 'true'
-        run: |
-          echo "ROUTING_RELEASE_VERSION=$(yq -r '.routeRegistrar.image.tag' helm/values.yaml)" >> $GITHUB_ENV
       - name: Build logcache images
         if: steps.check.outputs.should_run == 'true'
         working-directory: log-cache

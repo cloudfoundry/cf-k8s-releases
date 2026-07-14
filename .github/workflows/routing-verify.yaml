@@ -26,11 +26,6 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: routing
-        if: steps.check.outputs.should_run == 'true'
-        run: |
-          echo "LOGGREGATOR_AGENT_RELEASE_VERSION=$(yq -r '.udpForwarder.image.tag' helm/values.yaml)" >> $GITHUB_ENV
       - name: Build routing images
         if: steps.check.outputs.should_run == 'true'
         working-directory: routing
