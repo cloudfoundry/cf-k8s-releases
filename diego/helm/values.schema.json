@@ -188,10 +188,6 @@
     "fileserver": {
       "additionalProperties": false,
       "properties": {
-        "buildpacks": {
-          "additionalProperties": true,
-          "type": "object"
-        },
         "enabled": {
           "type": "boolean"
         },
