@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "NFS_VOLUME_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
-  default = "7.65.0"
+  default = "7.66.0"
 }
 
 group "default" {
