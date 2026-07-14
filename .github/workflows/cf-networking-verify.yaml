@@ -26,12 +26,6 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: cf-networking
-        if: steps.check.outputs.should_run == 'true'
-        run: |
-          echo "ROUTING_RELEASE_VERSION=$(yq -r '.routeRegistrar.image.tag' helm/values.yaml)" >> $GITHUB_ENV
-          echo "BOSH_DNS_RELEASE_VERSION=$(yq -r '.boshDns.image.tag' helm/values.yaml)" >> $GITHUB_ENV
       - name: Build cf-networking images
         if: steps.check.outputs.should_run == 'true'
         working-directory: cf-networking
