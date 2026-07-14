@@ -47,5 +47,10 @@ trafficcontroller:
 
 oauthClientsSecret: ~
 
-gatewayObjects:
-  enabled: true
+routeRegistrar:
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/route-registrar
+    # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
+    tag: "0.386.0"
+    imagePullPolicy: IfNotPresent
+  resources: ~

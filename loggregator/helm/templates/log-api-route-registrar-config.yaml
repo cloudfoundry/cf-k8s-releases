@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-api-route-registrar-config
+data:
+  route-registrar.json: |-
+    {
+      "message_bus_servers": [
+        {
+          "host": "nats.{{ .Release.Namespace }}.svc.cluster.local:4222"
+        }
+      ],
+      "nats_mtls_config": {
+        "enabled": true,
+        "cert_path": "/etc/ssl/certs/reverse-log-proxy-gateway/tls.crt",
+        "key_path": "/etc/ssl/certs/reverse-log-proxy-gateway/tls.key",
+        "ca_path": "/etc/ssl/certs/reverse-log-proxy-gateway/ca.crt"
+      },
+      "host": "",
+      "routes": [
+        {
+          "name": "doppler",
+          "tls_port": 8081,
+          "registration_interval": "10s",
+          "server_cert_domain_san": "{{ .Values.doppler.hostname }}",
+          "uris": [
+            "{{ .Values.doppler.hostname }}"
+          ]
+        },
+        {
+          "name": "rlp-gateway",
+          "tls_port": 8088,
+          "registration_interval": "10s",
+          "server_cert_domain_san": "{{ .Values.logStream.address }}",
+          "uris": [
+            "{{ .Values.logStream.address }}"
+          ]
+        }
+      ]
+    }

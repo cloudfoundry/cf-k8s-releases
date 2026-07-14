@@ -132,7 +132,7 @@ spec:
   - port: 443
     name: https
     targetPort: 443
-    appProtocol: kubernetes.io/h2c
+    appProtocol: https
   selector:
     app: {{ .Values.gorouter.name }}
 {{- if .Values.gatewayObjects.enabled }}
