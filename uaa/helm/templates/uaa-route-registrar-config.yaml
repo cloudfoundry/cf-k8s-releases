@@ -21,7 +21,7 @@ data:
       "routes": [
         {
           "name": "uaa",
-          "port": 8443,
+          "tls_port": 8443,
           "registration_interval": "10s",
           "server_cert_domain_san": "{{ .Values.hostname }}",
           "uris": [

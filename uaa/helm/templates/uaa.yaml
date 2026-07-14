@@ -89,7 +89,7 @@ spec:
               mountPath: /etc/ssl/certs/uaa
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
-            - name: tmpdir
+            - name: tmp
               mountPath: /tmp
       {{- if .Values.nodeSelector }}
       nodeSelector:
