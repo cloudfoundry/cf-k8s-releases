@@ -6,13 +6,22 @@
       "additionalProperties": false,
       "properties": {
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -66,13 +75,22 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -105,13 +123,22 @@
       "additionalProperties": false,
       "properties": {
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -144,13 +171,22 @@
       "additionalProperties": false,
       "properties": {
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -201,13 +237,19 @@
               "type": "string"
             },
             "fog_connection": {
-              "type": ["object", "null"]
+              "type": [
+                "object",
+                "null"
+              ]
             },
             "resource_directory_key": {
               "type": "string"
             },
             "storage_cli": {
-              "type": ["object", "null"]
+              "type": [
+                "object",
+                "null"
+              ]
             },
             "type": {
               "type": "string"
@@ -327,10 +369,16 @@
           "type": "object"
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "sshProxyKeyFingerprint": {
           "type": "string"
@@ -339,7 +387,9 @@
           "type": "string"
         },
         "stacks": {
-          "type": ["array"],
+          "type": [
+            "array"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -360,13 +410,20 @@
           "type": "string"
         },
         "lifecycle_bundles": {
-          "type": ["object"]
+          "type": [
+            "object"
+          ]
         },
         "droplet_destinations": {
-          "type": ["object"]
+          "type": [
+            "object"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -399,7 +456,6 @@
               "type": "string"
             }
           },
-
           "type": "object"
         }
       },
@@ -415,7 +471,10 @@
           "type": "string"
         },
         "password": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "address": {
           "type": "string"
@@ -435,15 +494,6 @@
       },
       "type": "object"
     },
-    "gatewayObjects": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-   },
     "global": {
       "type": "object"
     },
@@ -466,13 +516,22 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -520,13 +579,22 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -556,7 +624,10 @@
       "type": "object"
     },
     "oauthClientsSecret": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "routeRegistrar": {
       "additionalProperties": false,
@@ -577,7 +648,10 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -613,10 +687,16 @@
           "type": "null"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
