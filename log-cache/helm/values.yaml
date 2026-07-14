@@ -11,8 +11,18 @@ logCacheApi:
       repository: ghcr.io/cloudfoundry/k8s/gateway
       tag: ""
       imagePullPolicy: IfNotPresent
+  nats:
+    address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   nodeSelector: ~
   tolerations: ~
+
+routeRegistrar:
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/route-registrar
+    # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
+    tag: "0.386.0"
+    imagePullPolicy: IfNotPresent
+  resources: ~
 
 logCacheBackend:
   hostname: "log-cache.127-0-0-1.nip.io"
@@ -29,6 +39,3 @@ logCacheBackend:
       imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
-
-gatewayObjects:
-  enabled: true

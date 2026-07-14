@@ -2,15 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
-    "gatewayObjects": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-   },
     "global": {
       "type": "object"
     },
@@ -58,6 +49,15 @@
                 }
               },
               "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "nats": {
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "type": "string"
             }
           },
           "type": "object"
@@ -178,6 +178,30 @@
             ],
             "type": "object"
           }
+        }
+      },
+      "type": "object"
+    },
+    "routeRegistrar": {
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "imagePullPolicy": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         }
       },
       "type": "object"
