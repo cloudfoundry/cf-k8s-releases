@@ -26,10 +26,19 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build Images
+      - name: Determine Versions
+        working-directory: log-cache
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          echo "ROUTING_RELEASE_VERSION=$(yq -r '.routeRegistrar.image.tag' helm/values.yaml)" >> $GITHUB_ENV
+      - name: Build logcache images
         if: steps.check.outputs.should_run == 'true'
         working-directory: log-cache
         run: docker buildx bake --load
+      - name: Build route-registrar image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: docker buildx bake route-registrar --load
       - name: Create KinD Cluster
         if: steps.check.outputs.should_run == 'true'
         run: make -C kind create-kind init
@@ -40,6 +49,13 @@ jobs:
           for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
             kind load docker-image --name cfk8s ${image}
           done
+      - name: Load route-registrar image into KinD
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: routing
+        run: |
+          for image in $(docker buildx bake route-registrar --print | jq -c -r '.target[].tags | join(" ")'); do
+            kind load docker-image --name cfk8s ${image}
+          done
       - name: Use Images
         if: steps.check.outputs.should_run == 'true'
         working-directory:  log-cache
@@ -48,6 +64,7 @@ jobs:
           yq -e -i '.logCacheApi.gateway.image.repository = "gateway"' helm/values.yaml
           yq -e -i '.logCacheBackend.syslogServer.image.repository = "syslog-server"' helm/values.yaml
           yq -e -i '.logCacheBackend.logCache.image.repository = "log-cache"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
       - name: Deploy
         if: steps.check.outputs.should_run == 'true'
         run: |

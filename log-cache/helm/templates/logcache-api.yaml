@@ -74,6 +74,25 @@ spec:
           - name: log-cache-api
             mountPath: /etc/ssl/certs/log-cache-api
             readOnly: true
+        - name: route-registrar
+          image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
+          imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          {{- if .Values.routeRegistrar.resources }}
+          resources:
+            {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: log-cache-api
+              mountPath: /etc/ssl/certs/log-cache-api
+            - name: etc-route-registrar
+              mountPath: /etc/route-registrar-template
+            - name: tmpdir
+              mountPath: /tmp
       {{- if .Values.logCacheApi.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.logCacheApi.nodeSelector | nindent 8 }}
@@ -86,6 +105,11 @@ spec:
       - name: log-cache-api
         secret:
           secretName: {{ required "logCacheApi.certificateSecret is required" .Values.logCacheApi.certificateSecret }}
+      - name: etc-route-registrar
+        configMap:
+          name: logcache-route-registrar-config
+      - name: tmpdir
+        emptyDir: {}
 ---
 kind: Service
 apiVersion: v1
@@ -101,19 +125,3 @@ spec:
       protocol: TCP
   selector:
     app: log-cache-api
-{{- if .Values.gatewayObjects.enabled }}
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: log-cache-api
-spec:
-  parentRefs:
-    - name: istio-gateway
-  hostnames:
-    - "{{ .Values.logCacheBackend.hostname }}"
-  rules:
-    - backendRefs:
-        - name: log-cache-api
-          port: 8083
-{{- end }}
