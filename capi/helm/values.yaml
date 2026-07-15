@@ -66,7 +66,7 @@ cloudController:
     fog_connection:
       provider: ~
   diego:
-    fileServerUrl: https://fileserver.127-0-0-1.nip.io
+    fileServerUrl: http://fileserver.{{ .Release.Namespace }}.svc.cluster.local:8080
     ccUploaderUrl: https://cc-uploader.{{ .Release.Namespace }}.svc.cluster.local:9091
   credhubApi:
     internalUrl: https://credhub.{{ .Release.Namespace }}.svc.cluster.local:8844

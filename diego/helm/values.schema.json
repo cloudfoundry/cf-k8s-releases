@@ -191,9 +191,6 @@
         "enabled": {
           "type": "boolean"
         },
-        "hostname": {
-          "type": "string"
-        },
         "image": {
           "additionalProperties": false,
           "properties": {
