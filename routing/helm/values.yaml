@@ -51,6 +51,8 @@ tcpRouter:
   enabled: false
   certificateSecret: ""
   oauthClientsSecret: ""
+  startPort: 32000
+  numPorts: 20
   image:
     repository: ghcr.io/cloudfoundry/k8s/cf-tcp-router
     tag: ""
@@ -76,6 +78,3 @@ routeRegistrar:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     tag: ""
     imagePullPolicy: IfNotPresent
-
-gatewayObjects:
-  enabled: true

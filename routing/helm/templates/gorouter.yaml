@@ -135,36 +135,4 @@ spec:
     appProtocol: https
   selector:
     app: {{ .Values.gorouter.name }}
-{{- if .Values.gatewayObjects.enabled }}
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: BackendTLSPolicy
-metadata:
-  name: {{ .Values.gorouter.name }}-tls
-spec:
-  targetRefs:
-    - kind: Service
-      group: ""
-      name: {{ .Values.gorouter.name }}
-  validation:
-    hostname: "{{ .Values.gorouter.hostname }}"
-    caCertificateRefs:
-      - kind: ConfigMap
-        group: ""
-        name: ca
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: {{ .Values.gorouter.name }}
-spec:
-  parentRefs:
-    - name: istio-gateway
-  hostnames:
-    - "{{ .Values.gorouter.appsDomain }}"
-  rules:
-    - backendRefs:
-        - name: {{ .Values.gorouter.name }}
-          port: 443
-{{- end }}
 {{- end }}

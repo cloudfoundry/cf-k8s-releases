@@ -2,15 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
-    "gatewayObjects": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-   },
     "global": {
       "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
       "title": "global",
@@ -343,6 +334,16 @@
           "default": "",
           "title": "oauthClientsSecret",
           "type": "string"
+        },
+        "startPort": {
+          "default": 32000,
+          "title": "startPort",
+          "type": "integer"
+        },
+        "numPorts": {
+          "default": 20,
+          "title": "numPorts",
+          "type": "integer"
         },
         "uaa": {
           "additionalProperties": false,
