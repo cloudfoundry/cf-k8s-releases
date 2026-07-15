@@ -140,21 +140,4 @@ spec:
       port: {{ add $startPort $index }}
       targetPort: {{ add $startPort $index }}
     {{- end }}
-{{- if .Values.gatewayObjects.enabled }}
-{{- range $index := until $numPorts }}
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: cf-tcp-router-{{ add $index 1 }}
-spec:
-  parentRefs:
-    - name: istio-gateway
-      sectionName: tcp-route-{{ add $index 1 }}
-  rules:
-    - backendRefs:
-      - name: cf-tcp-router
-        port: {{ add $startPort $index }}
-{{- end }}
-{{- end }}
 {{- end }}
