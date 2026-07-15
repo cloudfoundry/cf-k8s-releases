@@ -344,6 +344,16 @@
           "title": "oauthClientsSecret",
           "type": "string"
         },
+        "startPort": {
+          "default": 32000,
+          "title": "startPort",
+          "type": "integer"
+        },
+        "numPorts": {
+          "default": 20,
+          "title": "numPorts",
+          "type": "integer"
+        },
         "uaa": {
           "additionalProperties": false,
           "properties": {
