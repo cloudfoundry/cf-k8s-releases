@@ -33,7 +33,7 @@ runs:
           --privileged \
           --pid host \
           alpine sh -c "sysctl -w fs.inotify.max_user_instances=512"
-    - uses: actions/setup-go@v6
+    - uses: actions/setup-go@v7
       with:
         go-version: stable
     - uses: azure/setup-helm@v5
