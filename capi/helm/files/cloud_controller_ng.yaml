@@ -265,7 +265,7 @@ rate_limiter_v2_api:
 temporary_enable_v2: true
 max_concurrent_service_broker_requests: 0
 diego:
-  file_server_url: {{ .Values.cloudController.diego.fileServerUrl }}
+  file_server_url: {{ tpl .Values.cloudController.diego.fileServerUrl . }}
   cc_uploader_url: {{ tpl .Values.cloudController.diego.ccUploaderUrl . }}
   use_privileged_containers_for_running: false
   use_privileged_containers_for_staging: false
