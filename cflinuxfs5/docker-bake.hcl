@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "CFLINUXFS5_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/cflinuxfs5-release
-  default = "0.31.0-beta"
+  default = "0.41.0"
 }
 
 group "default" {
