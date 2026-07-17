@@ -1,8 +1,8 @@
 name: credhub
 # renovate: dataSource=github-releases depName=pivotal/credhub-release
-version: 2.15.13
+version: 2.15.14
 description: Helm chart for CredHub components
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=pivotal/credhub-release
-appVersion: 2.15.13
+appVersion: 2.15.14
