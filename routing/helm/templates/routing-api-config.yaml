@@ -32,7 +32,7 @@ stringData:
     admin_port: 15897
     api:
       listen_port: 3000
-      http_enabled: true
+      http_enabled: false
       mtls_listen_port: 3001
       mtls_client_ca_file: "/etc/ssl/routing-api/ca.crt"
       mtls_server_cert_file: "/etc/ssl/routing-api/tls.crt"
