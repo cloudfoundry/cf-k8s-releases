@@ -117,9 +117,6 @@ metadata:
     app: routing-api
 spec:
   ports:
-    - name: http
-      port: 3000
-      targetPort: 3000
     - name: https
       port: 3001
       targetPort: 3001

@@ -23,8 +23,8 @@ spec:
             - containerPort: 8083
           readinessProbe:
             httpGet:
-              path: /api/v1/info
-              port: 8083
+              path: /metrics
+              port: 6065
             failureThreshold: 1
             periodSeconds: 10
           env:
@@ -42,6 +42,10 @@ spec:
               value: "true"
             - name: "ADDR"
               value: "0.0.0.0:8083"
+            - name: EXTERNAL_CERT
+              value: /etc/ssl/certs/log-cache-api/tls.crt
+            - name: EXTERNAL_KEY
+              value: /etc/ssl/certs/log-cache-api/tls.key
           {{- if .Values.logCacheApi.resources }}
           resources:
             {{- toYaml .Values.logCacheApi.resources | nindent 12 }}
@@ -110,18 +114,3 @@ spec:
           name: logcache-route-registrar-config
       - name: tmpdir
         emptyDir: {}
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: log-cache-api
-  labels:
-    app: log-cache-api
-spec:
-  ports:
-    - port: 8083
-      name: http
-      targetPort: 8083
-      protocol: TCP
-  selector:
-    app: log-cache-api

@@ -22,7 +22,7 @@ data:
       "routes": [
         {
           "name": "policy-server",
-          "port": 4002,
+          "tls_port": 4002,
           "registration_interval": "10s",
           "server_cert_domain_san": "{{ .Values.policyServer.externalDomain }}",
           "uris": [

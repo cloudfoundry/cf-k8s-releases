@@ -22,7 +22,7 @@ data:
       "routes": [
         {
           "name": "routing-api",
-          "port": 3000,
+          "tls_port": 3001,
           "registration_interval": "10s",
           "server_cert_domain_san": "api.{{ .Values.routingApi.systemDomain }}",
           "uris": [
