@@ -12,7 +12,7 @@ stringData:
       "listen_port": 4002,
       "log_prefix": "cfnetworking",
       "debug_server_host": "127.0.0.1",
-      "enable_tls": false,
+      "enable_tls": true,
       "ca_cert_file": "/etc/ssl/certs/policy-server/ca.crt",
       "server_cert_file": "/etc/ssl/certs/policy-server/tls.crt",
       "server_key_file": "/etc/ssl/certs/policy-server/tls.key",
