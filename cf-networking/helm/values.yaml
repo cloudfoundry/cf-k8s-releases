@@ -51,7 +51,7 @@ boshDns:
   image:
     repository: ghcr.io/cloudfoundry/k8s/bosh-dns
     # renovate: dataSource=github-releases depName=cloudfoundry/bosh-dns-release
-    tag: "1.39.24"
+    tag: "1.39.25"
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
