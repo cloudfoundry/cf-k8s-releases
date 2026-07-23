@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "DIEGO_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-    default = "2.142.0"
+    default = "2.143.0"
 }
 
 group "default" {
