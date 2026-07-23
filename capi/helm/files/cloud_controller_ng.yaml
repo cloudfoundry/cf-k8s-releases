@@ -233,14 +233,11 @@ install_buildpacks:
   - name: node_buildpack
     package: buildpack_node
 security_group_definitions:
-  - name: dummy1
-    rules: []
-  - name: dummy2
-    rules: []
+  {{- toYaml .Values.cloudController.securityGroupDefinitions | nindent 2 }}
 default_staging_security_groups:
-  - dummy3
+  {{- toYaml .Values.cloudController.defaultStagingSecurityGroups | nindent 2 }}
 default_running_security_groups:
-  - dummy4
+  {{- toYaml .Values.cloudController.defaultRunningSecurityGroups | nindent 2 }}
 security_groups:
   enable_comma_delimited_destinations: {{ .Values.cloudController.enableCommaDelimitedDestinations }}
 allowed_cors_domains:

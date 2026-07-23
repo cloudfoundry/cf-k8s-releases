@@ -422,6 +422,37 @@
             "object"
           ]
         },
+        "securityGroupDefinitions": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "rules": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "name",
+              "rules"
+            ],
+            "type": "object"
+          }
+        },
+        "defaultStagingSecurityGroups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultRunningSecurityGroups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "tolerations": {
           "type": [
             "array",
