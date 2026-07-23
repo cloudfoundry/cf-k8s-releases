@@ -24,7 +24,7 @@ deployment_updater:
   lock_key: "cf-deployment-updater"
   lock_owner: "cf_deployment_updater.bosh-vm-id"
 internal_service_hostname: {{ tpl .Values.cloudController.internalServiceHostname . }}
-system_domain_organization: system
+system_domain_organization: {{ .Values.cloudController.systemDomainOrganization }}
 system_domain: {{ .Values.cloudController.systemDomain }}
 app_domains:
   - {{ .Values.cloudController.appDomain }}

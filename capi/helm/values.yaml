@@ -33,6 +33,7 @@ cloudController:
   internalDomain: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
   internalServiceHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
   systemDomain: system.127-0-0-1.nip.io
+  systemDomainOrganization: system
   appSSHEndpoint: ssh.127-0-0-1.nip.io:2222
   sshProxyKeyFingerprint: ""
   loginUrl: https://login.127-0-0-1.nip.io
