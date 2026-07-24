@@ -5,19 +5,19 @@ name: uaa
 disableInternalAuth: false
 disableInternalUserManagement: false
 issuer:
-  uri: {{ .Values.address }}
+  uri: https://uaa.{{ .Values.systemDomain }}
 login:
-  url: {{ .Values.loginAddress }}
+  url: https://login.{{ .Values.systemDomain }}
   idpDiscoveryEnabled: false
   accountChooserEnabled: false
   aliasEntitiesEnabled: false
   checkOriginEnabled: false
   allowOriginLoop: true
-  entityBaseURL: {{ .Values.loginAddress }}
-  entityID: {{ .Values.loginAddress | trimPrefix "https://" }}
+  entityBaseURL: https://login.{{ .Values.systemDomain }}
+  entityID: login.{{ .Values.systemDomain }}
   selfServiceLinksEnabled: true
   authorize:
-    url: {{ .Values.address }}/oauth/authorize
+    url: https://uaa.{{ .Values.systemDomain }}/oauth/authorize
   prompt:
     username:
       text: Email
@@ -72,7 +72,7 @@ login:
           RpuRBwn3Ei+jCRouxTbzKPsuCVB+1sNyxMTXzf0=
           -----END CERTIFICATE-----
 uaa:
-  url: {{ .Values.address }}
+  url: https://uaa.{{ .Values.systemDomain }}
   limitedFunctionality:
     statusFile: "/tmp/bbr_limited_mode.lock"
     whitelist:
@@ -233,7 +233,7 @@ oauth:
       authorized-grant-types: authorization_code
       autoapprove: true
       override: true
-      redirect-uri: {{ .Values.address }}/login
+      redirect-uri: https://uaa.{{ .Values.systemDomain }}/login
       secret: {{ .Values.oauthClientsSecret | quote }}
       scope: openid,cloud_controller.read,cloud_controller.write,cloud_controller.admin
       id: ssh-proxy

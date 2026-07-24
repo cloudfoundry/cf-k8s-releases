@@ -1,5 +1,4 @@
 logCacheApi:
-  hostname: "log-cache-api.127-0-0-1.nip.io"
   certificateSecret: ""
   cfAuthProxy:
     image:
@@ -25,7 +24,7 @@ routeRegistrar:
   resources: ~
 
 logCacheBackend:
-  hostname: "log-cache.127-0-0-1.nip.io"
+  systemDomain: "cf.127-0-0-1.nip.io"
   certificateSecret: ""
   syslogServer:
     image:

@@ -11,7 +11,6 @@ ccWorker:
 ccUploader:
   resources: ~
   certificateSecret: ""
-  hostname: "cc-uploader.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/cc-uploader
     tag: ""
@@ -28,15 +27,12 @@ cloudController:
   enabled: false
   resources: ~
   certificateSecret: ""
-  appDomain: apps.127-0-0-1.nip.io
-  externalDomain: api.127-0-0-1.nip.io
-  internalDomain: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
+  appDomains: 
+    - apps.127-0-0-1.nip.io
   internalServiceHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
-  systemDomain: system.127-0-0-1.nip.io
+  systemDomain: cf.127-0-0-1.nip.io
   systemDomainOrganization: system
-  appSSHEndpoint: ssh.127-0-0-1.nip.io:2222
   sshProxyKeyFingerprint: ""
-  loginUrl: https://login.127-0-0-1.nip.io
   image:
     repository: ghcr.io/cloudfoundry/k8s/cloud-controller
     tag: ""
@@ -44,14 +40,6 @@ cloudController:
   loggregator:
     endpoint: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
     subjectName: metron
-  doppler:
-    url: wss://doppler.127-0-0-1.nip.io:443
-  logCache:
-    url: https://log-cache.127-0-0-1.nip.io
-  logStream:
-    url: https://log-stream.127-0-0-1.nip.io
-  uaa:
-    url: https://uaa.127-0-0-1.nip.io
   blobstore:
     type: storage-cli
     provider: s3
@@ -142,7 +130,6 @@ tpsWatcher:
   enabled: false
   resources: ~
   certificateSecret: ""
-  hostname: tps.{{ .Release.Namespace }}.svc.cluster.local
   image:
     repository: ghcr.io/cloudfoundry/k8s/tps-watcher
     tag: ""

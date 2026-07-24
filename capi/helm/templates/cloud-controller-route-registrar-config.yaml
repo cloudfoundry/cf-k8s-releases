@@ -24,12 +24,12 @@ data:
           "name": "api",
           "tls_port": 9024,
           "registration_interval": "10s",
-          "server_cert_domain_san": "{{ .Values.cloudController.externalDomain }}",
+          "server_cert_domain_san": "api.{{ .Values.cloudController.systemDomain }}",
           "tags": {
             "component": "CloudController"
           },
           "uris": [
-            "{{ .Values.cloudController.externalDomain }}"
+            "api.{{ .Values.cloudController.systemDomain }}"
           ]
         }
       ]

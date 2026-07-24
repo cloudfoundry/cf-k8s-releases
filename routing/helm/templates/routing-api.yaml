@@ -90,6 +90,14 @@ spec:
               mountPath: /etc/route-registrar-template
             - name: tmpdir
               mountPath: /tmp
+      {{- if .Values.routingApi.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.routingApi.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.routingApi.tolerations }}
+      tolerations:
+        {{- toYaml .Values.routingApi.tolerations | nindent 8 }}
+      {{- end }}
       volumes:
         - name: routing-api
           secret:

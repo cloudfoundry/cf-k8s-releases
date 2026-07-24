@@ -2,8 +2,7 @@ policyServer:
   enabled: false
   resources: ~
   certificateSecret: ""
-  hostname: "policy-server.127-0-0-1.nip.io"
-  externalDomain: api.127-0-0-1.nip.io
+  systemDomain: cf.127-0-0-1.nip.io
   image:
     repository: ghcr.io/cloudfoundry/k8s/policy-server
     tag: ""
@@ -18,8 +17,6 @@ policyServer:
     caCertificateSecret: ""
     skipSSLVerify: true
     skipHostnameVerify: false
-  nats:
-    address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   nodeSelector: ~
   tolerations: ~
 serviceDiscoveryController:

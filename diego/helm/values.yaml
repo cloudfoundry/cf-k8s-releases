@@ -43,7 +43,6 @@ locket:
 sshProxy:
   enabled: false
   certificateSecret: ""
-  hostname: "ssh-proxy.127-0-0-1.nip.io"
   oauthClientsSecret: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/ssh-proxy
