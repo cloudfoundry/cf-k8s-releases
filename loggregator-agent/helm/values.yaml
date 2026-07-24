@@ -13,7 +13,6 @@ forwarderAgent:
 loggregatorAgent:
   doppler:
     address: "doppler.{{ .Release.Namespace }}.svc.cluster.local:8082"
-  aggregateDrain: false
   certificateSecret: ""
   resources: ~
   image:
@@ -26,7 +25,6 @@ syslogAgent:
     address: "https://syslog-binding-cache.{{ .Release.Namespace }}.svc.cluster.local:9000"
   logCacheSyslog:
     address: "syslog://log-cache-syslog.cf.ci.example.com:8082"
-  aggregateDrain: false
   certificateSecret: ""
   resources: ~
   image:

@@ -131,10 +131,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "externalDomain": {
-          "type": "string"
-        },
-        "hostname": {
+        "systemDomain": {
           "type": "string"
         },
         "image": {
@@ -147,15 +144,6 @@
               "type": "string"
             },
             "tag": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "nats": {
-          "additionalProperties": false,
-          "properties": {
-            "address": {
               "type": "string"
             }
           },

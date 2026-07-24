@@ -23,10 +23,10 @@ data:
           "name": "uaa",
           "tls_port": 8443,
           "registration_interval": "10s",
-          "server_cert_domain_san": "{{ .Values.hostname }}",
+          "server_cert_domain_san": "uaa.{{ .Values.systemDomain }}",
           "uris": [
-            "{{ .Values.hostname }}",
-            "{{ .Values.loginAddress | trimPrefix "https://" }}"
+            "uaa.{{ .Values.systemDomain }}",
+            "login.{{ .Values.systemDomain }}"
           ]
         }
       ]

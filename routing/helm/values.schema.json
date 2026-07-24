@@ -10,11 +10,6 @@
     "gorouter": {
       "additionalProperties": false,
       "properties": {
-        "appsDomain": {
-          "default": "*.apps.127-0-0-1.nip.io",
-          "title": "appsDomain",
-          "type": "string"
-        },
         "certificateSecret": {
           "type": "string"
         },
@@ -22,11 +17,6 @@
           "default": true,
           "title": "enabled",
           "type": "boolean"
-        },
-        "hostname": {
-          "default": "gorouter.127-0-0-1.nip.io",
-          "title": "hostname",
-          "type": "string"
         },
         "isolationSegments": {
           "default": [],
@@ -133,9 +123,6 @@
         "certificateSecret": {
           "type": "string"
         },
-        "loggregatorCertificateSecret": {
-          "type": "string"
-        },
         "locketCertificateSecret": {
           "type": "string"
         },
@@ -160,9 +147,6 @@
         "sqldb": {
           "additionalProperties": false,
           "properties": {
-            "name": {
-              "type": "string"
-            },
             "user": {
               "type": "string"
             },
@@ -212,7 +196,7 @@
           "type": "object"
         },
         "systemDomain": {
-          "default": "127-0-0-1.nip.io",
+          "default": "cf.127-0-0-1.nip.io",
           "title": "systemDomain",
           "type": "string"
         },

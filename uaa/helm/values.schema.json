@@ -2,16 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
-    "address": {
-      "type": "string"
-    },
-    "loginAddress": {
-      "type": "string"
-    },
     "ccAdminPassword": {
       "type": ["string", "null"]
     },
     "certificateSecret": {
+      "type": "string"
+    },
+    "systemDomain": {
       "type": "string"
     },
     "uaadb": {
@@ -43,9 +40,6 @@
     },
     "global": {
       "type": "object"
-    },
-    "hostname": {
-      "type": "string"
     },
     "uaaConfigOverrides": {
       "type": ["object", "null"]

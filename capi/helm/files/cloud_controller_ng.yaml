@@ -9,7 +9,6 @@ allow_docker_root_user: true
 additional_allowed_process_users:
 - vcap
 local_route: 127.0.0.1
-external_port: 9022
 tls_port: 9023
 pid_filename: /tmp/cloud_controller.pid
 readiness_port:
@@ -17,7 +16,8 @@ readiness_port:
   clock: -1
   deployment_updater: -1
 external_protocol: https
-external_domain: {{ .Values.cloudController.externalDomain }}
+external_domain: api.{{ .Values.cloudController.systemDomain }}
+external_port: 9022
 temporary_disable_deployments: false
 deployment_updater:
   update_frequency_in_seconds: 5
@@ -27,7 +27,7 @@ internal_service_hostname: {{ tpl .Values.cloudController.internalServiceHostnam
 system_domain_organization: {{ .Values.cloudController.systemDomainOrganization }}
 system_domain: {{ .Values.cloudController.systemDomain }}
 app_domains:
-  - {{ .Values.cloudController.appDomain }}
+{{ toYaml .Values.cloudController.appDomains | indent 2 }}
   - name: apps.internal
     internal: true
 system_hostnames:
@@ -87,14 +87,14 @@ info:
   version: 2
   support_address: "http://support.cloudfoundry.com"
   description: "CF API on Kubernetes"
-  app_ssh_endpoint: "{{ .Values.cloudController.appSSHEndpoint }}"
+  app_ssh_endpoint: "ssh.{{ .Values.cloudController.systemDomain }}:2222"
   app_ssh_host_key_fingerprint: {{ .Values.cloudController.sshProxyKeyFingerprint | quote }}
   app_ssh_oauth_client: "ssh-proxy"
   min_cli_version: "8.14.0"
   min_recommended_cli_version: "latest"
 instance_file_descriptor_limit: 16384
 login:
-  url: "{{ .Values.cloudController.loginUrl }}"
+  url: "https://login.{{ .Values.cloudController.systemDomain }}"
   enabled: true
 lifecycle_type_backfill:
   frequency_in_seconds: 3600
@@ -125,13 +125,13 @@ logcache_tls:
   ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
   subject_name: "log_cache"
 doppler:
-  url: "{{ .Values.cloudController.doppler.url }}"
+  url: "wss://doppler.{{ .Values.cloudController.systemDomain }}:443"
 log_cache:
-  url: "{{ .Values.cloudController.logCache.url }}"
+  url: "https://log-cache.{{ .Values.cloudController.systemDomain }}"
 log_stream:
-  url: "{{ .Values.cloudController.logStream.url }}"
+  url: "https://log-stream.{{ .Values.cloudController.systemDomain }}"
 uaa:
-  url: "{{ .Values.cloudController.uaa.url }}"
+  url: "https://uaa.{{ .Values.cloudController.systemDomain }}"
   internal_url: https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443
   resource_id: "cloud_controller,cloud_controller_service_permissions"
   ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
@@ -148,7 +148,7 @@ cc_service_key_client_name: "cc_service_key_client"
 cc_service_key_client_secret: {{ .Values.oauthClientsSecret | quote }}
 
 routing_api:
-  url: "https://{{ .Values.cloudController.externalDomain }}/routing"
+  url: "https://api.{{ .Values.cloudController.systemDomain }}/routing"
   routing_client_name: "cc_routing"
   routing_client_secret: {{ .Values.oauthClientsSecret | quote }}
 route_services_enabled: true

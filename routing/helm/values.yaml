@@ -2,8 +2,6 @@ gorouter:
   enabled: false
   certificateSecret: ""
   name: gorouter
-  hostname: "gorouter.127-0-0-1.nip.io"
-  appsDomain: "*.apps.127-0-0-1.nip.io"
   isolationSegments: []
   routingTableShardingMode: all
   image:
@@ -25,11 +23,9 @@ routingApi:
   enabled: false
   certificateSecret: ""
   locketCertificateSecret: ""
-  loggregatorCertificateSecret: ""
   uaaCertificateSecret: ""
-  systemDomain: "127-0-0-1.nip.io"
+  systemDomain: "cf.127-0-0-1.nip.io"
   sqldb:
-    name: routing_api
     password: ~
     user: postgres
     port: 5432

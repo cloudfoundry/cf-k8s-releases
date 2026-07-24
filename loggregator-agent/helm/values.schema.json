@@ -71,9 +71,6 @@
     "loggregatorAgent": {
       "additionalProperties": false,
       "properties": {
-        "aggregateDrain": {
-          "type": "boolean"
-        },
         "certificateSecret": {
           "type": "string"
         },
@@ -110,9 +107,6 @@
     "syslogAgent": {
       "additionalProperties": false,
       "properties": {
-        "aggregateDrain": {
-          "type": "boolean"
-        },
         "certificateSecret": {
           "type": "string"
         },
