@@ -56,9 +56,6 @@
         "certificateSecret": {
           "type": "string"
         },
-        "hostname": {
-          "type": "string"
-        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -218,11 +215,13 @@
     "cloudController": {
       "additionalProperties": false,
       "properties": {
-        "appDomain": {
-          "type": "string"
-        },
-        "appSSHEndpoint": {
-          "type": "string"
+        "appDomains": {
+          "type": [
+            "array"
+          ],
+          "items": {
+            "type": "string"
+          }
         },
         "blobstore": {
           "additionalProperties": false,
@@ -287,23 +286,11 @@
           },
           "type": "object"
         },
-        "doppler": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "enableCommaDelimitedDestinations": {
           "type": "boolean"
         },
         "enabled": {
           "type": "boolean"
-        },
-        "externalDomain": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,
@@ -320,9 +307,6 @@
           },
           "type": "object"
         },
-        "internalDomain": {
-          "type": "string"
-        },
         "internalServiceHostname": {
           "type": "string"
         },
@@ -337,27 +321,6 @@
             }
           },
           "type": "object"
-        },
-        "logCache": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "logStream": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "loginUrl": {
-          "type": "string"
         },
         "nats": {
           "additionalProperties": false,
@@ -482,15 +445,6 @@
             ],
             "type": "object"
           }
-        },
-        "uaa": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
         }
       },
       "type": "object"
@@ -698,9 +652,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "hostname": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,
