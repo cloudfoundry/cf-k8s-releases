@@ -88,7 +88,34 @@ cloudController:
   droplet_destinations:
     cflinuxfs4: /home/vcap
   docker_staging_stack: cflinuxfs4
-
+  securityGroupDefinitions:
+    - name: "public_networks"
+      rules:
+        - destination: "0.0.0.0-9.255.255.255"
+          protocol: "all"
+        - destination: "11.0.0.0-169.253.255.255"
+          protocol: "all"
+        - destination: "169.255.0.0-172.15.255.255"
+          protocol: "all"
+        - destination: "172.32.0.0-192.167.255.255"
+          protocol: "all"
+        - destination: "192.169.0.0-255.255.255.255"
+          protocol: "all"
+    - name: "dns"
+      rules:
+        - destination: "0.0.0.0/0"
+          ports: "53"
+          protocol: "tcp"
+        - destination: "0.0.0.0/0"
+          ports: "53"
+          protocol: "udp"
+  defaultStagingSecurityGroups:
+    - "public_networks"
+    - "dns"
+  defaultRunningSecurityGroups:
+    - "public_networks"
+    - "dns"
+  
 localWorker:
   image:
     repository: ghcr.io/cloudfoundry/k8s/cloud-controller
