@@ -101,20 +101,10 @@ cloudController:
           protocol: "all"
         - destination: "192.169.0.0-255.255.255.255"
           protocol: "all"
-    - name: "dns"
-      rules:
-        - destination: "0.0.0.0/0"
-          ports: "53"
-          protocol: "tcp"
-        - destination: "0.0.0.0/0"
-          ports: "53"
-          protocol: "udp"
   defaultStagingSecurityGroups:
     - "public_networks"
-    - "dns"
   defaultRunningSecurityGroups:
     - "public_networks"
-    - "dns"
   
 localWorker:
   image:
