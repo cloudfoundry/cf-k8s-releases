@@ -114,7 +114,9 @@ scim:
   user:
     override: true
   users:
-    - ccadmin|{{ .Values.ccAdminPassword }}|ccadmin|||clients.read,cloud_controller.admin,doppler.firehose,network.admin,openid,routing.router_groups.read,routing.router_groups.write,scim.read,scim.write|uaa
+{{- range .Values.scim.users }}
+    - {{ .name }}|{{ tpl .password $ }}|{{ .email }}|{{ .firstName }}|{{ .lastName }}|{{ .groups }}|{{ .origin }}
+{{- end }}
 servlet:
   session-store: memory
   idle-timeout: 1800
@@ -167,95 +169,47 @@ oauth:
           requireSpecialCharacter: 0
           expireSecretInMonths: 0
   clients:
-    cc-service-dashboards:
-      authorities: clients.read,clients.write,clients.admin
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      scope: openid,cloud_controller_service_permissions.read
-      id: cc-service-dashboards
-    cc_routing:
-      authorities: routing.router_groups.read
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: cc_routing
-    cc_service_key_client:
-      authorities: credhub.read,credhub.write
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: cc_service_key_client
-    cf:
-      access-token-validity: 1200
-      authorities: uaa.none
-      authorized-grant-types: password,refresh_token,urn:ietf:params:oauth:grant-type:jwt-bearer
-      override: true
-      refresh-token-validity: 2592000
-      secret: ''
-      scope: network.admin,network.write,cloud_controller.read,cloud_controller.write,openid,password.write,cloud_controller.admin,scim.read,scim.write,doppler.firehose,uaa.user,routing.router_groups.read,routing.router_groups.write,cloud_controller.admin_read_only,cloud_controller.global_auditor,perm.admin,clients.read
-      id: cf
-    cf_smoke_tests:
-      authorities: cloud_controller.admin,clients.read
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: cf_smoke_tests
-    cloud_controller_username_lookup:
-      authorities: scim.userids,scim.read
-      authorized-grant-types: client_credentials
-      override: true
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: cloud_controller_username_lookup
-    credhub_admin_client:
-      authorities: credhub.read,credhub.write
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: credhub_admin_client
-    doppler:
-      authorities: uaa.resource
-      authorized-grant-types: client_credentials
-      override: true
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: doppler
-    gorouter:
-      authorities: routing.routes.read
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: gorouter
-    network-policy:
-      authorities: uaa.resource,cloud_controller.admin_read_only
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: network-policy
-    routing_api_client:
-      authorities: routing.routes.write,routing.routes.read,routing.router_groups.read
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: routing_api_client
-    ssh-proxy:
-      authorized-grant-types: authorization_code
-      autoapprove: true
-      override: true
-      redirect-uri: {{ .Values.address }}/login
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      scope: openid,cloud_controller.read,cloud_controller.write,cloud_controller.admin
-      id: ssh-proxy
-    tcp_emitter:
-      authorities: routing.routes.write,routing.routes.read
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: tcp_emitter
-    tcp_router:
-      authorities: routing.routes.read,routing.router_groups.read
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
-      id: tcp_router
-    admin:
-      authorized-grant-types: client_credentials
-      authorities: clients.read,clients.write,clients.secret,uaa.admin,scim.read,scim.write,password.write
-      id: admin
-      secret: {{ .Values.oauthClientsSecret | quote }}
-    nfsbroker-credhub-client:
-      authorities: credhub.read,credhub.write
-      authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+{{- range $clientId, $client := .Values.oauth.clients }}
+    {{ $clientId }}:
+{{- if $client.authorities }}
+      authorities: {{ $client.authorities }}
+{{- end }}
+{{- if $client.authorized_grant_types }}
+      authorized-grant-types: {{ tpl $client.authorized_grant_types $ }}
+{{- else if $client.authorizedGrantTypes }}
+      authorized-grant-types: {{ tpl $client.authorizedGrantTypes $ }}
+{{- end }}
+{{- if hasKey $client "secret" }}
+      secret: {{ tpl $client.secret $ | quote }}
+{{- end }}
+{{- if $client.scope }}
+      scope: {{ $client.scope }}
+{{- end }}
+{{- if $client.id }}
+      id: {{ $client.id }}
+{{- end }}
+{{- if hasKey $client "override" }}
+      override: {{ $client.override }}
+{{- end }}
+{{- if $client.access_token_validity }}
+      access-token-validity: {{ $client.access_token_validity }}
+{{- else if $client.accessTokenValidity }}
+      access-token-validity: {{ $client.accessTokenValidity }}
+{{- end }}
+{{- if $client.refresh_token_validity }}
+      refresh-token-validity: {{ $client.refresh_token_validity }}
+{{- else if $client.refreshTokenValidity }}
+      refresh-token-validity: {{ $client.refreshTokenValidity }}
+{{- end }}
+{{- if hasKey $client "autoapprove" }}
+      autoapprove: {{ $client.autoapprove }}
+{{- end }}
+{{- if $client.redirect_uri }}
+      redirect-uri: {{ tpl $client.redirect_uri $ }}
+{{- else if $client.redirectUri }}
+      redirect-uri: {{ tpl $client.redirectUri $ }}
+{{- end }}
+{{- end }}
 authentication:
   enableUriEncodingCompatibilityMode: false
   policy:
