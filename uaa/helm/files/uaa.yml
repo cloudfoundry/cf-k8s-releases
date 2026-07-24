@@ -1,5 +1,4 @@
 {{ $_ := required ".Values.oauthClientsSecret must be provided" .Values.oauthClientsSecret }}
-{{ $_ := required ".Values.ccAdminPassword must be provided" .Values.ccAdminPassword }}
 {{ $_ := required ".Values.uaadb.password must be provided" .Values.uaadb.password }}
 name: uaa
 disableInternalAuth: false
