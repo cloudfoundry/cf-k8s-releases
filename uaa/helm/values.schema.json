@@ -8,9 +8,6 @@
     "loginAddress": {
       "type": "string"
     },
-    "ccAdminPassword": {
-      "type": ["string", "null"]
-    },
     "certificateSecret": {
       "type": "string"
     },
@@ -172,56 +169,7 @@
       "additionalProperties": false,
       "properties": {
         "clients": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "properties": {
-                "authorities": {
-                  "type": "string"
-                },
-                "authorized-grant-types": {
-                  "type": "string"
-                },
-                "authorizedGrantTypes": {
-                  "type": "string"
-                },
-                "secret": {
-                  "type": "string"
-                },
-                "scope": {
-                  "type": "string"
-                },
-                "id": {
-                  "type": "string"
-                },
-                "override": {
-                  "type": "boolean"
-                },
-                "access-token-validity": {
-                  "type": "integer"
-                },
-                "accessTokenValidity": {
-                  "type": "integer"
-                },
-                "refresh-token-validity": {
-                  "type": "integer"
-                },
-                "refreshTokenValidity": {
-                  "type": "integer"
-                },
-                "autoapprove": {
-                  "type": "boolean"
-                },
-                "redirect-uri": {
-                  "type": "string"
-                },
-                "redirectUri": {
-                  "type": "string"
-                }
-              }
-            }
-          }
+          "type": "object"
         }
       },
       "type": "object"

@@ -168,48 +168,7 @@ oauth:
           requireSpecialCharacter: 0
           expireSecretInMonths: 0
   clients:
-{{- range $clientId, $client := .Values.oauth.clients }}
-    {{ $clientId }}:
-{{- if $client.authorities }}
-      authorities: {{ $client.authorities }}
-{{- end }}
-{{- if $client.authorized_grant_types }}
-      authorized-grant-types: {{ tpl $client.authorized_grant_types $ }}
-{{- else if $client.authorizedGrantTypes }}
-      authorized-grant-types: {{ tpl $client.authorizedGrantTypes $ }}
-{{- end }}
-{{- if hasKey $client "secret" }}
-      secret: {{ tpl $client.secret $ | quote }}
-{{- end }}
-{{- if $client.scope }}
-      scope: {{ $client.scope }}
-{{- end }}
-{{- if $client.id }}
-      id: {{ $client.id }}
-{{- end }}
-{{- if hasKey $client "override" }}
-      override: {{ $client.override }}
-{{- end }}
-{{- if $client.access_token_validity }}
-      access-token-validity: {{ $client.access_token_validity }}
-{{- else if $client.accessTokenValidity }}
-      access-token-validity: {{ $client.accessTokenValidity }}
-{{- end }}
-{{- if $client.refresh_token_validity }}
-      refresh-token-validity: {{ $client.refresh_token_validity }}
-{{- else if $client.refreshTokenValidity }}
-      refresh-token-validity: {{ $client.refreshTokenValidity }}
-{{- end }}
-{{- if hasKey $client "autoapprove" }}
-      autoapprove: {{ $client.autoapprove }}
-{{- end }}
-{{- if $client.redirect_uri }}
-      redirect-uri: {{ tpl $client.redirect_uri $ }}
-{{- else if $client.redirectUri }}
-      redirect-uri: {{ tpl $client.redirectUri $ }}
-{{- end }}
-{{- end }}
-authentication:
+{{ tpl (.Values.oauth.clients | toYaml) . | nindent 4 }}
   enableUriEncodingCompatibilityMode: false
   policy:
     lockoutAfterFailures: 5
