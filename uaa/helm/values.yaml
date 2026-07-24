@@ -10,7 +10,6 @@ nodeSelector: ~
 tolerations: ~
 
 uaaAdminSecret: ~
-ccAdminPassword: ~
 oauthClientsSecret: ~
 uaadb:
   name: uaa
@@ -32,7 +31,7 @@ routeRegistrar:
 scim:
   users:
     - name: ccadmin
-      password: "{{ .Values.ccAdminPassword }}"
+      password: "changeme"
       email: ccadmin
       firstName: ""
       lastName: ""
