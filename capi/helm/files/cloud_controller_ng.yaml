@@ -9,15 +9,15 @@ allow_docker_root_user: true
 additional_allowed_process_users:
 - vcap
 local_route: 127.0.0.1
-tls_port: 9023
+tls_port: {{ .Values.cloudController.tlsPort }}
 pid_filename: /tmp/cloud_controller.pid
 readiness_port:
   cloud_controller_worker: -1
   clock: -1
   deployment_updater: -1
-external_protocol: https
-external_domain: api.{{ .Values.cloudController.systemDomain }}
-external_port: 9022
+external_protocol: {{ .Values.cloudController.externalProtocol }}
+external_domain: {{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}
+external_port: {{ .Values.cloudController.externalPort }}
 temporary_disable_deployments: false
 deployment_updater:
   update_frequency_in_seconds: 5
@@ -87,14 +87,14 @@ info:
   version: 2
   support_address: "http://support.cloudfoundry.com"
   description: "CF API on Kubernetes"
-  app_ssh_endpoint: "ssh.{{ .Values.cloudController.systemDomain }}:2222"
+  app_ssh_endpoint: "ssh.{{ .Values.cloudController.systemDomain }}:{{ .Values.cloudController.appSSH.port }}"
   app_ssh_host_key_fingerprint: {{ .Values.cloudController.sshProxyKeyFingerprint | quote }}
   app_ssh_oauth_client: "ssh-proxy"
   min_cli_version: "8.14.0"
   min_recommended_cli_version: "latest"
 instance_file_descriptor_limit: 16384
 login:
-  url: "https://login.{{ .Values.cloudController.systemDomain }}"
+  url: "{{ .Values.cloudController.loginProtocol }}://login.{{ .Values.cloudController.systemDomain }}"
   enabled: true
 lifecycle_type_backfill:
   frequency_in_seconds: 3600
@@ -118,22 +118,22 @@ loggregator:
   cert_file: "/etc/ssl/certs/cloud-controller/tls.crt"
   ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
 logcache:
-  host: log-cache.{{ .Release.Namespace }}.svc.cluster.local
-  port: 8080
+  host: {{ tpl .Values.cloudController.logcache.host . }}
+  port: {{ .Values.cloudController.logcache.port }}
 logcache_tls:
   key_file: "/etc/ssl/certs/cloud-controller/tls.key"
   cert_file: "/etc/ssl/certs/cloud-controller/tls.crt"
   ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
-  subject_name: "log_cache"
+  subject_name: {{ .Values.cloudController.logcache.tls.subjectName }}
 doppler:
-  url: "wss://doppler.{{ .Values.cloudController.systemDomain }}:443"
+  url: "ws{{ if .Values.cloudController.doppler.useSSL }}s{{ end }}://doppler.{{ .Values.cloudController.systemDomain }}:{{ .Values.cloudController.doppler.port }}"
 log_cache:
   url: "https://log-cache.{{ .Values.cloudController.systemDomain }}"
 log_stream:
   url: "https://log-stream.{{ .Values.cloudController.systemDomain }}"
 uaa:
-  url: "https://uaa.{{ .Values.cloudController.systemDomain }}"
-  internal_url: https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443
+  url: "{{ .Values.cloudController.loginProtocol }}://uaa.{{ .Values.cloudController.systemDomain }}"
+  internal_url: https://{{ tpl .Values.cloudController.uaa.internalHost . }}:{{ .Values.cloudController.uaa.ssl.port }}
   resource_id: "cloud_controller,cloud_controller_service_permissions"
   ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
   client_timeout: 60
@@ -149,7 +149,7 @@ cc_service_key_client_name: "cc_service_key_client"
 cc_service_key_client_secret: {{ .Values.oauthClientsSecret | quote }}
 
 routing_api:
-  url: "https://api.{{ .Values.cloudController.systemDomain }}/routing"
+  url: "{{ .Values.cloudController.externalProtocol }}://{{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}/routing"
   routing_client_name: "cc_routing"
   routing_client_secret: {{ .Values.oauthClientsSecret | quote }}
 route_services_enabled: true
@@ -275,14 +275,14 @@ diego:
   insecure_docker_registry_list: []
   docker_staging_stack: {{ .Values.cloudController.docker_staging_stack }}
   bbs:
-    url: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
+    url: {{ tpl .Values.cloudController.diego.bbs.url . }}
     key_file: /etc/ssl/certs/cloud-controller/tls.key
     cert_file: /etc/ssl/certs/cloud-controller/tls.crt
     ca_file: /etc/ssl/certs/cloud-controller/ca.crt
-    connect_timeout: 10
-    send_timeout: 10
-    receive_timeout: 10
-  pid_limit: 2048
+    connect_timeout: {{ .Values.cloudController.diego.bbs.connectTimeout }}
+    send_timeout: {{ .Values.cloudController.diego.bbs.sendTimeout }}
+    receive_timeout: {{ .Values.cloudController.diego.bbs.receiveTimeout }}
+  pid_limit: {{ .Values.cloudController.diego.pidLimit }}
 directories:
   tmpdir: /tmp
   diagnostics: tmp
@@ -344,8 +344,8 @@ credential_references:
   interpolate_service_bindings: true
 internal_route_vip_range: "127.128.0.0/9"
 locket:
-  host: "locket.{{ .Release.Namespace }}.svc.cluster.local"
-  port: 8891
+  host: {{ tpl .Values.cloudController.locket.host . }}
+  port: {{ .Values.cloudController.locket.port }}
   ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
   cert_file: "/etc/ssl/certs/cloud-controller/tls.crt"
   key_file: "/etc/ssl/certs/cloud-controller/tls.key"
