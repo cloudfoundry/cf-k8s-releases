@@ -168,12 +168,7 @@ oauth:
           requireSpecialCharacter: 0
           expireSecretInMonths: 0
   clients:
-<<<<<<< HEAD
   {{ tpl (.Values.oauth.clients | toYaml) . | nindent 4 }}
-  authentication:
-=======
-{{ tpl (.Values.oauth.clients | toYaml) . | nindent 4 }}
->>>>>>> d273eba (Simplified value structure)
   enableUriEncodingCompatibilityMode: false
   policy:
     lockoutAfterFailures: 5
