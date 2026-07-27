@@ -12,6 +12,7 @@ nodeSelector: ~
 tolerations: ~
 
 uaaAdminSecret: ~
+ccAdminPassword: notUsed
 oauthClientsSecret: ~
 uaadb:
   name: uaa

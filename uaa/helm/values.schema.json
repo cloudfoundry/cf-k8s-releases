@@ -8,6 +8,9 @@
     "loginAddress": {
       "type": "string"
     },
+    "ccAdminPassword": {
+      "type": ["string", "null"]
+    },
     "certificateSecret": {
       "type": "string"
     },
