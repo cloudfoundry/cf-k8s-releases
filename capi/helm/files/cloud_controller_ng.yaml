@@ -101,6 +101,7 @@ lifecycle_type_backfill:
 nginx:
   use_nginx: true
   instance_socket: "/var/run/cloud_controller.sock"
+  metrics_socket: "/var/run/cloud_controller_metrics.sock"
 logging:
   file: /dev/stdout
   level: info

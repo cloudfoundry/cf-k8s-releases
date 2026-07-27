@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-controller
+spec:
+  template:
+    spec:
+      containers:
+        - name: telegraf
+          image: telegraf:1.31-alpine
+          volumeMounts:
+            - name: telegraf-config
+              mountPath: /etc/telegraf
+            - name: var-run
+              mountPath: /var/run
+      volumes:
+        - name: telegraf-config
+          configMap:
+            name: telegraf-config

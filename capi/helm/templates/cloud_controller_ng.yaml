@@ -206,6 +206,9 @@ spec:
         - name: nginx-config
           configMap:
             name: nginx-config
+        - name: telegraf-config
+          configMap:
+            name: telegraf-config
         - name: var-run # Share unix sockets between containers.
           emptyDir: {}
         - name: tmpdir
