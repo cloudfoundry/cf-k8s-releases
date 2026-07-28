@@ -36,8 +36,6 @@ spec:
             {{- toYaml .Values.ccWorkerClock.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: var-run
-              mountPath: /var/run
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
             {{- if not .Values.ccdb.skipSSLVerify }}
@@ -58,8 +56,6 @@ spec:
         {{- toYaml .Values.ccWorkerClock.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: var-run # Share unix sockets between containers.
-          emptyDir: {}
         - name: cloud-controller
           secret:
             secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}

@@ -42,8 +42,6 @@ spec:
           volumeMounts:
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
-            - name: var-run
-              mountPath: /var/run
             {{- if not .Values.ccdb.skipSSLVerify }}
             - name: postgres-ca
               mountPath: /etc/ssl/certs/postgres
@@ -73,8 +71,6 @@ spec:
         - name: etc-cloud-controller
           secret:
             secretName: cloud-controller-config
-        - name: var-run # Share unix sockets between containers.
-          emptyDir: {}
         - name: tmpdir
           emptyDir: {}
 {{ end }}
