@@ -11,7 +11,6 @@ ccWorker:
 ccUploader:
   resources: ~
   certificateSecret: ""
-  hostname: "cc-uploader.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/cc-uploader
     tag: ""
@@ -28,15 +27,36 @@ cloudController:
   enabled: false
   resources: ~
   certificateSecret: ""
-  appDomain: apps.127-0-0-1.nip.io
-  externalDomain: api.127-0-0-1.nip.io
-  internalDomain: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
+  appDomains:
+    - apps.127-0-0-1.nip.io
   internalServiceHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
-  systemDomain: 127-0-0-1.nip.io
+  systemDomain: cf.127-0-0-1.nip.io
   systemDomainOrganization: system
-  appSSHEndpoint: ssh.127-0-0-1.nip.io:2222
   sshProxyKeyFingerprint: ""
-  loginUrl: https://login.127-0-0-1.nip.io
+  externalHost: api
+  externalPort: 9022
+  externalProtocol: https
+  loginProtocol: https
+  appSSH:
+    port: 2222
+  doppler:
+    useSSL: true
+    port: 443
+  tlsPort: 9023
+  publicTLS:
+    port: 9024
+  logcache:
+    host: log-cache.{{ .Release.Namespace }}.svc.cluster.local
+    port: 8080
+    tls:
+      subjectName: log_cache
+  uaa:
+    internalHost: uaa.{{ .Release.Namespace }}.svc.cluster.local
+    ssl:
+      port: 8443
+  locket:
+    host: locket.{{ .Release.Namespace }}.svc.cluster.local
+    port: 8891
   image:
     repository: ghcr.io/cloudfoundry/k8s/cloud-controller
     tag: ""
@@ -44,14 +64,6 @@ cloudController:
   loggregator:
     endpoint: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
     subjectName: metron
-  doppler:
-    url: wss://doppler.127-0-0-1.nip.io:443
-  logCache:
-    url: https://log-cache.127-0-0-1.nip.io
-  logStream:
-    url: https://log-stream.127-0-0-1.nip.io
-  uaa:
-    url: https://uaa.127-0-0-1.nip.io
   blobstore:
     type: storage-cli
     provider: s3
@@ -69,6 +81,12 @@ cloudController:
   diego:
     fileServerUrl: http://fileserver.{{ .Release.Namespace }}.svc.cluster.local:8080
     ccUploaderUrl: https://cc-uploader.{{ .Release.Namespace }}.svc.cluster.local:9091
+    bbs:
+      url: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
+      connectTimeout: 10
+      sendTimeout: 10
+      receiveTimeout: 10
+    pidLimit: 2048
   credhubApi:
     internalUrl: https://credhub.{{ .Release.Namespace }}.svc.cluster.local:8844
     externalUrl: ""
@@ -115,7 +133,7 @@ cloudController:
   defaultRunningSecurityGroups:
     - "public_networks"
     - "dns"
-  
+
 localWorker:
   image:
     repository: ghcr.io/cloudfoundry/k8s/cloud-controller
@@ -142,7 +160,6 @@ tpsWatcher:
   enabled: false
   resources: ~
   certificateSecret: ""
-  hostname: tps.{{ .Release.Namespace }}.svc.cluster.local
   image:
     repository: ghcr.io/cloudfoundry/k8s/tps-watcher
     tag: ""
