@@ -26,6 +26,8 @@ RUN bundle config set --local without 'development test' && bundle install
 COPY <<EOF /usr/bin/setup-db.sh
 #!/bin/sh
 
+set -e
+
 bundle exec rake db:migrate
 bundle exec rake db:seed
 EOF
