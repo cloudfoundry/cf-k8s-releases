@@ -1,6 +1,6 @@
 name: capi
 # renovate: dataSource=github-releases depName=cloudfoundry/capi-release
-version: 1.240.1-2
+version: 1.240.1-3
 description: Helm chart for CF API components
 type: application
 apiVersion: v2
