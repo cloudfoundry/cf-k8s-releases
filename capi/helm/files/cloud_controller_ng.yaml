@@ -357,3 +357,6 @@ update_metric_tags_on_rename: true
 app_log_revision: false
 app_instance_stopping_state: true
 max_service_credential_bindings_per_app_service_instance: 5
+
+publish_metrics: true
+prometheus_port: 9397
