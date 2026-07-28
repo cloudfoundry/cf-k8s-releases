@@ -437,9 +437,6 @@
         "enabled": {
           "type": "boolean"
         },
-        "hostname": {
-          "type": "string"
-        },
         "oauthClientsSecret": {
           "type": "string"
         },

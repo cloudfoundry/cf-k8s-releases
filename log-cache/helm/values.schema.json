@@ -62,9 +62,6 @@
           },
           "type": "object"
         },
-        "hostname": {
-          "type": "string"
-        },
         "nodeSelector": {
           "type": ["object", "null"]
         },
@@ -104,7 +101,7 @@
         "certificateSecret": {
           "type": "string"
         },
-        "hostname": {
+        "systemDomain": {
           "type": "string"
         },
         "logCache": {

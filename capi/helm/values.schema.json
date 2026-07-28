@@ -56,9 +56,6 @@
         "certificateSecret": {
           "type": "string"
         },
-        "hostname": {
-          "type": "string"
-        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -218,11 +215,22 @@
     "cloudController": {
       "additionalProperties": false,
       "properties": {
-        "appDomain": {
-          "type": "string"
+        "appDomains": {
+          "type": [
+            "array"
+          ],
+          "items": {
+            "type": "string"
+          }
         },
-        "appSSHEndpoint": {
-          "type": "string"
+        "appSSH": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
         },
         "blobstore": {
           "additionalProperties": false,
@@ -283,6 +291,27 @@
             },
             "fileServerUrl": {
               "type": "string"
+            },
+            "bbs": {
+              "additionalProperties": false,
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "connectTimeout": {
+                  "type": "integer"
+                },
+                "sendTimeout": {
+                  "type": "integer"
+                },
+                "receiveTimeout": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "pidLimit": {
+              "type": "integer"
             }
           },
           "type": "object"
@@ -290,8 +319,11 @@
         "doppler": {
           "additionalProperties": false,
           "properties": {
-            "url": {
-              "type": "string"
+            "port": {
+              "type": "integer"
+            },
+            "useSSL": {
+              "type": "boolean"
             }
           },
           "type": "object"
@@ -302,7 +334,13 @@
         "enabled": {
           "type": "boolean"
         },
-        "externalDomain": {
+        "externalHost": {
+          "type": "string"
+        },
+        "externalPort": {
+          "type": "integer"
+        },
+        "externalProtocol": {
           "type": "string"
         },
         "image": {
@@ -320,10 +358,43 @@
           },
           "type": "object"
         },
-        "internalDomain": {
+        "internalServiceHostname": {
           "type": "string"
         },
-        "internalServiceHostname": {
+        "locket": {
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "logcache": {
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "subjectName": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "loginProtocol": {
           "type": "string"
         },
         "loggregator": {
@@ -338,27 +409,6 @@
           },
           "type": "object"
         },
-        "logCache": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "logStream": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "loginUrl": {
-          "type": "string"
-        },
         "nats": {
           "additionalProperties": false,
           "properties": {
@@ -367,6 +417,18 @@
             }
           },
           "type": "object"
+        },
+        "publicTLS": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "tlsPort": {
+          "type": "integer"
         },
         "nodeSelector": {
           "type": [
@@ -388,6 +450,24 @@
         },
         "systemDomainOrganization": {
           "type": "string"
+        },
+        "uaa": {
+          "additionalProperties": false,
+          "properties": {
+            "internalHost": {
+              "type": "string"
+            },
+            "ssl": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
         },
         "stacks": {
           "type": [
@@ -482,15 +562,6 @@
             ],
             "type": "object"
           }
-        },
-        "uaa": {
-          "additionalProperties": false,
-          "properties": {
-            "url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
         }
       },
       "type": "object"
@@ -554,42 +625,6 @@
             "object",
             "null"
           ]
-        },
-        "nodeSelector": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "tolerations": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "effect": {
-                "type": "string"
-              },
-              "key": {
-                "type": "string"
-              },
-              "operator": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "effect",
-              "key",
-              "operator",
-              "value"
-            ],
-            "type": "object"
-          }
         }
       },
       "type": "object"
@@ -617,42 +652,6 @@
             "object",
             "null"
           ]
-        },
-        "nodeSelector": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "tolerations": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "effect": {
-                "type": "string"
-              },
-              "key": {
-                "type": "string"
-              },
-              "operator": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "effect",
-              "key",
-              "operator",
-              "value"
-            ],
-            "type": "object"
-          }
         }
       },
       "type": "object"
@@ -698,9 +697,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "hostname": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,

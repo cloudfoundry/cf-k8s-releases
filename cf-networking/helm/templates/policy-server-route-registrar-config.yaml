@@ -24,9 +24,9 @@ data:
           "name": "policy-server",
           "tls_port": 4002,
           "registration_interval": "10s",
-          "server_cert_domain_san": "{{ .Values.policyServer.externalDomain }}",
+          "server_cert_domain_san": "api.{{ .Values.policyServer.systemDomain }}",
           "uris": [
-            "{{ .Values.policyServer.externalDomain }}/networking"
+            "api.{{ .Values.policyServer.systemDomain }}/networking"
           ]
         }
       ]

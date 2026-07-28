@@ -148,7 +148,7 @@ spec:
           - name: TRAFFIC_CONTROLLER_METRIC_EMITTER_INTERVAL
             value: "1m"
           - name: TRAFFIC_CONTROLLER_SYSTEM_DOMAIN
-            value: {{ .Values.trafficcontroller.systemDomain }}
+            value: {{ .Values.systemDomain }}
           - name: TRAFFIC_CONTROLLER_IP
             valueFrom:
               fieldRef:
