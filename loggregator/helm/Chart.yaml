@@ -5,4 +5,4 @@ description: Helm chart for Loggregator components
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-release
-appVersion: 107.0.33
+appVersion: 107.0.34
