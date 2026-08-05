@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "LOGGREGATOR_AGENT_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
-  default = "8.3.24"
+  default = "8.3.25"
 }
 
 group "default" {
