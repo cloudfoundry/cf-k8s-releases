@@ -5,4 +5,4 @@ description: Helm chart for Log Cache components
 type: application
 apiVersion: v2
 # renovate: dataSource=github-releases depName=cloudfoundry/log-cache-release
-appVersion: 3.2.12
+appVersion: 3.2.13
