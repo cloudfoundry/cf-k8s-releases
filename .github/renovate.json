@@ -42,6 +42,7 @@
         "cloudfoundry/*",
         "pivotal/*"
       ],
+      "versioning": "semver",
       "automerge": true
     }
   ]
