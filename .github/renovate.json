@@ -37,12 +37,21 @@
       "matchManagers": [
         "custom.regex"
       ],
+      "matchPackageNames": [
+        "cloudfoundry/*",
+        "pivotal/*"
+      ],
+      "versioning": "semver"
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
       "matchUpdateTypes": ["minor", "patch"],
       "matchPackageNames": [
         "cloudfoundry/*",
         "pivotal/*"
       ],
-      "versioning": "semver",
       "automerge": true
     }
   ]
