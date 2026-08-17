@@ -21,7 +21,7 @@ data:
       "garden_healthcheck_emission_interval": "30s",
       "envoy_config_reload_duration": "5s",
       "envoy_drain_timeout": "15m",
-      "advertise_domain": "{{ .Values.rep.advertiseDomain }}",
+      "advertise_domain": "{{ tpl .Values.rep.advertiseDomain . }}",
       "auto_disk_capacity_overhead_mb": 0,
       "cache_path": "/var/lib/rep/download_cache",
       "cell_index": 0,
@@ -129,8 +129,7 @@ data:
       "time_format": "rfc3339",
       "layering_mode": "single-layer",
       "declarative_healthcheck_default_timeout": "1s",
-      "k8s_rep": {
-        "container_config_path": "/var/lib/rep/container_config"
-      }
+      "use_kubernetes_garden_client": true,
+      "workloads_namespace": "{{ .Values.rep.workloadsNamespace }}"
     }
 {{- end }}

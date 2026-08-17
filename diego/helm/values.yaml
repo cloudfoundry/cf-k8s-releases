@@ -91,7 +91,7 @@ rep:
     imagePullPolicy: IfNotPresent
   instanceIdentityCASecret: instance-identity
   caCertificate: ~
-  advertiseDomain: cell.127-0-0-1.nip.io
+  advertiseDomain: "{{ .Release.Namespace }}.pod.cluster.local"
   bbsAddress: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
   containerProxyVerifySubjectAltName:
     - "gorouter"
