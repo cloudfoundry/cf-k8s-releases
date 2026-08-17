@@ -83,6 +83,41 @@ routeEmitter:
       value: "true"
       effect: NoSchedule
 
+rep:
+  enabled: false
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/rep
+    tag: ""
+    imagePullPolicy: IfNotPresent
+  instanceIdentityCASecret: instance-identity
+  caCertificate: ~
+  advertiseDomain: cell.127-0-0-1.nip.io
+  bbsAddress: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
+  containerProxyVerifySubjectAltName:
+    - "gorouter"
+    - "ssh-proxy"
+  locket:
+    address: locket.{{ .Release.Namespace }}.svc.cluster.local:8891
+    certificateSecret: ""
+  loggregator:
+    apiHost: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
+    apiPort: 3458
+    certificateSecret: ""
+  fileServer:
+    address: http://fileserver.{{ .Release.Namespace }}.svc.cluster.local:8080
+  stacks:
+    cflinuxfs4: ghcr.io/cloudfoundry/k8s/cflinuxfs4:1.304.0
+  workloadsNamespace: cf-workloads
+  pauseImage: registry.k8s.io/pause:3.10.2
+  resources: ~
+  nodeSelector:
+    cloudfoundry.org/cell: "true"
+  tolerations:
+    - key: cloudfoundry.org/cell
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+
 diegodb:
   name: diego
   password: ~

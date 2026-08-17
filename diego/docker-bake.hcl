@@ -7,8 +7,17 @@ variable "DIEGO_RELEASE_VERSION" {
     default = "2.145.0"
 }
 
+variable "DIEGO_RELEASE_FORK" {
+    default = "https://github.com/sap-contributions/diego-release-fork.git#support-k8s-garden-client"
+}
+
+variable "K8S_GARDEN_CLIENT_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/k8s-garden-client
+    default = "0.6.6"
+}
+
 group "default" {
-    targets = [ "diego", "fileserver" ]
+    targets = [ "diego", "fileserver", "rep" ]
 }
 
 function "targetname" {
@@ -42,5 +51,15 @@ target "fileserver" {
     contexts = {
         "src"    = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
         "config" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:config"
+    }
+}
+
+target "rep" {
+    dockerfile = "rep.Dockerfile"
+    tags = [ "${REGISTRY_PREFIX}rep:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}rep:latest" ]
+
+    contexts = {
+        "src"     = "${DIEGO_RELEASE_FORK}:src",
+        "watcher" = "https://github.com/cloudfoundry/k8s-garden-client.git#v${K8S_GARDEN_CLIENT_VERSION}"
     }
 }
