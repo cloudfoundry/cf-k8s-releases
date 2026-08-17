@@ -7,8 +7,12 @@ variable "DIEGO_RELEASE_VERSION" {
     default = "2.151.0"
 }
 
+variable "TAR_VERSION" {
+    default = "1.35"
+}
+
 group "default" {
-    targets = [ "diego", "fileserver" ]
+    targets = [ "diego", "fileserver", "rep" ]
 }
 
 function "targetname" {
@@ -42,5 +46,15 @@ target "fileserver" {
     contexts = {
         "src"    = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
         "config" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:config"
+    }
+}
+
+target "rep" {
+    dockerfile = "rep.Dockerfile"
+    tags = [ "${REGISTRY_PREFIX}rep:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}rep:latest" ]
+
+    contexts = {
+        "src" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
+        "tar" = "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"
     }
 }
