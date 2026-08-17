@@ -10,7 +10,7 @@ nodeSelector: ~
 tolerations: ~
 
 uaaAdminSecret: ~
-ccAdminPassword: notUsed
+ccAdminPassword: changeme
 oauthClientsSecret: ~
 uaadb:
   name: uaa
@@ -32,7 +32,7 @@ routeRegistrar:
 scim:
   users:
     - name: ccadmin
-      password: "changeme"
+      password: "{{ .Values.ccAdminPassword }}"
       email: ccadmin
       firstName: ""
       lastName: ""
@@ -44,18 +44,18 @@ oauth:
     cc-service-dashboards:
       authorities: clients.read,clients.write,clients.admin
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       scope: openid,cloud_controller_service_permissions.read
       id: cc-service-dashboards
     cc_routing:
       authorities: routing.router_groups.read
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: cc_routing
     cc_service_key_client:
       authorities: credhub.read,credhub.write
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: cc_service_key_client
     cf:
       access-token-validity: 1200
@@ -69,66 +69,66 @@ oauth:
     cf_smoke_tests:
       authorities: cloud_controller.admin,clients.read
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: cf_smoke_tests
     cloud_controller_username_lookup:
       authorities: scim.userids,scim.read
       authorized-grant-types: client_credentials
       override: true
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: cloud_controller_username_lookup
     credhub_admin_client:
       authorities: credhub.read,credhub.write
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: credhub_admin_client
     doppler:
       authorities: uaa.resource
       authorized-grant-types: client_credentials
       override: true
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: doppler
     gorouter:
       authorities: routing.routes.read
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: gorouter
     network-policy:
       authorities: uaa.resource,cloud_controller.admin_read_only
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: network-policy
     routing_api_client:
       authorities: routing.routes.write,routing.routes.read,routing.router_groups.read
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: routing_api_client
     ssh-proxy:
       authorized-grant-types: authorization_code
       autoapprove: true
       override: true
       redirect-uri: "https://uaa.{{ .Values.systemDomain }}/login"
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       scope: openid,cloud_controller.read,cloud_controller.write,cloud_controller.admin
       id: ssh-proxy
     tcp_emitter:
       authorities: routing.routes.write,routing.routes.read
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: tcp_emitter
     tcp_router:
       authorities: routing.routes.read,routing.router_groups.read
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
       id: tcp_router
     admin:
       authorized-grant-types: client_credentials
       authorities: clients.read,clients.write,clients.secret,uaa.admin,scim.read,scim.write,password.write
       id: admin
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
     nfsbroker-credhub-client:
       authorities: credhub.read,credhub.write
       authorized-grant-types: client_credentials
-      secret: {{ .Values.oauthClientsSecret | quote }}
+      secret: "{{ .Values.oauthClientsSecret }}"
 
 uaaConfigOverrides: {}
