@@ -50,6 +50,7 @@ jobs:
           yq -e -i '.sshProxy.image.repository = "ssh-proxy"' helm/values.yaml
           yq -e -i '.routeEmitter.image.repository = "route-emitter"' helm/values.yaml
           yq -e -i '.fileserver.image.repository = "fileserver"' helm/values.yaml
+          yq -e -i '.rep.image.repository = "rep"' helm/values.yaml
       - name: Deploy
         if: steps.check.outputs.should_run == 'true'
         run: |
