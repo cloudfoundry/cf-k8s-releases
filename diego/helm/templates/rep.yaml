@@ -28,10 +28,6 @@ spec:
           securityContext:
             runAsUser: 0
           env:
-            - name: NODE_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -47,7 +43,7 @@ spec:
                 -subj "/CN=rep/O=cf" \
                 -keyout /etc/ssl/certs/rep/tls.key \
                 -out /etc/ssl/certs/rep/rep.csr && \
-              echo "subjectAltName=IP:${NODE_IP},IP:127.0.0.1,DNS:localhost" > /tmp/rep.ext && \
+              echo "subjectAltName=DNS:*.{{ .Release.Namespace }}.pod.cluster.local,IP:127.0.0.1,DNS:localhost" > /tmp/rep.ext && \
               echo '01' > /tmp/rep.srl && \
               openssl x509 -req -in /etc/ssl/certs/rep/rep.csr \
                 -CA /etc/ssl/certs/instance-identity/tls.crt \
@@ -110,10 +106,6 @@ spec:
               hostPort: 1801
               name: rep-tls
           env:
-          - name: POD_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
           - name: NODE_NAME
             valueFrom:
               fieldRef:
@@ -122,8 +114,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-          - name: WORKLOADS_NAMESPACE
-            value: {{ .Values.rep.workloadsNamespace }}
           {{- if .Values.rep.resources }}
           resources:
             {{- toYaml .Values.rep.resources | nindent 12 }}
