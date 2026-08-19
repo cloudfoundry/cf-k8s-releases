@@ -9,7 +9,9 @@ metadata:
     "helm.sh/hook-weight": "-1"
 stringData:
   config.yaml: |-
-    {{- tpl (.Files.Get "files/cloud_controller_ng.yaml") . | nindent 4 }}
+    {{- $base := tpl (.Files.Get "files/cloud_controller_ng.yaml") . | fromYaml }}
+    {{- $overrides := .Values.cloudController.configOverrides | default dict }}
+    {{- toYaml (mergeOverwrite $base $overrides) | nindent 4 }}
   stacks.yaml: |-
     default: {{ .Values.cloudController.default_stack }}
     stacks:
