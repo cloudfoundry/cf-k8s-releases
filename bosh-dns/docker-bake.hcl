@@ -8,7 +8,7 @@ group "default" {
 
 variable "BOSH_DNS_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/bosh-dns-release
-  default = "1.39.27"
+  default = "1.39.28"
 }
 
 target "bosh-dns" {
