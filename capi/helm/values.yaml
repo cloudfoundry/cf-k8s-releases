@@ -133,6 +133,7 @@ cloudController:
   defaultRunningSecurityGroups:
     - "public_networks"
     - "dns"
+  configOverrides: {}
 
 localWorker:
   image:

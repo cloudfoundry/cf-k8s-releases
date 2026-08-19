@@ -215,6 +215,11 @@
     "cloudController": {
       "additionalProperties": false,
       "properties": {
+        "configOverrides": {
+          "type": [
+            "object"
+          ]
+        },
         "appDomains": {
           "type": [
             "array"
