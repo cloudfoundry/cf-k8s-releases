@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/java-buildpack
-    default = "5.0.6"
+    default = "4.77.0"
 }
 
 group "default" {
@@ -21,6 +21,5 @@ target "java-buildpack" {
 
     contexts = {
       "src" = "https://github.com/cloudfoundry/java-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
     }
 }
