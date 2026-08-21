@@ -8,7 +8,7 @@ variable "CFLINUXFS4_VERSION" {
 }
 
 group "default" {
-  targets = ["cflinuxfs4"]
+  targets = ["cflinuxfs4", "cflinuxfs4-compat"]
 }
 
 target "cflinuxfs4" {
@@ -18,5 +18,19 @@ target "cflinuxfs4" {
   args = {
     "STACK_VERSION" = CFLINUXFS4_VERSION
     "STACK_NAME" = "cflinuxfs4"
+  }
+}
+
+target "cflinuxfs4-compat" {
+  dockerfile = "compat.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}cflinuxfs4-compat:${CFLINUXFS4_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4-compat:latest" ]
+
+  args = {
+    "STACK_VERSION" = CFLINUXFS4_VERSION
+    "STACK_NAME" = "cflinuxfs4"
+  }
+
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/cflinuxfs4.git#main:packages"
   }
 }
