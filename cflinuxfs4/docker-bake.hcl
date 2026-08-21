@@ -31,6 +31,6 @@ target "cflinuxfs4-compat" {
   }
 
   contexts = {
-    "src" = "https://github.com/cloudfoundry/cflinuxfs4.git#main:packages"
+    "src" = "https://github.com/cloudfoundry/cflinuxfs4.git#${CFLINUXFS4_VERSION}:packages"
   }
 }
