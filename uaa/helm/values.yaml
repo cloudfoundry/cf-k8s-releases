@@ -11,7 +11,7 @@ tolerations: ~
 
 uaaAdminSecret: ~
 ccAdminPassword: changeme
-oauthClientsSecret: ~
+oauthClientsSecret: changeme
 uaadb:
   name: uaa
   password: ~

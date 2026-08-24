@@ -63,7 +63,7 @@
       "type": ["object", "null"]
     },
     "oauthClientsSecret": {
-      "type": ["string", "null"]
+      "type": "string"
     },
     "routeRegistrar": {
       "additionalProperties": false,
