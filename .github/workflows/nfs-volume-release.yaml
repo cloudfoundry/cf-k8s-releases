@@ -14,7 +14,11 @@ env:
 
 
 jobs:
-  nfs-volume-release:
+  nfs-volume-image-release:
+    uses: ./.github/workflows/reusable-matrix-image-build.yaml
+    with:
+      target: nfs-volume
+  nfs-volume-helm-release:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -25,23 +29,12 @@ jobs:
       - uses: ./.github/actions/init
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: nfs-volume
-        run: |
-          echo "CHART_VERSION=$(yq e '.version' helm/Chart.yaml)" >> $GITHUB_ENV
-          echo "APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)" >> $GITHUB_ENV
-      - name: Release Images
-        working-directory: nfs-volume
-        run: |
-          # Check if image available
-          if docker pull ${REGISTRY_PREFIX}nfsbroker:$APP_VERSION > /dev/null 2>&1; then
-             echo "nfsbroker image already exists in version $APP_VERSION."
-          else
-            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
-          fi
       - name: Publish Helm Chart
         working-directory: nfs-volume
         run: |
+          CHART_VERSION=$(yq e '.version' helm/Chart.yaml)
+          APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)
+
           # Check if chart available
           if helm show chart oci://${HELM_REGISTRY_PREFIX}nfs-volume --version $CHART_VERSION > /dev/null 2>&1; then
              echo "Helm chart already exists in version $CHART_VERSION."
