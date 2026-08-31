@@ -7,8 +7,10 @@ metadata:
   labels:
     app: otel-collector
 data:
-  config.yaml: |
-    {{- toYaml .Values.otelCollector.config | nindent 4 }}
+  {{- range $i, $e := .Values.otelCollector.configs }}
+  {{ printf "config-%03d-%s.yml" $i (regexReplaceAll "[^a-zA-Z0-9_-]" $e.name "_") }}: |
+    {{- toYaml $e.config | nindent 4 }}
+  {{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,15 +28,17 @@ spec:
       labels:
         app: otel-collector
       annotations:
-        checksum/config: {{ toYaml .Values.otelCollector.config | sha256sum }}
+        checksum/config: {{ toYaml .Values.otelCollector.configs | sha256sum }}
     spec:
       containers:
         - name: otel-collector
           image: {{ .Values.otelCollector.image.repository }}:{{ default .Chart.AppVersion .Values.otelCollector.image.tag }}
           imagePullPolicy: {{ .Values.otelCollector.image.imagePullPolicy }}
           args:
+          {{- range $i, $e := .Values.otelCollector.configs }}
             - "--config"
-            - "/etc/otel/config.yaml"
+            - {{ printf "/etc/otel/config-%03d-%s.yml" $i (regexReplaceAll "[^a-zA-Z0-9_-]" $e.name "_") }}
+          {{- end }}
           ports:
             - name: otlp-grpc
               containerPort: 4317

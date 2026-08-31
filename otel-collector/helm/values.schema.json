@@ -11,8 +11,17 @@
         "enabled": {
           "type": "boolean"
         },
-        "config": {
-          "type": "object"
+        "configs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name":   { "type": "string" },
+              "config": { "type": "object" }
+            },
+            "required": ["name", "config"]
+          }
         },
         "image": {
           "additionalProperties": false,

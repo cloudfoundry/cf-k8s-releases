@@ -5,29 +5,31 @@ otelCollector:
     repository: ghcr.io/cloudfoundry/k8s/otel-collector
     tag: ""
     imagePullPolicy: IfNotPresent
-  # OpenTelemetry Collector config, rendered verbatim into a ConfigMap and passed
-  # to the collector via `--config /etc/otel/config.yaml`. Override to taste.
-  config:
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-    exporters:
-      debug:
-        verbosity: detailed
-    service:
-      pipelines:
-        logs:
-          receivers: [otlp]
-          exporters: [debug]
-        metrics:
-          receivers: [otlp]
-          exporters: [debug]
-        traces:
-          receivers: [otlp]
-          exporters: [debug]
+  # Ordered list of collector configs. Each entry becomes one --config file (deep-merged
+  # by the collector at load, in list order). Replaces the old single `config:`.
+  configs:
+    - name: base
+      config:
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:4317
+              http:
+                endpoint: 0.0.0.0:4318
+        exporters:
+          debug:
+            verbosity: detailed
+        service:
+          pipelines:
+            metrics:
+              receivers: [otlp]
+              exporters: [debug]
+            logs:
+              receivers: [otlp]
+              exporters: [debug]
+            traces:
+              receivers: [otlp]
+              exporters: [debug]
   nodeSelector: ~
   tolerations: ~
