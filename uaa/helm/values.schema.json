@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "ccAdminPassword": {
-      "type": ["string", "null"]
+      "type": "string"
     },
     "certificateSecret": {
       "type": "string"
@@ -63,7 +63,7 @@
       "type": ["object", "null"]
     },
     "oauthClientsSecret": {
-      "type": ["string", "null"]
+      "type": "string"
     },
     "routeRegistrar": {
       "additionalProperties": false,
@@ -118,6 +118,58 @@
     },
     "uaaAdminSecret": {
       "type": ["string", "null"]
+    },
+    "scim": {
+      "additionalProperties": false,
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "groups": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "password",
+              "email",
+              "groups",
+              "origin"
+            ],
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    "oauth": {
+      "additionalProperties": false,
+      "properties": {
+        "clients": {
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   },
   "type": "object"
