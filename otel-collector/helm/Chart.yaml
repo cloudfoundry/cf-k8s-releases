@@ -1,8 +1,0 @@
-name: otel-collector
-# renovate: dataSource=github-releases depName=cloudfoundry/otel-collector-release
-version: 0.11.10
-description: Helm chart for OpenTelemetry Collector for CloudFoundry
-type: application
-apiVersion: v2
-# renovate: dataSource=github-releases depName=cloudfoundry/otel-collector-release
-appVersion: 0.11.10
