@@ -146,7 +146,7 @@ routeRegistrar:
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
-    tag: "0.392.0"
+    tag: "0.393.0"
     imagePullPolicy: IfNotPresent
   resources: ~
 
