@@ -28,7 +28,7 @@ This creates an image tagged as `<image>:latest` (e.g., `gorouter:latest`) in yo
 
   <summary>View all available images</summary>
 
-  To see all buildable images:
+To see all buildable images:
 
   ```bash
   docker buildx bake --print
@@ -36,3 +36,9 @@ This creates an image tagged as `<image>:latest` (e.g., `gorouter:latest`) in yo
 
 </details>
 
+> **Podman:** Building via `docker-bake.hcl` is not yet supported with Podman. Build images manually using `podman build` with the Dockerfiles in `releases/`:
+>
+> ```bash
+> podman build -f releases/<component>/Dockerfile -t <image>:latest \
+>   --build-context src=<path-to-local-source> .
+> ```
