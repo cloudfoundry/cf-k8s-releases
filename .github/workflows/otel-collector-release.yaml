@@ -1,0 +1,38 @@
+name: Release otel-collector
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'otel-collector/docker-bake.hcl'
+      - 'otel-collector/otel-collector.Dockerfile'
+
+env:
+  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
+
+jobs:
+  otel-collector-release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/init
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine Version
+        working-directory: otel-collector
+        run: |
+          echo "APP_VERSION=$(grep -E 'default\s*=\s*"[0-9]' docker-bake.hcl | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_ENV
+      - name: Release Images
+        working-directory: otel-collector
+        run: |
+          if docker pull ${REGISTRY_PREFIX}otel-collector:$APP_VERSION > /dev/null 2>&1; then
+            echo "otel-collector image already exists in version $APP_VERSION."
+          else
+            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
+          fi
