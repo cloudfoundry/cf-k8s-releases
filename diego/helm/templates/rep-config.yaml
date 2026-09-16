@@ -130,6 +130,7 @@ data:
       "layering_mode": "single-layer",
       "declarative_healthcheck_default_timeout": "1s",
       "use_kubernetes_garden_client": true,
-      "workloads_namespace": "{{ .Values.rep.workloadsNamespace }}"
+      "workloads_namespace": "{{ .Values.rep.workloadsNamespace }}",
+      "kubelet_skip_tls_verify": true
     }
 {{- end }}

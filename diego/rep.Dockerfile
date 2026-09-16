@@ -2,51 +2,41 @@ FROM gcc:15 AS gccbuild
 
 ARG TAR_VERSION=1.35
 
+COPY --from=tar . /src
 WORKDIR /src
-
-ADD https://github.com/cloudfoundry/guardian.git#main:rundmc/nstar ./nstar
-RUN mkdir -p ./tar && curl -L http://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz | tar -xJ -C ./tar
 
 ENV LDFLAGS=-static
 ENV FORCE_UNSAFE_CONFIGURE=1
+ENV CC="musl-gcc -static"
 
-RUN apt update && apt install musl musl-dev musl-tools -y && \
-    sed -i '/#include <unistd.h>/a #include <fcntl.h>' nstar/nstar.c && \
-    make -C ./nstar nstar && \
-    cd ./tar/tar-${TAR_VERSION} && CC="musl-gcc -static" ./configure && CC="musl-gcc -static" make && mv src/tar /src/tar/tar
+RUN apt update && apt install musl musl-dev musl-tools -y && tar -xJf context && \
+    cd ./tar-${TAR_VERSION} && ./configure && make && mv src/tar /src/tar
 
-FROM --platform=$BUILDPLATFORM golang:alpine AS repbuild
-
-ARG TARGETOS TARGETARCH
-
-COPY --from=src . /diego-release/src
-WORKDIR /diego-release/src/code.cloudfoundry.org
-
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/local/bin/rep code.cloudfoundry.org/rep/cmd/rep
-
-FROM --platform=$BUILDPLATFORM golang:alpine AS watcherbuild
+FROM --platform=$BUILDPLATFORM golang:1 AS builder
 
 ARG TARGETOS TARGETARCH
 
-COPY --from=watcher . /k8s-garden-client
-WORKDIR /k8s-garden-client
+COPY --from=src ./code.cloudfoundry.org /src
+WORKDIR /src
 
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/local/bin/watcher ./cmd/watch
+RUN go mod vendor && go mod download
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-w -s" -o bin/rep code.cloudfoundry.org/rep/cmd/rep
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags "-w -s" -o bin/watcher code.cloudfoundry.org/rep/cmd/watch
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags "-w -s" -o bin/untar code.cloudfoundry.org/rep/cmd/untar
 
 FROM ubuntu:26.04
-
 ARG TARGETARCH
-
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     tzdata \
     && \
     update-ca-certificates
 
-COPY --from=repbuild /usr/local/bin/rep /bin/rep
-COPY --from=watcherbuild /usr/local/bin/watcher /bin/watcher
-COPY --from=gccbuild /src/nstar/nstar /bin/
-COPY --from=gccbuild /src/tar/tar /bin/
+COPY --from=builder /src/bin/rep /bin/rep
+COPY --from=builder /src/bin/watcher /bin/watcher
+COPY --from=builder /src/bin/untar /bin/untar
+COPY --from=gccbuild /src/tar /bin/tar
 
 EXPOSE 8080 443
 
