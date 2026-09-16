@@ -33,7 +33,6 @@ jobs:
         working-directory: nfs-volume
         run: |
           CHART_VERSION=$(yq e '.version' helm/Chart.yaml)
-          APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)
 
           # Check if chart available
           if helm show chart oci://${HELM_REGISTRY_PREFIX}nfs-volume --version $CHART_VERSION > /dev/null 2>&1; then
