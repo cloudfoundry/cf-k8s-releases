@@ -12,6 +12,7 @@ jobs:
   capi-image-release:
     uses: ./.github/workflows/reusable-matrix-image-build.yaml
     with:
+      dir: capi
       target: capi
   capi-helm-release:
     needs: capi-image-release
