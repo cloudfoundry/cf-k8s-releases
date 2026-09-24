@@ -7,6 +7,10 @@ on:
         description: "Target to build"
         required: true
         type: string
+      dir:
+        description: "Build directory"
+        required: false
+        type: string
       registry-prefix:
         description: "Registry prefix for the built images"
         required: false
@@ -17,6 +21,10 @@ on:
       target:
         description: "Target to build"
         required: true
+        type: string
+      dir:
+        description: "Build directory"
+        required: false
         type: string
       registry-prefix:
         description: "Registry prefix for the built images"
@@ -36,7 +44,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Determine target
         id: determine-target
-        working-directory: ${{ inputs.target }}
+        working-directory: ${{ inputs.dir }}
         run: |
           echo "build-images=false" >> $GITHUB_OUTPUT
 
@@ -87,7 +95,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         id: bake
-        working-directory: ${{ inputs.target }}
+        working-directory: ${{ inputs.dir }}
         run: |
           TARGET="${{ inputs.target }}"
           docker buildx bake "$TARGET" --print --progress quiet | \
@@ -120,7 +128,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
       - name: Prepare tags
         id: tags
-        working-directory: ${{ inputs.target }}
+        working-directory: ${{ inputs.dir }}
         run: |
           TAGS_DATA=$(docker buildx bake "${{ inputs.target }}" --print --progress quiet | \
             jq -c '

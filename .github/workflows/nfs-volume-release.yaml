@@ -17,6 +17,7 @@ jobs:
   nfs-volume-image-release:
     uses: ./.github/workflows/reusable-matrix-image-build.yaml
     with:
+      dir: nfs-volume
       target: nfs-volume
   nfs-volume-helm-release:
     runs-on: ubuntu-latest

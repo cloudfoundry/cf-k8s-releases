@@ -17,6 +17,7 @@ jobs:
   diego-image-release:
     uses: ./.github/workflows/reusable-matrix-image-build.yaml
     with:
+      dir: diego
       target: default
   diego-helm-release:
     runs-on: ubuntu-latest
