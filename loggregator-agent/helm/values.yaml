@@ -9,6 +9,16 @@ forwarderAgent:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  env: {}
+  extraVolumeMounts: []
+  extraVolumes: []
+
+otelCollector:
+  enabled: false
+  image: otel/opentelemetry-collector-contrib
+  imageTag: ""
+  certificateSecret: ""
+  config: {}
 
 loggregatorAgent:
   doppler:
