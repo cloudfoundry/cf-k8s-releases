@@ -169,6 +169,7 @@ oauth:
           expireSecretInMonths: 0
   clients:
   {{ tpl (.Values.oauth.clients | toYaml) . | nindent 4 }}
+authentication:
   enableUriEncodingCompatibilityMode: false
   policy:
     lockoutAfterFailures: 5
