@@ -1,0 +1,88 @@
+{{- if .Values.otelCollector.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  labels:
+    app: otel-collector
+data:
+  {{- range $i, $e := .Values.otelCollector.configs }}
+  {{ printf "config-%03d-%s.yml" $i (regexReplaceAll "[^a-zA-Z0-9_-]" $e.name "_") }}: |
+    {{- toYaml $e.config | nindent 4 }}
+  {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+      annotations:
+        checksum/config: {{ toYaml .Values.otelCollector.configs | sha256sum }}
+    spec:
+      containers:
+        - name: otel-collector
+          image: {{ .Values.otelCollector.image.repository }}:{{ default .Chart.AppVersion .Values.otelCollector.image.tag }}
+          imagePullPolicy: {{ .Values.otelCollector.image.imagePullPolicy }}
+          args:
+          {{- range $i, $e := .Values.otelCollector.configs }}
+            - "--config"
+            - {{ printf "/etc/otel/config-%03d-%s.yml" $i (regexReplaceAll "[^a-zA-Z0-9_-]" $e.name "_") }}
+          {{- end }}
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+          {{- if .Values.otelCollector.resources }}
+          resources:
+            {{- toYaml .Values.otelCollector.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel
+              readOnly: true
+      {{- if .Values.otelCollector.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.otelCollector.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.otelCollector.tolerations }}
+      tolerations:
+        {{- toYaml .Values.otelCollector.tolerations | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: otel-collector
+  labels:
+    app: otel-collector
+spec:
+  ports:
+    - port: 4317
+      name: otlp-grpc
+      targetPort: 4317
+      protocol: TCP
+    - port: 4318
+      name: otlp-http
+      targetPort: 4318
+      protocol: TCP
+  selector:
+    app: otel-collector
+{{- end }}
