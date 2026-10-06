@@ -59,6 +59,12 @@ completed_tasks:
   cutoff_age_in_days: 31
 service_operations_create_in_progress_cleanup:
   frequency_in_seconds: 3600
+service_operations_update_stuck_in_progress_failed:
+  frequency_in_seconds: 3600 #1h
+service_operations_delete_stuck_in_progress_retry:
+  frequency_in_seconds: 3600 #1h
+service_operations_binding_delete_stuck_in_progress_retry:
+  frequency_in_seconds: 3600 #1h
 cpu_weight_min_memory: 128 #mb
 cpu_weight_max_memory: 8192 #mb
 default_app_memory: 1024 #mb
