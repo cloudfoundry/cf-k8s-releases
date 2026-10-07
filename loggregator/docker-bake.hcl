@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "LOGGREGATOR_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-release
-  default = "107.0.35"
+  default = "107.0.36"
 }
 
 group "default" {
