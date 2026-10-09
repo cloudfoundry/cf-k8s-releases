@@ -5,8 +5,6 @@ metadata:
   name: credhub
   labels:
     app: credhub
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/credhub-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: credhub
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/credhub-config.yaml") . | sha256sum }}
+        checksum/credhub-config: {{ include (print $.Template.BasePath "/credhub-config.yaml") . | sha256sum }}
     spec:
       containers:
       - name: credhub-server

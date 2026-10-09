@@ -37,8 +37,6 @@ metadata:
   name: route-emitter
   labels:
     app: route-emitter
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/route-emitter-config.yaml") . | sha256sum }}
 spec:
   selector:
     matchLabels:
@@ -48,7 +46,7 @@ spec:
       labels:
         app: route-emitter
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/route-emitter-config.yaml") . | sha256sum }}
+        checksum/route-emitter-config: {{ include (print $.Template.BasePath "/route-emitter-config.yaml") . | sha256sum }}
     spec:
       serviceAccountName: route-emitter
       initContainers:

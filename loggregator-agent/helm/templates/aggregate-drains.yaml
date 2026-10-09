@@ -1,0 +1,14 @@
+{{- if .Values.syslogBindingCache.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aggregate-drains
+  labels:
+    app: syslog-binding-cache
+type: Opaque
+stringData:
+  aggregate_drains.yml: |
+    ---
+    - url: syslog://log-cache-syslog.{{ .Release.Namespace }}.svc.cluster.local:8082?include-metrics-deprecated=true
+{{- end }}

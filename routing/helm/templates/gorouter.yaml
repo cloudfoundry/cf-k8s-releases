@@ -6,8 +6,6 @@ metadata:
   name: {{ .Values.gorouter.name }}
   labels:
     app: {{ .Values.gorouter.name }}
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/gorouter-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: {{ .Values.gorouter.name }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/gorouter-config.yaml") . | sha256sum }}
+        checksum/gorouter-config: {{ include (print $.Template.BasePath "/gorouter-config.yaml") . | sha256sum }}
     spec:
       initContainers:
       - name: gorouter-init

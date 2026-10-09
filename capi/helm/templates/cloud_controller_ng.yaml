@@ -1,18 +1,4 @@
 {{ if .Values.cloudController.enabled }}
-{{ $_ := required ".Values.ccdb.password must be provided" .Values.ccdb.password }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cc-shared
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "-2"
-stringData:
-  DB: {{ .Values.ccdb.name }}
-  DB_CONNECTION_STRING: postgres://{{ .Values.ccdb.user }}:{{ .Values.ccdb.password }}@{{ tpl .Values.ccdb.address . }}:{{ .Values.ccdb.port }}/{{ .Values.ccdb.name }}
-  CLOUD_CONTROLLER_NG_CONFIG: /etc/cloud-controller/config.yaml
-  RAILS_ENV: production
 ---
 kind: Service
 apiVersion: v1
@@ -37,8 +23,6 @@ metadata:
   name: cloud-controller
   labels:
     app.kubernetes.io/name: cloud-controller
-  annotations:
-    checksum/config: {{ cat (include (print $.Template.BasePath "/cloud-controller-config.yaml") .) (include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") .) (include (print $.Template.BasePath "/nginx-config.yaml") .) | sha256sum }}
 spec:
   # This is a singleton.
   replicas: 1
@@ -52,7 +36,10 @@ spec:
       labels:
         app.kubernetes.io/name: cloud-controller
       annotations:
-        checksum/config: {{ cat (include (print $.Template.BasePath "/cloud-controller-config.yaml") .) (include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") .) (include (print $.Template.BasePath "/nginx-config.yaml") .) | sha256sum }}
+        checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
+        checksum/cloud-controller-route-registrar-config: {{ include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") . | sha256sum }}
+        checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
+        checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
     spec:
       containers:
         - name: cloud-controller

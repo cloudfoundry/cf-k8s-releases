@@ -4,8 +4,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cc-worker
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
   labels:
     app.kubernetes.io/name: cc-worker
 spec:
@@ -18,7 +16,8 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
+        checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
+        checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/name: cc-worker
     spec:

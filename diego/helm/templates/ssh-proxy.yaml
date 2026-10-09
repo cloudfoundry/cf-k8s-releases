@@ -6,8 +6,6 @@ metadata:
   name: ssh-proxy
   labels:
     app: ssh-proxy
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/ssh-proxy-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: ssh-proxy
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/ssh-proxy-config.yaml") . | sha256sum }}
+        checksum/ssh-proxy-config: {{ include (print $.Template.BasePath "/ssh-proxy-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: ssh-proxy

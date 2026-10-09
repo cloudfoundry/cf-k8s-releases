@@ -6,8 +6,6 @@ metadata:
   name: auctioneer
   labels:
     app: auctioneer
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/auctioneer-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: auctioneer
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/auctioneer-config.yaml") . | sha256sum }}
+        checksum/auctioneer-config: {{ include (print $.Template.BasePath "/auctioneer-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: auctioneer

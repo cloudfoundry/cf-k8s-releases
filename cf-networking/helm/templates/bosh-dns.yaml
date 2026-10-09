@@ -6,8 +6,6 @@ metadata:
   name: bosh-dns
   labels:
     app: bosh-dns
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/bosh-dns-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: bosh-dns
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/bosh-dns-config.yaml") . | sha256sum }}
+        checksum/bosh-dns-config: {{ include (print $.Template.BasePath "/bosh-dns-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: bosh-dns-adapter

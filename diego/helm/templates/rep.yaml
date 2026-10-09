@@ -4,8 +4,6 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: rep
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/rep-config.yaml") . | sha256sum }}
   labels:
     app: rep
 spec:
@@ -15,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/rep-config.yaml") . | sha256sum }}
+        checksum/rep-config: {{ include (print $.Template.BasePath "/rep-config.yaml") . | sha256sum }}
       labels:
         app: rep
     spec:

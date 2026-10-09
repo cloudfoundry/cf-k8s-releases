@@ -6,8 +6,6 @@ metadata:
   name: tps-watcher
   labels:
     app: tps-watcher
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: tps-watcher
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
+        checksum/tps-watcher-config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: tps-watcher

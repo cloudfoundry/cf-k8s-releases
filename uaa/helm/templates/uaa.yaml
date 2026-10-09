@@ -3,8 +3,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: uaa
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
   labels:
     app: uaa
 spec:
@@ -16,6 +14,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+        checksum/uaa-route-registrar-config: {{ include (print $.Template.BasePath "/uaa-route-registrar-config.yaml") . | sha256sum }}
       labels:
         app: uaa
     spec:
