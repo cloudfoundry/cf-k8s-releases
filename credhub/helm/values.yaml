@@ -9,6 +9,7 @@ image:
 
 nodeSelector: ~
 tolerations: ~
+resources: ~
 
 caCertificateSecret: ""
 

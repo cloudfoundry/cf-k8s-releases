@@ -14,6 +14,7 @@ logCacheApi:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   nodeSelector: ~
   tolerations: ~
+  resources: ~
 
 routeRegistrar:
   image:
@@ -38,3 +39,4 @@ logCacheBackend:
       imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  resources: ~

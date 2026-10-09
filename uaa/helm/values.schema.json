@@ -62,6 +62,9 @@
     "nodeSelector": {
       "type": ["object", "null"]
     },
+    "resources": {
+      "type": ["object", "null"]
+    },
     "oauthClientsSecret": {
       "type": "string"
     },

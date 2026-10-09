@@ -53,6 +53,9 @@
           "title": "image",
           "type": "object"
         },
+        "resources": {
+          "type": ["object", "null"]
+        },
         "nodeSelector": {
           "type": [
             "object",
@@ -112,6 +115,9 @@
           },
           "title": "image",
           "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         }
       },
       "title": "routeRegistrar",
@@ -200,6 +206,9 @@
           "title": "systemDomain",
           "type": "string"
         },
+        "resources": {
+          "type": ["object", "null"]
+        },
         "nodeSelector": {
           "type": [
             "object",
@@ -286,7 +295,7 @@
             "resources": {
               "default": "~",
               "title": "resources",
-              "type": "null"
+              "type": ["object", "null"]
             }
           },
           "title": "haproxy",
@@ -313,6 +322,9 @@
           },
           "title": "image",
           "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         },
         "oauthClientsSecret": {
           "default": "",
@@ -421,6 +433,9 @@
           },
           "title": "image",
           "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         }
       },
       "title": "udpForwarder",

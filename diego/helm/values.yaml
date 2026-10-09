@@ -6,6 +6,7 @@ auctioneer:
     repository: ghcr.io/cloudfoundry/k8s/auctioneer
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~
   nodeSelector: ~
   tolerations: ~
 
@@ -17,6 +18,7 @@ bbs:
     repository: ghcr.io/cloudfoundry/k8s/bbs
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~
   nodeSelector: ~
   tolerations: ~
 
@@ -26,6 +28,7 @@ fileserver:
     repository: ghcr.io/cloudfoundry/k8s/fileserver
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~
   nodeSelector: ~
   tolerations: ~
 
@@ -37,6 +40,7 @@ locket:
     repository: ghcr.io/cloudfoundry/k8s/locket
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~
   nodeSelector: ~
   tolerations: ~
 
@@ -48,6 +52,7 @@ sshProxy:
     repository: ghcr.io/cloudfoundry/k8s/ssh-proxy
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~
   nodeSelector: ~
   tolerations: ~
 
@@ -75,6 +80,7 @@ routeEmitter:
     repository: ghcr.io/cloudfoundry/k8s/route-emitter
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~
   nodeSelector:
     cloudfoundry.org/cell: "true"
   tolerations:
@@ -110,6 +116,13 @@ rep:
   workloadsNamespace: cf-workloads
   pauseImage: registry.k8s.io/pause:3.10.2
   resources: ~
+  watcher:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+      limits:
+        cpu: 100m
   nodeSelector:
     cloudfoundry.org/cell: "true"
   tolerations:
