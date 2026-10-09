@@ -19,13 +19,6 @@ runs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
-    - name: Set kernel settings
-      shell: bash
-      run: |
-        docker run --rm \
-          --privileged \
-          --pid host \
-          alpine sh -c "sysctl -w fs.inotify.max_user_instances=512"
     - uses: actions/setup-go@v7
       with:
         go-version: stable
