@@ -17,6 +17,8 @@ spec:
     metadata:
       labels:
         app: log-api
+      annotations:
+        checksum/log-api-route-registrar-config: {{ include (print $.Template.BasePath "/log-api-route-registrar-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: reverse-log-proxy

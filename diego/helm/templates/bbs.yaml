@@ -6,8 +6,6 @@ metadata:
   name: bbs
   labels:
     app: bbs
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/bbs-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: bbs
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/bbs-config.yaml") . | sha256sum }}
+        checksum/bbs-config: {{ include (print $.Template.BasePath "/bbs-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: bbs

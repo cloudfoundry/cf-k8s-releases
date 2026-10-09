@@ -6,9 +6,6 @@ metadata:
   name: cf-tcp-router
   labels:
     app: cf-tcp-router
-  annotations:
-    checksum/cf-tcp-router-config: {{ include (print $.Template.BasePath "/cf-tcp-router-config.yaml") . | sha256sum }}
-    checksum/haproxy-config: {{ include (print $.Template.BasePath "/haproxy-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:

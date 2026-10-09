@@ -6,8 +6,6 @@ metadata:
   name: service-discovery-controller
   labels:
     app: service-discovery-controller
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/service-discovery-controller-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: service-discovery-controller
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/service-discovery-controller-config.yaml") . | sha256sum }}
+        checksum/service-discovery-controller-config: {{ include (print $.Template.BasePath "/service-discovery-controller-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: service-discovery-controller

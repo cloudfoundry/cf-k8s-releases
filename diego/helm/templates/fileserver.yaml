@@ -19,8 +19,6 @@ metadata:
   name: fileserver
   labels:
     app.kubernetes.io/name: fileserver
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/fileserver-config.yaml") . | sha256sum }}
 spec:
   # This is a singleton.
   replicas: 1
@@ -34,7 +32,7 @@ spec:
       labels:
         app.kubernetes.io/name: fileserver
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/fileserver-config.yaml") . | sha256sum }}
+        checksum/fileserver-config: {{ include (print $.Template.BasePath "/fileserver-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: nginx

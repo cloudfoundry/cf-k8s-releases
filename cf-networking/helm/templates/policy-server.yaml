@@ -6,8 +6,6 @@ metadata:
   name: policy-server
   labels:
     app: policy-server
-  annotations:
-    checksum/config: {{ cat (include (print $.Template.BasePath "/policy-server-config.yaml") .) (include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") .) | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,8 @@ spec:
       labels:
         app: policy-server
       annotations:
-        checksum/config: {{ cat (include (print $.Template.BasePath "/policy-server-config.yaml") .) (include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") .) | sha256sum }}
+        checksum/policy-server-config: {{ include (print $.Template.BasePath "/policy-server-config.yaml") . | sha256sum }}
+        checksum/policy-server-route-registrar-config: {{ include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: policy-server

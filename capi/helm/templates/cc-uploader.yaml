@@ -6,8 +6,6 @@ metadata:
   name: cc-uploader
   labels:
     app: cc-uploader
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/cc-uploader-config.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +16,7 @@ spec:
       labels:
         app: cc-uploader
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/cc-uploader-config.yaml") . | sha256sum }}
+        checksum/cc-uploader-config: {{ include (print $.Template.BasePath "/cc-uploader-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: cc-uploader
