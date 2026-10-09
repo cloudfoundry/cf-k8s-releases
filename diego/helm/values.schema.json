@@ -29,6 +29,9 @@
           },
           "type": "object"
         },
+        "resources": {
+          "type": ["object", "null"]
+        },
         "nodeSelector": {
           "type": ["object", "null"]
         },
@@ -88,6 +91,9 @@
             }
           },
           "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         },
         "nodeSelector": {
           "type": ["object", "null"]
@@ -242,6 +248,13 @@
         "resources": {
           "type": ["object", "null"]
         },
+        "watcher": {
+          "additionalProperties": false,
+          "properties": {
+            "resources": { "type": ["object", "null"] }
+          },
+          "type": "object"
+        },
         "nodeSelector": {
           "type": ["object", "null"]
         },
@@ -329,6 +342,9 @@
           },
           "type": "object"
         },
+        "resources": {
+          "type": ["object", "null"]
+        },
         "nodeSelector": {
           "type": ["object", "null"]
         },
@@ -400,6 +416,9 @@
             }
           },
           "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         },
         "nodeSelector": {
           "type": ["object", "null"]
@@ -512,6 +531,9 @@
             }
           }
         },
+        "resources": {
+          "type": ["object", "null"]
+        },
         "nodeSelector": {
           "additionalProperties": false,
           "properties": {
@@ -577,6 +599,9 @@
             }
           },
           "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
         },
         "nodeSelector": {
           "type": ["object", "null"]

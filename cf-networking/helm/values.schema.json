@@ -27,7 +27,7 @@
           "type": ["object", "null"]
         },
         "resources": {
-          "type": "null"
+          "type": ["object", "null"]
         },
         "tolerations": {
           "type": ["array", "null"],
@@ -84,7 +84,7 @@
           "type": "object"
         },
         "resources": {
-          "type": "null"
+          "type": ["object", "null"]
         }
       },
       "type": "object"
@@ -156,7 +156,7 @@
           "type": "string"
         },
         "resources": {
-          "type": "null"
+          "type": ["object", "null"]
         },
         "tolerations": {
           "type": ["array", "null"],
@@ -191,6 +191,9 @@
     "routeRegistrar": {
       "additionalProperties": false,
       "properties": {
+        "resources": {
+          "type": ["object", "null"]
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -255,7 +258,7 @@
           "type": "integer"
         },
         "resources": {
-          "type": "null"
+          "type": ["object", "null"]
         },
         "tolerations": {
           "type": ["array", "null"],

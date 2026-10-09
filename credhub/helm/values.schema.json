@@ -56,6 +56,9 @@
     "nodeSelector": {
       "type": ["object", "null"]
     },
+    "resources": {
+      "type": ["object", "null"]
+    },
     "tolerations": {
       "type": ["array", "null"],
       "items": {

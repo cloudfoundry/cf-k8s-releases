@@ -8,6 +8,7 @@ image:
 
 nodeSelector: ~
 tolerations: ~
+resources: ~
 
 uaaAdminSecret: ~
 ccAdminPassword: changeme

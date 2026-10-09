@@ -10,6 +10,7 @@ gorouter:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  resources: ~
 
 udpForwarder:
   certificateSecret: ""
@@ -18,6 +19,7 @@ udpForwarder:
     # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
     tag: "8.3.30"
     imagePullPolicy: IfNotPresent
+  resources: ~
 
 routingApi:
   enabled: false
@@ -42,6 +44,7 @@ routingApi:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  resources: ~
 
 tcpRouter:
   enabled: false
@@ -68,9 +71,11 @@ tcpRouter:
   nodeSelector: ~
   tolerations: ~
   isolationSegments: []
+  resources: ~
 
 routeRegistrar:
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     tag: ""
     imagePullPolicy: IfNotPresent
+  resources: ~

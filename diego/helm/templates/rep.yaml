@@ -25,6 +25,7 @@ spec:
       initContainers:
         - name: init
           image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 0
           env:
@@ -187,12 +188,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          {{- if .Values.rep.watcher.resources }}
           resources:
-            requests:
-              cpu: 50m
-              memory: 32Mi
-            limits:
-              cpu: 100m
+            {{- toYaml .Values.rep.watcher.resources | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: tmp
               mountPath: /tmp
