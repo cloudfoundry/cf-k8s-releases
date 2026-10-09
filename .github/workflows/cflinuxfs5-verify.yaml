@@ -53,7 +53,7 @@ jobs:
         with:
           test-repo: cf-smoke-tests
           test-branch: main
-          config-template: ${{ github.workspace }}/.github/smoke-config.tpl
+          config-template: ${{ github.workspace }}/kind-deployment/.github/smoke-config.tpl
           config-output: ${{ github.workspace }}/.github/smoke-config.json
       - name: run smoke test
         if: steps.check.outputs.should_run == 'true'
