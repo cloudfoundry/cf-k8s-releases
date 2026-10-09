@@ -34,3 +34,31 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: nodejs-buildpack
         run: docker buildx bake --load
+      - name: Use image
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          cat >> ${{ github.workspace }}/state-values.yaml <<EOF
+          buildpacks:
+            nodejs-buildpack:
+              image: nodejs-buildpack:latest
+          EOF
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@load-images
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          load-images: "nodejs-buildpack"
+          additional-values-files: "${{ github.workspace }}/state-values.yaml"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@v0.25.0
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          test-repo: cf-smoke-tests
+          test-branch: main
+          config-template: ${{ github.workspace }}/kind-deployment/.github/smoke-config.tpl
+          config-output: ${{ github.workspace }}/.github/smoke-config.json
+      - name: run smoke test
+        if: steps.check.outputs.should_run == 'true'
+        env:
+          CONFIG: "${{ github.workspace }}/.github/smoke-config.json"
+          GINKGO_NO_COLOR: "true"
+        run: |
+          ./cf-smoke-tests/bin/test --no-color --github-output --timeout=30m --procs=4 --json-report report.json
