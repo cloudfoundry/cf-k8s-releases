@@ -71,6 +71,15 @@
     "routeRegistrar": {
       "additionalProperties": false,
       "properties": {
+        "nats": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
+        },
         "image": {
           "additionalProperties": false,
           "properties": {

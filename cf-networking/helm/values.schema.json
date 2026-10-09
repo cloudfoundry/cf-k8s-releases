@@ -194,6 +194,15 @@
         "resources": {
           "type": ["object", "null"]
         },
+        "nats": {
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "image": {
           "additionalProperties": false,
           "properties": {

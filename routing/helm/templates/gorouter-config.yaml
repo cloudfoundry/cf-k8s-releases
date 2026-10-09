@@ -65,8 +65,8 @@ stringData:
       private_key: |-
         $TLS_KEY
       hosts:
-      - hostname: nats.{{ .Release.Namespace }}.svc.cluster.local
-        port: 4222
+      - hostname: {{ tpl .Values.gorouter.nats.host . }}
+        port: {{ .Values.gorouter.nats.port }}
     force_forwarded_proto_https: false
     sanitize_forwarded_proto: false
     hop_by_hop_headers_to_filter:

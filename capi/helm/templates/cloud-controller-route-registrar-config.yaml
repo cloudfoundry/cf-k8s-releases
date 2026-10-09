@@ -9,7 +9,7 @@ data:
     {
       "message_bus_servers": [
         {
-          "host": "{{ tpl .Values.cloudController.nats.address . }}"
+          "host": "{{ tpl .Values.routeRegistrar.nats.address . }}"
         }
       ],
       "nats_mtls_config": {
