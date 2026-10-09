@@ -8,7 +8,7 @@ data:
     {
       "message_bus_servers": [
         {
-          "host": "{{ tpl .Values.logCacheApi.nats.address . }}"
+          "host": "{{ tpl .Values.routeRegistrar.nats.address . }}"
         }
       ],
       "nats_mtls_config": {

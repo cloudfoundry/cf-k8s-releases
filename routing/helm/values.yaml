@@ -4,6 +4,9 @@ gorouter:
   name: gorouter
   isolationSegments: []
   routingTableShardingMode: all
+  nats:
+    host: nats.{{ .Release.Namespace }}.svc.cluster.local
+    port: 4222
   image:
     repository: ghcr.io/cloudfoundry/k8s/gorouter
     tag: ""
@@ -74,6 +77,8 @@ tcpRouter:
   resources: ~
 
 routeRegistrar:
+  nats:
+    address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     tag: ""

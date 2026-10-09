@@ -5,3 +5,4 @@ version: 7.73.0
 description: A Helm chart for deploying NFS Volume Release components
 # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
 appVersion: 7.73.0
+type: application

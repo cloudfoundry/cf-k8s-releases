@@ -54,6 +54,8 @@ boshDns:
   tolerations: ~
 routeRegistrar:
   resources: ~
+  nats:
+    address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     # renovate: dataSource=github-releases depName=cloudfoundry/routing-release

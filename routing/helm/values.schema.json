@@ -29,6 +29,18 @@
           "default": "all",
           "type": "string"
         },
+        "nats": {
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
         "name": {
           "default": "gorouter",
           "type": "string"
@@ -99,6 +111,15 @@
     "routeRegistrar": {
       "additionalProperties": false,
       "properties": {
+        "nats": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
