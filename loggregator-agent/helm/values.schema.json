@@ -32,6 +32,18 @@
         "nodeSelector": {
           "type": ["object", "null"]
         },
+        "otelCollector": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "resources": {
           "type": ["object", "null"]
         },
@@ -61,41 +73,11 @@
             ],
             "type": "object"
           }
-        },
-        "env": {
-          "type": "object"
-        },
-        "extraVolumeMounts": {
-          "type": "array"
-        },
-        "extraVolumes": {
-          "type": "array"
         }
       },
       "type": "object"
     },
     "global": {
-      "type": "object"
-    },
-    "otelCollector": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "image": {
-          "type": "string"
-        },
-        "imageTag": {
-          "type": "string"
-        },
-        "certificateSecret": {
-          "type": "string"
-        },
-        "config": {
-          "type": "object"
-        }
-      },
       "type": "object"
     },
     "loggregatorAgent": {
