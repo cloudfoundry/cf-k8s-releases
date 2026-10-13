@@ -30,7 +30,7 @@ stringData:
       "max_data_string_length": 640,
       "database_connection_string": "postgres://{{ .Values.diegodb.user }}:{{ .Values.diegodb.password }}@{{ tpl .Values.diegodb.address . }}:{{ .Values.diegodb.port }}/{{ .Values.diegodb.name }}",
       "encryption_keys": {
-        "key-2016-06": "MZvOZLfI9lLjUqPVZfJ7khVm1M4lq6"
+        "key-2016-06": "{{ .Values.bbs.encryptionKey.passphrase }}"
       },
       "auctioneer_address": "https://{{ tpl .Values.auctioneer.hostname . }}:9016",
       "auctioneer_require_tls": false,
