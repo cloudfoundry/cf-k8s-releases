@@ -13,6 +13,8 @@ auctioneer:
 bbs:
   enabled: false
   certificateSecret: ""
+  encryptionKey:
+    passphrase: "MZvOZLfI9lLjUqPVZfJ7khVm1M4lq6"
   hostname: "bbs.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/bbs

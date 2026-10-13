@@ -74,6 +74,15 @@
         "enabled": {
           "type": "boolean"
         },
+        "encryptionKey": {
+          "additionalProperties": false,
+          "properties": {
+            "passphrase": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "hostname": {
           "type": "string"
         },
