@@ -7,10 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cc-worker-clock
 spec:
-  # This is a singleton.
-  replicas: 1
-  strategy:
-    type: Recreate
+  replicas: {{ .Values.ccWorkerClock.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cc-worker-clock
@@ -37,9 +34,9 @@ spec:
           volumeMounts:
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
-            {{- if not .Values.ccdb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            {{- if .Values.ccdb.caCertificateSecret }}
+            - name: db-ca
+              mountPath: /etc/ssl/certs/db-ca
               readOnly: true
             {{- end }}
             - name: etc-cloud-controller
@@ -58,10 +55,10 @@ spec:
         - name: cloud-controller
           secret:
             secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}
-        {{- if not .Values.ccdb.skipSSLVerify }}
-        - name: postgres-ca
+        {{- if .Values.ccdb.caCertificateSecret }}
+        - name: db-ca
           secret:
-            secretName: {{ required "ccdb.caCertificateSecret is required when ccdb.skipSSLVerify is false" .Values.ccdb.caCertificateSecret }}
+            secretName: {{ .Values.ccdb.caCertificateSecret }}
         {{- end }}
         - name: etc-cloud-controller
           secret:

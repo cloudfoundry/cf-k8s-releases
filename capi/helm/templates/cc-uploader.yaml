@@ -7,7 +7,7 @@ metadata:
   labels:
     app: cc-uploader
 spec:
-  replicas: 1
+  replicas: {{ .Values.ccUploader.replicas }}
   selector:
     matchLabels:
       app: cc-uploader
@@ -18,12 +18,13 @@ spec:
       annotations:
         checksum/cc-uploader-config: {{ include (print $.Template.BasePath "/cc-uploader-config.yaml") . | sha256sum }}
     spec:
+      terminationGracePeriodSeconds: {{ add (mul .Values.ccUploader.config.cc_uploader_drain_timeout_in_minutes 60) 1 }}
       containers:
         - name: cc-uploader
           image: {{ .Values.ccUploader.image.repository }}:{{ default .Chart.AppVersion .Values.ccUploader.image.tag }}
           imagePullPolicy: {{ .Values.ccUploader.image.imagePullPolicy }}
           ports:
-            - containerPort: 9091
+            - containerPort: {{ .Values.ccUploader.config.https_port }}
           {{- if .Values.ccUploader.resources }}
           resources:
             {{- toYaml .Values.ccUploader.resources | nindent 12 }}
@@ -57,8 +58,8 @@ metadata:
     app: cc-uploader
 spec:
   ports:
-    - port: 9091
-      targetPort: 9091
+    - port: {{ .Values.ccUploader.config.https_port }}
+      targetPort: {{ .Values.ccUploader.config.https_port }}
       name: tcp
       protocol: TCP
   selector:

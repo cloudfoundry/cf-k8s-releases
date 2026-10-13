@@ -22,14 +22,14 @@ data:
       "routes": [
         {
           "name": "api",
-          "tls_port": {{ .Values.cloudController.publicTLS.port }},
+          "tls_port": {{ .Values.cloudController.config.public_tls.port }},
           "registration_interval": "10s",
-          "server_cert_domain_san": "{{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}",
+          "server_cert_domain_san": "{{ .Values.cloudController.config.external_host }}.{{ .Values.cloudController.config.system_domain }}",
           "tags": {
             "component": "CloudController"
           },
           "uris": [
-            "{{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}"
+            "{{ .Values.cloudController.config.external_host }}.{{ .Values.cloudController.config.system_domain }}"
           ]
         }
       ]

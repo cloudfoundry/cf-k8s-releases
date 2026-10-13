@@ -10,23 +10,26 @@ data:
       "bbs_client_cert": "/etc/ssl/certs/tps-watcher/tls.crt",
       "bbs_client_key": "/etc/ssl/certs/tps-watcher/tls.key",
       "bbs_ca_cert": "/etc/ssl/certs/tps-watcher/ca.crt",
-      "bbs_api_url": "https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889",
-      "cc_base_url": "https://{{ tpl .Values.cloudController.internalServiceHostname . }}:9023",
+      "bbs_api_url": "https://{{ tpl .Values.tpsWatcher.config.bbs.api_location . }}",
+      {{- if .Values.tpsWatcher.config.bbs.max_idle_conns_per_host }}
+      "bbs_max_idle_conns_per_host": {{ .Values.tpsWatcher.config.bbs.max_idle_conns_per_host }},
+      {{- end }}
+      "cc_base_url": "https://{{ tpl .Values.tpsWatcher.config.cc.internal_service_hostname . }}:{{ .Values.tpsWatcher.config.cc.external_port }}",
       "cc_client_cert": "/etc/ssl/certs/tps-watcher/tls.crt",
       "cc_client_key": "/etc/ssl/certs/tps-watcher/tls.key",
       "cc_ca_cert": "/etc/ssl/certs/tps-watcher/ca.crt",
       "debug_server_config": {
-        "debug_address": "127.0.0.1:17015"
+        "debug_address": {{ .Values.tpsWatcher.config.watcher.debug_addr | quote }}
       },
-      "dropsonde_port": 3457,
+      "dropsonde_port": {{ .Values.tpsWatcher.config.dropsonde_port }},
       "lager_config": {
-        "log_level": "info",
-        "time_format": "rfc3339"
+        "log_level": {{ .Values.tpsWatcher.config.log_level | quote }},
+        "time_format": {{ .Values.tpsWatcher.config.logging.format.timestamp | quote }}
       },
       "locket_client_cert_file": "/etc/ssl/certs/tps-watcher/tls.crt",
       "locket_client_key_file": "/etc/ssl/certs/tps-watcher/tls.key",
       "locket_ca_cert_file": "/etc/ssl/certs/tps-watcher/ca.crt",
-      "locket_address": "locket.{{ .Release.Namespace }}.svc.cluster.local:8891",
+      "locket_address": "{{ tpl .Values.tpsWatcher.config.watcher.locket.api_location . }}",
       "instance_id": "62bcb8b5-ee8a-4dd9-bec0-3788beb13855"
     }
 {{ end }}

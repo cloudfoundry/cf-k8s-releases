@@ -14,6 +14,11 @@ spec:
     - port: 9024
       name: https-ext
       targetPort: 9024
+{{- if .Values.cloudController.config.prom_metrics_server_enabled }}
+    - port: {{ .Values.cloudController.config.prom_metrics_server_tls_port }}
+      name: https-metrics
+      targetPort: {{ .Values.cloudController.config.prom_metrics_server_tls_port }}
+{{- end }}
   selector:
     app.kubernetes.io/name: cloud-controller
 ---
@@ -24,10 +29,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cloud-controller
 spec:
-  # This is a singleton.
-  replicas: 1
-  strategy:
-    type: Recreate
+  replicas: {{ .Values.cloudController.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cloud-controller
@@ -41,6 +43,7 @@ spec:
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
     spec:
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.local_worker_grace_period_seconds 1 }}
       containers:
         - name: cloud-controller
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
@@ -52,10 +55,8 @@ spec:
           env:
             - name: INDEX
               value: "1"
-            {{- if .Values.cloudController.blobstore.storage_cli }}
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
-            {{- end }}
           {{- if .Values.cloudController.resources }}
           resources:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}
@@ -63,9 +64,9 @@ spec:
           volumeMounts:
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
-            {{- if not .Values.ccdb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            {{- if .Values.ccdb.caCertificateSecret }}
+            - name: db-ca
+              mountPath: /etc/ssl/certs/db-ca
               readOnly: true
             {{- end }}
             - name: etc-cloud-controller
@@ -98,28 +99,33 @@ spec:
               mountPath: /etc/route-registrar-template
             - name: tmpdir
               mountPath: /tmp
-        - name: local-worker
-          image: {{ .Values.localWorker.image.repository }}:{{ default .Chart.AppVersion .Values.localWorker.image.tag }}
-          imagePullPolicy: {{ .Values.localWorker.image.imagePullPolicy }}
-          command: ["bundle", "exec", "rake", "jobs:local"]
-          {{- if .Values.cloudController.blobstore.storage_cli }}
+        {{- range $i := until (int .Values.cloudController.config.jobs.local.number_of_workers) }}
+        - name: local-worker-{{ add $i 1 }}
+          image: {{ $.Values.localWorker.image.repository }}:{{ default $.Chart.AppVersion $.Values.localWorker.image.tag }}
+          imagePullPolicy: {{ $.Values.localWorker.image.imagePullPolicy }}
+          command: ["bundle", "exec", "rake", "jobs:local[cc_api_worker.$(POD_NAME).{{ add $i 1 }}]"]
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
-          {{- end }}
+            - name: CLOUD_CONTROLLER_LOCAL_WORKER_OVERRIDE_CONFIG
+              value: /etc/cloud-controller/cloud_controller_local_worker_override.yml
           envFrom:
             - secretRef:
                 name: cc-shared
-          {{- if .Values.localWorker.resources }}
+          {{- if $.Values.localWorker.resources }}
           resources:
-            {{- toYaml .Values.localWorker.resources | nindent 12 }}
+            {{- toYaml $.Values.localWorker.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
-            {{- if not .Values.ccdb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            {{- if $.Values.ccdb.caCertificateSecret }}
+            - name: db-ca
+              mountPath: /etc/ssl/certs/db-ca
               readOnly: true
             {{- end }}
             - name: etc-cloud-controller
@@ -128,6 +134,7 @@ spec:
               mountPath: /var/run
             - name: tmpdir
               mountPath: /tmp
+        {{- end }}
         - name: nginx
           image: {{ .Values.nginx.image.repository }}:{{ default .Chart.AppVersion .Values.nginx.image.tag }}
           imagePullPolicy: {{ .Values.nginx.image.imagePullPolicy }}
@@ -149,6 +156,11 @@ spec:
               mountPath: /tmp
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
+            {{- if .Values.cloudController.publicTLSCertificateSecret }}
+            - name: cloud-controller-public
+              mountPath: /etc/ssl/certs/cloud-controller-public
+              readOnly: true
+            {{- end }}
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
@@ -167,6 +179,17 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx_server_public_tls.conf
               subPath: nginx_server_public_tls.conf
+        - name: valkey
+          image: {{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}
+          imagePullPolicy: {{ .Values.valkey.image.imagePullPolicy }}
+          command: ["valkey-server", "--unixsocket", "/var/run/valkey.sock", "--unixsocketperm", "777", "--port", "0", "--save", ""]
+          {{- if .Values.valkey.resources }}
+          resources:
+            {{- toYaml .Values.valkey.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: var-run
+              mountPath: /var/run
       {{- if .Values.cloudController.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.cloudController.nodeSelector | nindent 8 }}
@@ -179,10 +202,15 @@ spec:
         - name: cloud-controller
           secret:
             secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}
-        {{- if not .Values.ccdb.skipSSLVerify }}
-        - name: postgres-ca
+        {{- if .Values.cloudController.publicTLSCertificateSecret }}
+        - name: cloud-controller-public
           secret:
-            secretName: {{ required "ccdb.caCertificateSecret is required when ccdb.skipSSLVerify is false" .Values.ccdb.caCertificateSecret }}
+            secretName: {{ .Values.cloudController.publicTLSCertificateSecret }}
+        {{- end }}
+        {{- if .Values.ccdb.caCertificateSecret }}
+        - name: db-ca
+          secret:
+            secretName: {{ .Values.ccdb.caCertificateSecret }}
         {{- end }}
         - name: etc-cloud-controller
           secret:

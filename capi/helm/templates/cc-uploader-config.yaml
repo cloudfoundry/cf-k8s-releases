@@ -7,21 +7,25 @@ metadata:
 data:
   cc-uploader.json: |-
     {
-      "log_level": "debug",
-      "dropsonde_port": 3457,
+      "log_level": {{ .Values.ccUploader.config.log_level | quote }},
+      "dropsonde_port": {{ .Values.ccUploader.config.dropsonde_port }},
       "lager_config": {
-        "log_level": "debug",
-        "time_format": "rfc3339"
+        "log_level": {{ .Values.ccUploader.config.log_level | quote }},
+        "time_format": {{ .Values.ccUploader.config.logging.format.timestamp | quote }}
       },
-      "listen_addr": "0.0.0.0:9091",
+      {{- if .Values.ccUploader.config.debug_port }}
       "debug_server_config": {
-        "debug_address": "127.0.0.1:17018"
+        "debug_address": "{{ .Values.ccUploader.config.debug_bind_addr }}:{{ .Values.ccUploader.config.debug_port }}"
       },
+      {{- end }}
+      {{- if .Values.ccUploader.config.cc.job_polling_interval_in_seconds }}
+      "job_polling_interval_in_seconds": "{{ .Values.ccUploader.config.cc.job_polling_interval_in_seconds }}s",
+      {{- end }}
       "cc_ca_cert": "/etc/ssl/certs/cc-uploader/ca.crt",
       "cc_client_cert": "/etc/ssl/certs/cc-uploader/tls.crt",
       "cc_client_key": "/etc/ssl/certs/cc-uploader/tls.key",
       "mutual_tls": {
-        "listen_addr": "0.0.0.0:9091",
+        "listen_addr": "{{ .Values.ccUploader.config.bind_addr }}:{{ .Values.ccUploader.config.https_port }}",
         "ca_cert": "/etc/ssl/certs/cc-uploader/ca.crt",
         "server_cert": "/etc/ssl/certs/cc-uploader/tls.crt",
         "server_key": "/etc/ssl/certs/cc-uploader/tls.key"

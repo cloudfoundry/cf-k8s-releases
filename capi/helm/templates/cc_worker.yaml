@@ -7,9 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cc-worker
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
+  replicas: {{ .Values.ccWorker.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cc-worker
@@ -21,17 +19,26 @@ spec:
       labels:
         app.kubernetes.io/name: cc-worker
     spec:
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.worker_grace_period_seconds 1 }}
       containers:
         - name: cc-worker
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
-          command: ["bundle", "exec", "rake", "jobs:generic"]
+          {{- if .Values.cloudController.config.jobs.generic.number_of_worker_threads }}
+          command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME),{{ .Values.cloudController.config.jobs.generic.number_of_worker_threads }},{{ sub .Values.cloudController.config.jobs.generic.worker_grace_period_seconds 1 }}]"]
+          {{- else }}
+          command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME)]"]
+          {{- end }}
           envFrom:
             - secretRef:
                 name: cc-shared
           env:
             - name: INDEX
               value: "1"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
           {{- if .Values.ccWorker.resources }}
@@ -41,9 +48,9 @@ spec:
           volumeMounts:
             - name: cloud-controller
               mountPath: /etc/ssl/certs/cloud-controller
-            {{- if not .Values.ccdb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            {{- if .Values.ccdb.caCertificateSecret }}
+            - name: db-ca
+              mountPath: /etc/ssl/certs/db-ca
               readOnly: true
             {{- end }}
             - name: etc-cloud-controller
@@ -62,10 +69,10 @@ spec:
         - name: cloud-controller
           secret:
             secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}
-        {{- if not .Values.ccdb.skipSSLVerify }}
-        - name: postgres-ca
+        {{- if .Values.ccdb.caCertificateSecret }}
+        - name: db-ca
           secret:
-            secretName: {{ required "ccdb.caCertificateSecret is required when ccdb.skipSSLVerify is false" .Values.ccdb.caCertificateSecret }}
+            secretName: {{ .Values.ccdb.caCertificateSecret }}
         {{- end }}
         - name: etc-cloud-controller
           secret:
