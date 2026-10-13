@@ -18,7 +18,7 @@ routeRegistrar:
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
-    tag: "0.396.0"
+    tag: "0.397.0"
     imagePullPolicy: IfNotPresent
   nats:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
