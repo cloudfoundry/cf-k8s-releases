@@ -23,8 +23,16 @@ serviceDiscoveryController:
   enabled: false
   resources: ~
   certificateSecret: ""
+  clientCaSecret: ""
   hostname: service-discovery-controller.{{ .Release.Namespace }}.svc.cluster.local
+  address: "0.0.0.0"
   port: 8054
+  logLevelAddress: "127.0.0.1"
+  logLevelPort: 8055
+  metronPort: 3457
+  stalenessThresholdSeconds: 180
+  routeEmitterIntervalSeconds: 60
+  readHeaderTimeout: "30s"
   image:
     repository: ghcr.io/cloudfoundry/k8s/service-discovery-controller
     tag: ""
@@ -32,6 +40,10 @@ serviceDiscoveryController:
   nats:
     host: nats.{{ .Release.Namespace }}.svc.cluster.local
     port: 4222
+    user: ""
+    password: ""
+    tlsEnabled: true
+    certificateSecret: ""
   nodeSelector: ~
   tolerations: ~
 boshDnsAdapter:

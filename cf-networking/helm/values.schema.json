@@ -290,7 +290,37 @@
     "serviceDiscoveryController": {
       "additionalProperties": false,
       "properties": {
+        "address": {
+          "type": "string"
+        },
+        "stalenessThresholdSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "routeEmitterIntervalSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "readHeaderTimeout": {
+          "type": "string"
+        },
+        "logLevelAddress": {
+          "type": "string"
+        },
+        "logLevelPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "metronPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
         "certificateSecret": {
+          "type": "string"
+        },
+        "clientCaSecret": {
           "type": "string"
         },
         "enabled": {
@@ -317,11 +347,25 @@
         "nats": {
           "additionalProperties": false,
           "properties": {
+            "certificateSecret": {
+              "type": "string"
+            },
             "host": {
               "type": "string"
             },
             "port": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "user": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "tlsEnabled": {
+              "type": "boolean"
             }
           },
           "type": "object"
@@ -330,7 +374,9 @@
           "type": ["object", "null"]
         },
         "port": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
         },
         "resources": {
           "type": ["object", "null"]

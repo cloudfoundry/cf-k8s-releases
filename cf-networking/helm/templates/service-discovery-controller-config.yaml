@@ -1,32 +1,40 @@
 {{- if .Values.serviceDiscoveryController.enabled }}
+{{- if le (int64 .Values.serviceDiscoveryController.stalenessThresholdSeconds) (int64 .Values.serviceDiscoveryController.routeEmitterIntervalSeconds) }}
+{{- fail "serviceDiscoveryController.stalenessThresholdSeconds must be greater than serviceDiscoveryController.routeEmitterIntervalSeconds" }}
+{{- end }}
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: service-discovery-controller-config
-data:
+type: Opaque
+stringData:
   service-discovery-controller.json: |-
     {
-      "address": "0.0.0.0",
+      "address": "{{ .Values.serviceDiscoveryController.address }}",
       "port": "{{ .Values.serviceDiscoveryController.port }}",
       "index": "0",
-      "log_level_address": "127.0.0.1",
-      "log_level_port": 8055,
+      "log_level_address": "{{ .Values.serviceDiscoveryController.logLevelAddress }}",
+      "log_level_port": {{ .Values.serviceDiscoveryController.logLevelPort }},
       "server_cert": "/etc/ssl/certs/service-discovery-controller/tls.crt",
       "server_key": "/etc/ssl/certs/service-discovery-controller/tls.key",
-      "ca_cert": "/etc/ssl/certs/service-discovery-controller/ca.crt",
-      "metron_port": 3457,
-      "staleness_threshold_seconds": 180,
-      "pruning_interval_seconds": 60,
+      "ca_cert": "/etc/ssl/certs/service-discovery-controller-client-ca/ca.crt",
+      "metron_port": {{ .Values.serviceDiscoveryController.metronPort }},
+      "staleness_threshold_seconds": {{ .Values.serviceDiscoveryController.stalenessThresholdSeconds }},
+      "pruning_interval_seconds": {{ .Values.serviceDiscoveryController.routeEmitterIntervalSeconds }},
       "metrics_emit_seconds": 10,
-      "resume_pruning_delay_seconds": 60,
-      "warm_duration_seconds": 60,
-      "read_header_timeout": "30s",
+      "resume_pruning_delay_seconds": {{ .Values.serviceDiscoveryController.routeEmitterIntervalSeconds }},
+      "warm_duration_seconds": {{ .Values.serviceDiscoveryController.routeEmitterIntervalSeconds }},
+      "read_header_timeout": "{{ .Values.serviceDiscoveryController.readHeaderTimeout }}",
       "nats": {
-        "tls_enabled": true,
-        "ca_certs": "/etc/ssl/certs/service-discovery-controller/ca.crt",
-        "cert_chain": "/etc/ssl/certs/service-discovery-controller/tls.crt",
-        "private_key": "/etc/ssl/certs/service-discovery-controller/tls.key",
+        "user": {{ .Values.serviceDiscoveryController.nats.user | quote }},
+        "pass": {{ .Values.serviceDiscoveryController.nats.password | quote }},
+        "tls_enabled": {{ .Values.serviceDiscoveryController.nats.tlsEnabled }},
+        {{- if .Values.serviceDiscoveryController.nats.tlsEnabled }}
+        "ca_certs": "/etc/ssl/certs/service-discovery-controller-nats/ca.crt",
+        "cert_chain": "/etc/ssl/certs/service-discovery-controller-nats/tls.crt",
+        "private_key": "/etc/ssl/certs/service-discovery-controller-nats/tls.key",
+        {{- end }}
         "hosts": [
           {
             "hostname": "{{ tpl .Values.serviceDiscoveryController.nats.host . }}",
