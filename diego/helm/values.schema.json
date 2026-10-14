@@ -78,23 +78,7 @@
           "type": "boolean"
         },
         "encryptionKeys": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "label": {
-                "type": "string"
-              },
-              "passphrase": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "label",
-              "passphrase"
-            ],
-            "type": "object"
-          },
-          "type": "array"
+          "type": "object"
         },
         "hostname": {
           "type": "string"

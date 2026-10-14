@@ -15,8 +15,7 @@ bbs:
   certificateSecret: ""
   activeKeyLabel: "key-2016-06"
   encryptionKeys:
-    - label: "key-2016-06"
-      passphrase: "MZvOZLfI9lLjUqPVZfJ7khVm1M4lq6"
+    key-2016-06: "MZvOZLfI9lLjUqPVZfJ7khVm1M4lq6"
   hostname: "bbs.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/bbs
