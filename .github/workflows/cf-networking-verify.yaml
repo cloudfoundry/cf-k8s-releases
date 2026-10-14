@@ -38,49 +38,45 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: bosh-dns
         run: docker buildx bake bosh-dns --load
-      - name: Create KinD Cluster
-        if: steps.check.outputs.should_run == 'true'
-        run: make -C kind create-kind init
-      - name: Load cf-networking images into KinD
+      - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: cf-networking
-        run: |
-          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Load route-registrar image into KinD
-        if: steps.check.outputs.should_run == 'true'
-        working-directory: routing
-        run: |
-          for image in $(docker buildx bake route-registrar --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Load bosh-dns image into KinD
-        if: steps.check.outputs.should_run == 'true'
-        working-directory: bosh-dns
-        run: |
-          for image in $(docker buildx bake bosh-dns --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Use images
-        if: steps.check.outputs.should_run == 'true'
-        working-directory:  cf-networking
         run: |
           yq -e -i '.policyServer.image.repository = "policy-server"' helm/values.yaml
           yq -e -i '.serviceDiscoveryController.image.repository = "service-discovery-controller"' helm/values.yaml
           yq -e -i '.boshDnsAdapter.image.repository = "bosh-dns-adapter"' helm/values.yaml
           yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
           yq -e -i '.boshDns.image.repository = "bosh-dns"' helm/values.yaml
-      - name: Deploy
+
+          cat >> ${{ github.workspace }}/state-values.yaml <<EOF
+          charts:
+            cfNetworking:
+              url: ../cf-networking/helm
+          EOF
+
+          list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')
+          list="$list,$(cd "$GITHUB_WORKSPACE/routing" && docker buildx bake route-registrar --print | jq -r '[.target[].tags[]] | join(",")')"
+          list="$list,$(cd "$GITHUB_WORKSPACE/bosh-dns" && docker buildx bake bosh-dns --print | jq -r '[.target[].tags[]] | join(",")')"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
-        run: |
-          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
-          docker run --rm --net=host --env-file kind/temp/secrets.env \
-            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
-            -v "${{ github.workspace }}:/wd" \
-            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
-            --workdir /wd ghcr.io/helmfile/helmfile:v$HELMFILE_VERSION \
-            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.cfNetworking.url=../cf-networking/helm
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          install-optional-components: "true"
+          load-images: "${{ steps.imgs.outputs.list }}"
+          additional-values-files: "${{ github.workspace }}/state-values.yaml"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          test-repo: cf-smoke-tests
+          test-branch: main
+          config-template: ${{ github.workspace }}/kind-deployment/.github/smoke-config.tpl
+          config-output: ${{ github.workspace }}/.github/smoke-config.json
+      - name: run smoke test
+        if: steps.check.outputs.should_run == 'true'
         env:
-          # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
-          HELMFILE_VERSION: "1.8.1"
+          CONFIG: "${{ github.workspace }}/.github/smoke-config.json"
+          GINKGO_NO_COLOR: "true"
+        run: |
+          ./cf-smoke-tests/bin/test --no-color --github-output --timeout=30m --procs=4 --json-report report.json

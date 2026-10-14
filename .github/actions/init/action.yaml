@@ -9,13 +9,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: checkout kind-deployment
-      uses: actions/checkout@v7
-      with:
-        github-server-url: https://github.com
-        repository: cloudfoundry/kind-deployment
-        ref: main
-        path: kind
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v4
     - name: Set up Docker Buildx
@@ -26,27 +19,6 @@ runs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
-    - name: Set kernel settings
-      shell: bash
-      run: |
-        docker run --rm \
-          --privileged \
-          --pid host \
-          alpine sh -c "sysctl -w fs.inotify.max_user_instances=512"
     - uses: actions/setup-go@v7
       with:
         go-version: stable
-    - uses: azure/setup-helm@v5
-    - name: Install dependencies
-      shell: bash
-      run: |
-        mkdir -p $HOME/.local/bin && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-        curl -L https://kind.sigs.k8s.io/dl/v${KIND_VERSION}/kind-linux-amd64 -o $HOME/.local/bin/kind
-        chmod +x $HOME/.local/bin/kind
-        curl -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=${CF_CLI_VERSION}&source=github" | tar -zx
-        mv cf8 $HOME/.local/bin/cf
-      env:
-        # renovate: dataSource=github-releases depName=cloudfoundry/cli
-        CF_CLI_VERSION: "8.19.0"
-        # renovate: dataSource=github-releases depName=kubernetes-sigs/kind
-        KIND_VERSION: "0.33.0"

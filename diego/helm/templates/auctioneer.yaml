@@ -26,7 +26,7 @@ spec:
             - "/auctioneer/auctioneer.json"
           imagePullPolicy: {{ .Values.auctioneer.image.imagePullPolicy }}
           ports:
-            - containerPort: 8889
+            - containerPort: 9016
           {{- if .Values.auctioneer.resources }}
           resources:
             {{- toYaml .Values.auctioneer.resources | nindent 12 }}

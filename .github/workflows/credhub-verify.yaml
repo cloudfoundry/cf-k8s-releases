@@ -30,31 +30,38 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: credhub
         run: docker buildx bake --load
-      - name: Create KinD Cluster
-        if: steps.check.outputs.should_run == 'true'
-        run: make -C kind create-kind init
-      - name: Load Images into KinD
+      - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: credhub
         run: |
-          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Use Images
-        if: steps.check.outputs.should_run == 'true'
-        working-directory:  credhub
-        run: |
           yq -e -i '.image.repository = "credhub"' helm/values.yaml
-      - name: Deploy
+
+          cat >> ${{ github.workspace }}/state-values.yaml <<EOF
+          charts:
+            credhub:
+              url: ../credhub/helm
+          EOF
+
+          echo "list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')" >> "$GITHUB_OUTPUT"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
-        run: |
-          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
-          docker run --rm --net=host --env-file kind/temp/secrets.env \
-            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
-            -v "${{ github.workspace }}:/wd" \
-            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
-            --workdir /wd ghcr.io/helmfile/helmfile:v$HELMFILE_VERSION \
-            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.credhub.url=../credhub/helm
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          install-optional-components: "true"
+          load-images: "${{ steps.imgs.outputs.list }}"
+          additional-values-files: "${{ github.workspace }}/state-values.yaml"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
+        if: steps.check.outputs.should_run == 'true'
+        with:
+          test-repo: cf-smoke-tests
+          test-branch: main
+          config-template: ${{ github.workspace }}/kind-deployment/.github/smoke-config.tpl
+          config-output: ${{ github.workspace }}/.github/smoke-config.json
+      - name: run smoke test
+        if: steps.check.outputs.should_run == 'true'
         env:
-          # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
-          HELMFILE_VERSION: "1.8.1"
+          CONFIG: "${{ github.workspace }}/.github/smoke-config.json"
+          GINKGO_NO_COLOR: "true"
+        run: |
+          ./cf-smoke-tests/bin/test --no-color --github-output --timeout=30m --procs=4 --json-report report.json
