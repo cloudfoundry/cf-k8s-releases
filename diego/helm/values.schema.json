@@ -68,20 +68,33 @@
     "bbs": {
       "additionalProperties": false,
       "properties": {
+        "activeKeyLabel": {
+          "type": "string"
+        },
         "certificateSecret": {
           "type": "string"
         },
         "enabled": {
           "type": "boolean"
         },
-        "encryptionKey": {
-          "additionalProperties": false,
-          "properties": {
-            "passphrase": {
-              "type": "string"
-            }
+        "encryptionKeys": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "passphrase": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "passphrase"
+            ],
+            "type": "object"
           },
-          "type": "object"
+          "type": "array"
         },
         "hostname": {
           "type": "string"
