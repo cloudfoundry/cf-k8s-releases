@@ -62,11 +62,77 @@
     "boshDnsAdapter": {
       "additionalProperties": false,
       "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "metronPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "logLevelAddress": {
+          "type": "string"
+        },
+        "logLevelPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
         "certificateSecret": {
+          "type": "string"
+        },
+        "serverCaSecret": {
           "type": "string"
         },
         "enabled": {
           "type": "boolean"
+        },
+        "internalDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "internalServiceMeshDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "imagePullPolicy": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
+        }
+      },
+      "type": "object"
+    },
+    "udpForwarder": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "certificateSecret": {
+          "type": "string"
         },
         "image": {
           "additionalProperties": false,

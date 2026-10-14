@@ -36,8 +36,17 @@ serviceDiscoveryController:
   tolerations: ~
 boshDnsAdapter:
   enabled: false
+  address: "127.0.0.1"
+  port: 8053
+  metronPort: 3457
+  logLevelAddress: "127.0.0.1"
+  logLevelPort: 8066
   resources: ~
   certificateSecret: ""
+  serverCaSecret: ""
+  internalDomains:
+    - apps.internal.
+  internalServiceMeshDomains: []
   image:
     repository: ghcr.io/cloudfoundry/k8s/bosh-dns-adapter
     tag: ""
@@ -52,6 +61,15 @@ boshDns:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+udpForwarder:
+  enabled: false
+  certificateSecret: ""
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/udp-forwarder
+    # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
+    tag: "8.3.30"
+    imagePullPolicy: IfNotPresent
+  resources: ~
 routeRegistrar:
   resources: ~
   nats:
