@@ -26,9 +26,26 @@ spec:
           resources:
             {{- toYaml .Values.boshDnsAdapter.resources | nindent 12 }}
           {{- end }}
+          livenessProbe:
+            exec:
+              command:
+                - /usr/local/bin/busybox
+                - wget
+                - -q
+                - -T
+                - "5"
+                - -O
+                - /dev/null
+                - {{ printf "http://127.0.0.1:%v/health" .Values.boshDnsAdapter.port | quote }}
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - name: bosh-dns-adapter
               mountPath: /etc/ssl/certs/bosh-dns-adapter
+            - name: bosh-dns-adapter-server-ca
+              mountPath: /etc/ssl/certs/bosh-dns-adapter-server-ca
             - name: bosh-dns-config
               mountPath: /bosh-dns-adapter/bosh-dns-adapter.json
               subPath: bosh-dns-adapter.json
@@ -58,6 +75,33 @@ spec:
             - name: bosh-dns-config
               mountPath: /bosh-dns/records.json
               subPath: records.json
+        - name: udp-forwarder
+          image: {{ .Values.udpForwarder.image.repository }}:{{ .Values.udpForwarder.image.tag }}
+          imagePullPolicy: {{ .Values.udpForwarder.image.imagePullPolicy }}
+          {{- if .Values.udpForwarder.resources }}
+          resources:
+            {{- toYaml .Values.udpForwarder.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: UDP_PORT
+              value: {{ .Values.boshDnsAdapter.metronPort | quote }}
+            - name: LOGGREGATOR_AGENT_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+          volumeMounts:
+            - name: udp-forwarder
+              mountPath: /etc/ssl/certs/udp-forwarder
       {{- if .Values.boshDns.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.boshDns.nodeSelector | nindent 8 }}
@@ -70,12 +114,18 @@ spec:
         - name: bosh-dns-adapter
           secret:
             secretName: {{ required "boshDnsAdapter.certificateSecret is required" .Values.boshDnsAdapter.certificateSecret }}
+        - name: bosh-dns-adapter-server-ca
+          secret:
+            secretName: {{ required "boshDnsAdapter.serverCaSecret is required" .Values.boshDnsAdapter.serverCaSecret }}
         - name: bosh-dns
           secret:
             secretName: {{ required "boshDns.certificateSecret is required" .Values.boshDns.certificateSecret }}
         - name: bosh-dns-config
           configMap:
             name: bosh-dns-config
+        - name: udp-forwarder
+          secret:
+            secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
 ---
 kind: Service
 apiVersion: v1

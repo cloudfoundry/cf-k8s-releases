@@ -6,32 +6,34 @@ metadata:
   name: bosh-dns-config
 data:
   handlers.json: |-
-    [
-      {
-        "domain": "apps.internal.",
-        "cache": {
-          "enabled": false
-        },
-        "source": {
-          "type": "http",
-          "url": "http://127.0.0.1:8053"
-        }
-      }
-    ]
+    {{- $adapterURL := printf "http://127.0.0.1:%v" .Values.boshDnsAdapter.port }}
+    {{- $handlers := list }}
+    {{- range concat .Values.boshDnsAdapter.internalDomains .Values.boshDnsAdapter.internalServiceMeshDomains }}
+    {{- $handlers = append $handlers (dict "domain" . "cache" (dict "enabled" false) "source" (dict "type" "http" "url" $adapterURL)) }}
+    {{- end }}
+    {{ $handlers | toJson }}
   bosh-dns-adapter.json: |-
     {
-      "address": "0.0.0.0",
-      "port": "8053",
+      "address": "{{ .Values.boshDnsAdapter.address }}",
+      "port": "{{ .Values.boshDnsAdapter.port }}",
       "service_discovery_controller_address": "{{ tpl .Values.serviceDiscoveryController.hostname . }}",
       "service_discovery_controller_port": "{{ .Values.serviceDiscoveryController.port }}",
       "client_cert": "/etc/ssl/certs/bosh-dns-adapter/tls.crt",
       "client_key": "/etc/ssl/certs/bosh-dns-adapter/tls.key",
-      "ca_cert": "/etc/ssl/certs/bosh-dns-adapter/ca.crt",
-      "metron_port": 3457,
+      "ca_cert": "/etc/ssl/certs/bosh-dns-adapter-server-ca/ca.crt",
+      "metron_port": {{ .Values.boshDnsAdapter.metronPort }},
       "metrics_emit_seconds": 10,
-      "log_level_address": "127.0.0.1",
-      "log_level_port": 8066,
-      "internal_service_mesh_domains": []
+      "log_level_address": "{{ .Values.boshDnsAdapter.logLevelAddress }}",
+      "log_level_port": {{ .Values.boshDnsAdapter.logLevelPort }},
+      {{- $internalServiceMeshDomains := list }}
+      {{- range .Values.boshDnsAdapter.internalServiceMeshDomains }}
+      {{- $domain := . }}
+      {{- if not (hasSuffix "." $domain) }}
+      {{- $domain = printf "%s." $domain }}
+      {{- end }}
+      {{- $internalServiceMeshDomains = append $internalServiceMeshDomains $domain }}
+      {{- end }}
+      "internal_service_mesh_domains": {{ $internalServiceMeshDomains | toJson }}
     }
   bosh-dns.json: |-
     {

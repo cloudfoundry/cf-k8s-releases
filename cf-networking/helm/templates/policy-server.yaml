@@ -33,9 +33,15 @@ spec:
             - name: policy-server
               mountPath: /etc/ssl/certs/policy-server
               readOnly: true
+            - name: policy-server-uaa
+              mountPath: /etc/ssl/certs/policy-server-uaa
+              readOnly: true
+            - name: policy-server-cc
+              mountPath: /etc/ssl/certs/policy-server-cc
+              readOnly: true
             {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            - name: networkpolicydb-ca
+              mountPath: /etc/ssl/certs/networkpolicydb
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -49,15 +55,22 @@ spec:
           args:
           - -config-file
           - /policy-server/policy-server-internal.json
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 31946
+            timeoutSeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
           volumeMounts:
             - name: policy-server-config
               mountPath: /policy-server
-            - name: policy-server
-              mountPath: /etc/ssl/certs/policy-server
+            - name: policy-server-internal
+              mountPath: /etc/ssl/certs/policy-server-internal
               readOnly: true
             {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            - name: networkpolicydb-ca
+              mountPath: /etc/ssl/certs/networkpolicydb
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -74,12 +87,21 @@ spec:
           volumeMounts:
             - name: policy-server-config
               mountPath: /policy-server
-            - name: policy-server
-              mountPath: /etc/ssl/certs/policy-server
+            - name: policy-server-uaa
+              mountPath: /etc/ssl/certs/policy-server-uaa
+              readOnly: true
+            - name: policy-server-cc
+              mountPath: /etc/ssl/certs/policy-server-cc
+              readOnly: true
+            - name: policy-server-cc-internal
+              mountPath: /etc/ssl/certs/policy-server-cc-internal
+              readOnly: true
+            - name: policy-server-locket
+              mountPath: /etc/ssl/certs/policy-server-locket
               readOnly: true
             {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            - name: networkpolicydb-ca
+              mountPath: /etc/ssl/certs/networkpolicydb
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -105,6 +127,33 @@ spec:
               mountPath: /etc/route-registrar-template
             - name: tmpdir
               mountPath: /tmp
+        - name: udp-forwarder
+          image: {{ .Values.udpForwarder.image.repository }}:{{ .Values.udpForwarder.image.tag }}
+          imagePullPolicy: {{ .Values.udpForwarder.image.imagePullPolicy }}
+          {{- if .Values.udpForwarder.resources }}
+          resources:
+            {{- toYaml .Values.udpForwarder.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: UDP_PORT
+              value: {{ .Values.policyServer.metronPort | quote }}
+            - name: LOGGREGATOR_AGENT_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+          volumeMounts:
+            - name: udp-forwarder
+              mountPath: /etc/ssl/certs/udp-forwarder
       {{- if .Values.policyServer.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.policyServer.nodeSelector | nindent 8 }}
@@ -120,8 +169,23 @@ spec:
         - name: policy-server
           secret:
             secretName: {{ required "policyServer.certificateSecret is required" .Values.policyServer.certificateSecret }}
+        - name: policy-server-uaa
+          secret:
+            secretName: {{ required "policyServer.uaaCaSecret is required" .Values.policyServer.uaaCaSecret }}
+        - name: policy-server-cc
+          secret:
+            secretName: {{ required "policyServer.ccCaCertSecret is required" .Values.policyServer.ccCaCertSecret }}
+        - name: policy-server-internal
+          secret:
+            secretName: {{ required "policyServer.internal.certificateSecret is required" .Values.policyServer.internal.certificateSecret }}
+        - name: policy-server-cc-internal
+          secret:
+            secretName: {{ required "policyServer.asgSyncer.ccInternalClientSecret is required" .Values.policyServer.asgSyncer.ccInternalClientSecret }}
+        - name: policy-server-locket
+          secret:
+            secretName: {{ required "policyServer.asgSyncer.locketSecret is required" .Values.policyServer.asgSyncer.locketSecret }}
         {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-        - name: postgres-ca
+        - name: networkpolicydb-ca
           secret:
             secretName: {{ required "policyServer.networkpolicydb.caCertificateSecret is required when policyServer.networkpolicydb.skipSSLVerify is false" .Values.policyServer.networkpolicydb.caCertificateSecret }}
         {{- end }}
@@ -130,6 +194,9 @@ spec:
             name: policy-server-route-registrar-config
         - name: tmpdir
           emptyDir: {}
+        - name: udp-forwarder
+          secret:
+            secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
 ---
 kind: Service
 apiVersion: v1
@@ -139,9 +206,9 @@ metadata:
     app: policy-server
 spec:
   ports:
-  - port: 4003
+  - port: {{ .Values.policyServer.internal.listenPort }}
     name: https
-    targetPort: 4003
+    targetPort: {{ .Values.policyServer.internal.listenPort }}
     appProtocol: kubernetes.io/h2c
   selector:
     app: policy-server
