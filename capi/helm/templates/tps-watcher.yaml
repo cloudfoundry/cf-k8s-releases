@@ -18,10 +18,28 @@ spec:
       annotations:
         checksum/tps-watcher-config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: set-instance-id
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - sed "s|\${POD_NAME}|${POD_NAME}|g" /tps-watcher/tps-watcher.json > /tmp/tps-watcher.json
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: tps-watcher-config
+              mountPath: /tps-watcher
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: tps-watcher
           image: {{ .Values.tpsWatcher.image.repository }}:{{ default .Chart.AppVersion .Values.tpsWatcher.image.tag }}
           imagePullPolicy: {{ .Values.tpsWatcher.image.imagePullPolicy }}
+          args: ["-configPath", "/tmp/tps-watcher.json"]
           {{- if .Values.tpsWatcher.resources }}
           resources:
             {{- toYaml .Values.tpsWatcher.resources | nindent 12 }}

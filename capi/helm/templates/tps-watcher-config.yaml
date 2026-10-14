@@ -30,6 +30,6 @@ data:
       "locket_client_key_file": "/etc/ssl/certs/tps-watcher-bbs/tls.key",
       "locket_ca_cert_file": "/etc/ssl/certs/tps-watcher-bbs/ca.crt",
       "locket_address": "{{ tpl .Values.tpsWatcher.config.watcher.locket.apiLocation . }}",
-      "instance_id": "62bcb8b5-ee8a-4dd9-bec0-3788beb13855"
+      "instance_id": "${POD_NAME}"
     }
 {{ end }}
