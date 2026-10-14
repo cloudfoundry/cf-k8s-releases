@@ -50,13 +50,13 @@ jobs:
             capi:
               url: ../capi/helm
           EOF
-      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@load-images
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           load-images: "cloud-controller,cc-uploader,cc-nginx,tps-watcher,route-registrar"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
-      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@v0.25.0
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
         with:
           test-repo: cf-smoke-tests
