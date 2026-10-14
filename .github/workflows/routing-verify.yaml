@@ -35,26 +35,31 @@ jobs:
         working-directory: loggregator-agent
         run: docker buildx bake udp-forwarder --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: routing
         run: |
-          yq -e -i '.gorouter.image.repository = "gorouter" | .gorouter.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.routingApi.image.repository = "routing-api" | .routingApi.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.tcpRouter.image.repository = "cf-tcp-router" | .tcpRouter.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.routeRegistrar.image.repository = "route-registrar" | .routeRegistrar.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.udpForwarder.image.repository = "udp-forwarder" | .udpForwarder.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.gorouter.image.repository = "gorouter"' helm/values.yaml
+          yq -e -i '.routingApi.image.repository = "routing-api"' helm/values.yaml
+          yq -e -i '.tcpRouter.image.repository = "cf-tcp-router"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+          yq -e -i '.udpForwarder.image.repository = "udp-forwarder"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             routing:
               url: ../routing/helm
           EOF
+
+          list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')
+          list="$list,$(cd "$GITHUB_WORKSPACE/loggregator-agent" && docker buildx bake udp-forwarder --print | jq -r '[.target[].tags[]] | join(",")')"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
-          load-images: "gorouter:latest,routing-api:latest,cf-tcp-router:latest,route-registrar:latest,udp-forwarder:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

@@ -31,22 +31,25 @@ jobs:
         working-directory: credhub
         run: docker buildx bake --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: credhub
         run: |
-          yq -e -i '.image.repository = "credhub" | .image.tag = "latest"' helm/values.yaml
+          yq -e -i '.image.repository = "credhub"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             credhub:
               url: ../credhub/helm
           EOF
+
+          echo "list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
-          load-images: "credhub:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

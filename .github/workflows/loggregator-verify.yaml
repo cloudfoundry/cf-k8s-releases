@@ -35,26 +35,31 @@ jobs:
         working-directory: routing
         run: docker buildx bake route-registrar --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: loggregator
         run: |
-          yq -e -i '.doppler.image.repository = "doppler" | .doppler.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.reverseLogProxy.image.repository = "reverse-log-proxy" | .reverseLogProxy.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.reverseLogProxyGateway.image.repository = "reverse-log-proxy-gateway" | .reverseLogProxyGateway.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.trafficcontroller.image.repository = "traffic-controller" | .trafficcontroller.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.routeRegistrar.image.repository = "route-registrar" | .routeRegistrar.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.doppler.image.repository = "doppler"' helm/values.yaml
+          yq -e -i '.reverseLogProxy.image.repository = "reverse-log-proxy"' helm/values.yaml
+          yq -e -i '.reverseLogProxyGateway.image.repository = "reverse-log-proxy-gateway"' helm/values.yaml
+          yq -e -i '.trafficcontroller.image.repository = "traffic-controller"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             loggregator:
               url: ../loggregator/helm
           EOF
+
+          list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')
+          list="$list,$(cd "$GITHUB_WORKSPACE/routing" && docker buildx bake route-registrar --print | jq -r '[.target[].tags[]] | join(",")')"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
-          load-images: "doppler:latest,reverse-log-proxy:latest,reverse-log-proxy-gateway:latest,traffic-controller:latest,route-registrar:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

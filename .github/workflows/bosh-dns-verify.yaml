@@ -31,22 +31,25 @@ jobs:
         working-directory: bosh-dns
         run: docker buildx bake --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: cf-networking
         run: |
-          yq -e -i '.boshDns.image.repository = "bosh-dns" | .boshDns.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.boshDns.image.repository = "bosh-dns"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             cfNetworking:
               url: ../cf-networking/helm
           EOF
+
+          echo "list=$(cd "$GITHUB_WORKSPACE/bosh-dns" && docker buildx bake bosh-dns --print | jq -r '[.target[].tags[]] | join(",")')" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
-          load-images: "bosh-dns:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

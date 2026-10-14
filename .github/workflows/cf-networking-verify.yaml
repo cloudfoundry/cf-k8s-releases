@@ -39,26 +39,32 @@ jobs:
         working-directory: bosh-dns
         run: docker buildx bake bosh-dns --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: cf-networking
         run: |
-          yq -e -i '.policyServer.image.repository = "policy-server" | .policyServer.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.serviceDiscoveryController.image.repository = "service-discovery-controller" | .serviceDiscoveryController.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.boshDnsAdapter.image.repository = "bosh-dns-adapter" | .boshDnsAdapter.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.routeRegistrar.image.repository = "route-registrar" | .routeRegistrar.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.boshDns.image.repository = "bosh-dns" | .boshDns.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.policyServer.image.repository = "policy-server"' helm/values.yaml
+          yq -e -i '.serviceDiscoveryController.image.repository = "service-discovery-controller"' helm/values.yaml
+          yq -e -i '.boshDnsAdapter.image.repository = "bosh-dns-adapter"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
+          yq -e -i '.boshDns.image.repository = "bosh-dns"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             cfNetworking:
               url: ../cf-networking/helm
           EOF
+
+          list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')
+          list="$list,$(cd "$GITHUB_WORKSPACE/routing" && docker buildx bake route-registrar --print | jq -r '[.target[].tags[]] | join(",")')"
+          list="$list,$(cd "$GITHUB_WORKSPACE/bosh-dns" && docker buildx bake bosh-dns --print | jq -r '[.target[].tags[]] | join(",")')"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
-          load-images: "policy-server:latest,service-discovery-controller:latest,bosh-dns-adapter:latest,route-registrar:latest,bosh-dns:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

@@ -35,26 +35,31 @@ jobs:
         working-directory: routing
         run: docker buildx bake route-registrar --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: capi
         run: |
-          yq -e -i '.ccUploader.image.repository = "cc-uploader" | .ccUploader.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.cloudController.image.repository = "cloud-controller" | .cloudController.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.localWorker.image.repository = "cloud-controller" | .localWorker.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.nginx.image.repository = "cc-nginx" | .nginx.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.tpsWatcher.image.repository = "tps-watcher" | .tpsWatcher.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.routeRegistrar.image.repository = "route-registrar" | .routeRegistrar.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.ccUploader.image.repository = "cc-uploader"' helm/values.yaml
+          yq -e -i '.cloudController.image.repository = "cloud-controller"' helm/values.yaml
+          yq -e -i '.localWorker.image.repository = "cloud-controller"' helm/values.yaml
+          yq -e -i '.nginx.image.repository = "cc-nginx"' helm/values.yaml
+          yq -e -i '.tpsWatcher.image.repository = "tps-watcher"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             capi:
               url: ../capi/helm
           EOF
+
+          list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')
+          list="$list,$(cd "$GITHUB_WORKSPACE/routing" && docker buildx bake route-registrar --print | jq -r '[.target[].tags[]] | join(",")')"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-          load-images: "cloud-controller:latest,cc-uploader:latest,cc-nginx:latest,tps-watcher:latest,route-registrar:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

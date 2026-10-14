@@ -31,24 +31,27 @@ jobs:
         working-directory: loggregator-agent
         run: docker buildx bake --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: loggregator-agent
         run: |
-          yq -e -i '.forwarderAgent.image.repository = "forwarder-agent" | .forwarderAgent.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.loggregatorAgent.image.repository = "loggregator-agent" | .loggregatorAgent.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.syslogAgent.image.repository = "syslog-agent" | .syslogAgent.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.syslogBindingCache.image.repository = "syslog-binding-cache" | .syslogBindingCache.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.forwarderAgent.image.repository = "forwarder-agent"' helm/values.yaml
+          yq -e -i '.loggregatorAgent.image.repository = "loggregator-agent"' helm/values.yaml
+          yq -e -i '.syslogAgent.image.repository = "syslog-agent"' helm/values.yaml
+          yq -e -i '.syslogBindingCache.image.repository = "syslog-binding-cache"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             loggregatorAgent:
               url: ../loggregator-agent/helm
           EOF
+
+          echo "list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-          load-images: "forwarder-agent:latest,loggregator-agent:latest,syslog-agent:latest,syslog-binding-cache:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

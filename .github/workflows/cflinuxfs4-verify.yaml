@@ -34,6 +34,13 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: cflinuxfs4
         run: docker buildx bake --load
+      - name: Resolve image tag
+        id: img
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: cflinuxfs4
+        run: |
+          tag=$(docker buildx bake cflinuxfs4 --print | jq -r '.target.cflinuxfs4.tags[]' | awk -F: '$NF!="latest"{print $NF; exit}')
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Use image
         if: steps.check.outputs.should_run == 'true'
         run: |
@@ -41,13 +48,13 @@ jobs:
           stacks:
             cflinuxfs4:
               image: cflinuxfs4
-              tag: latest
+              tag: "${{ steps.img.outputs.tag }}"
           EOF
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-          load-images: "cflinuxfs4:latest"
+          load-images: "cflinuxfs4:${{ steps.img.outputs.tag }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'

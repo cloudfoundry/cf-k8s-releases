@@ -31,23 +31,26 @@ jobs:
         working-directory: nfs-volume
         run: docker buildx bake --load
       - name: Use images
+        id: imgs
         if: steps.check.outputs.should_run == 'true'
         working-directory: nfs-volume
         run: |
-          yq -e -i '.nfsbroker.image.repository = "nfsbroker" | .nfsbroker.image.tag = "latest"' helm/values.yaml
-          yq -e -i '.nfsv3driver.image.repository = "nfsv3driver" | .nfsv3driver.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.nfsbroker.image.repository = "nfsbroker"' helm/values.yaml
+          yq -e -i '.nfsv3driver.image.repository = "nfsv3driver"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
             nfsVolume:
               url: ../nfs-volume/helm
           EOF
+
+          echo "list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
-          load-images: "nfsbroker:latest,nfsv3driver:latest"
+          load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
