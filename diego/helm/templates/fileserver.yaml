@@ -9,7 +9,13 @@ metadata:
 spec:
   ports:
     - port: 8080
+      name: http
       targetPort: 8080
+{{- if .Values.fileserver.enableHttps }}
+    - port: 8443
+      name: https
+      targetPort: 8443
+{{- end }}
   selector:
     app.kubernetes.io/name: fileserver
 ---
@@ -42,10 +48,20 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+{{- if .Values.fileserver.enableHttps }}
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+{{- end }}
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+          {{- if .Values.fileserver.enableHttps }}
+            - name: fileserver-tls
+              mountPath: /etc/fileserver/tls
+              readOnly: true
+          {{- end }}
           {{- if .Values.fileserver.resources }}
           resources:
             {{- toYaml .Values.fileserver.resources | nindent 12 }}
@@ -62,4 +78,9 @@ spec:
         - name: nginx-config
           configMap:
             name: fileserver-config
+      {{- if .Values.fileserver.enableHttps }}
+        - name: fileserver-tls
+          secret:
+            secretName: {{ .Values.fileserver.certificateSecret }}
+      {{- end}}
 {{- end }}

@@ -333,6 +333,12 @@
         "enabled": {
           "type": "boolean"
         },
+        "enableHttps": {
+          "type": "boolean"
+        },
+        "certificateSecret": {
+          "type": "string"
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
