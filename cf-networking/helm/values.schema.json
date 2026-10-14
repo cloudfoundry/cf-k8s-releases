@@ -128,9 +128,6 @@
     "udpForwarder": {
       "additionalProperties": false,
       "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
         "certificateSecret": {
           "type": "string"
         },
@@ -164,9 +161,50 @@
         "certificateSecret": {
           "type": "string"
         },
+        "uaaCaSecret": {
+          "type": "string"
+        },
+        "ccCaCertSecret": {
+          "type": "string"
+        },
+        "internal": {
+          "additionalProperties": false,
+          "properties": {
+            "certificateSecret": {
+              "type": "string"
+            },
+            "debugPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "listenPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "type": "object"
+        },
+        "asgSyncer": {
+          "additionalProperties": false,
+          "properties": {
+            "ccInternalClientSecret": {
+              "type": "string"
+            },
+            "locketSecret": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "networkpolicydb": {
           "additionalProperties": false,
           "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["postgres", "mysql"]
+            },
             "name": {
               "type": "string"
             },
@@ -190,6 +228,21 @@
             },
             "skipHostnameVerify": {
               "type": "boolean"
+            },
+            "connectTimeoutSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxOpenConnections": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxIdleConnections": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "connectionsMaxLifetimeSeconds": {
+              "type": "integer"
             }
           },
           "type": "object"
@@ -220,6 +273,73 @@
         },
         "oauthClientsSecret": {
           "type": "string"
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"]
+        },
+        "enableSpaceDeveloperSelfService": {
+          "type": "boolean"
+        },
+        "listenIp": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "listenPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "debugPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "metronPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "uaaClient": {
+          "type": "string"
+        },
+        "uaaPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "skipSSLValidation": {
+          "type": "boolean"
+        },
+        "enableTls": {
+          "type": "boolean"
+        },
+        "tagLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "policyCleanupInterval": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxPoliciesPerAppSource": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "allowedCorsDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "asgPollIntervalSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retryDeadlineSeconds": {
+          "type": "integer",
+          "minimum": 1
         },
         "resources": {
           "type": ["object", "null"]
