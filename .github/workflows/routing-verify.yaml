@@ -34,42 +34,39 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: loggregator-agent
         run: docker buildx bake udp-forwarder --load
-      - name: Create KinD Cluster
-        if: steps.check.outputs.should_run == 'true'
-        run: make -C kind create-kind init
-      - name: Load routing images into KinD
+      - name: Use images
         if: steps.check.outputs.should_run == 'true'
         working-directory: routing
         run: |
-          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Load udp-forwarder image into KinD
+          yq -e -i '.gorouter.image.repository = "gorouter" | .gorouter.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.routingApi.image.repository = "routing-api" | .routingApi.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.tcpRouter.image.repository = "cf-tcp-router" | .tcpRouter.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.routeRegistrar.image.repository = "route-registrar" | .routeRegistrar.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.udpForwarder.image.repository = "udp-forwarder" | .udpForwarder.image.tag = "latest"' helm/values.yaml
+
+          cat >> ${{ github.workspace }}/state-values.yaml <<EOF
+          charts:
+            routing:
+              url: ../routing/helm
+          EOF
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
-        working-directory: loggregator-agent
-        run: |
-          for image in $(docker buildx bake udp-forwarder --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Use Images
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          install-optional-components: "true"
+          load-images: "gorouter:latest,routing-api:latest,cf-tcp-router:latest,route-registrar:latest,udp-forwarder:latest"
+          additional-values-files: "${{ github.workspace }}/state-values.yaml"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
-        working-directory:  routing
-        run: |
-          yq -e -i '.gorouter.image.repository = "gorouter"' helm/values.yaml
-          yq -e -i '.routingApi.image.repository = "routing-api"' helm/values.yaml
-          yq -e -i '.tcpRouter.image.repository = "cf-tcp-router"' helm/values.yaml
-          yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
-          yq -e -i '.udpForwarder.image.repository = "udp-forwarder"' helm/values.yaml
-      - name: Deploy
+        with:
+          test-repo: cf-smoke-tests
+          test-branch: main
+          config-template: ${{ github.workspace }}/kind-deployment/.github/smoke-config.tpl
+          config-output: ${{ github.workspace }}/.github/smoke-config.json
+      - name: run smoke test
         if: steps.check.outputs.should_run == 'true'
-        run: |
-          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
-          docker run --rm --net=host --env-file kind/temp/secrets.env \
-            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
-            -v "${{ github.workspace }}:/wd" \
-            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
-            --workdir /wd ghcr.io/helmfile/helmfile:v$HELMFILE_VERSION \
-            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.routing.url=../routing/helm
         env:
-          # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
-          HELMFILE_VERSION: "1.8.1"
+          CONFIG: "${{ github.workspace }}/.github/smoke-config.json"
+          GINKGO_NO_COLOR: "true"
+        run: |
+          ./cf-smoke-tests/bin/test --no-color --github-output --timeout=30m --procs=4 --json-report report.json

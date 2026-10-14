@@ -30,37 +30,40 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: diego
         run: docker buildx bake --load
-      - name: Create KinD Cluster
-        if: steps.check.outputs.should_run == 'true'
-        run: make -C kind create-kind init
-      - name: Load Images into KinD
+      - name: Use images
         if: steps.check.outputs.should_run == 'true'
         working-directory: diego
         run: |
-          for image in $(docker buildx bake --print | jq -c -r '.target[].tags | join(" ")'); do
-            kind load docker-image --name cfk8s ${image}
-          done
-      - name: Use Images
+          yq -e -i '.auctioneer.image.repository = "auctioneer" | .auctioneer.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.bbs.image.repository = "bbs" | .bbs.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.locket.image.repository = "locket" | .locket.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.sshProxy.image.repository = "ssh-proxy" | .sshProxy.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.routeEmitter.image.repository = "route-emitter" | .routeEmitter.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.fileserver.image.repository = "fileserver" | .fileserver.image.tag = "latest"' helm/values.yaml
+          yq -e -i '.rep.image.repository = "rep" | .rep.image.tag = "latest"' helm/values.yaml
+
+          cat >> ${{ github.workspace }}/state-values.yaml <<EOF
+          charts:
+            diego:
+              url: ../diego/helm
+          EOF
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
-        working-directory: diego
-        run: |
-          yq -e -i '.auctioneer.image.repository = "auctioneer"' helm/values.yaml
-          yq -e -i '.bbs.image.repository = "bbs"' helm/values.yaml
-          yq -e -i '.locket.image.repository = "locket"' helm/values.yaml
-          yq -e -i '.sshProxy.image.repository = "ssh-proxy"' helm/values.yaml
-          yq -e -i '.routeEmitter.image.repository = "route-emitter"' helm/values.yaml
-          yq -e -i '.fileserver.image.repository = "fileserver"' helm/values.yaml
-          yq -e -i '.rep.image.repository = "rep"' helm/values.yaml
-      - name: Deploy
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          load-images: "auctioneer:latest,bbs:latest,locket:latest,ssh-proxy:latest,route-emitter:latest,fileserver:latest,rep:latest"
+          additional-values-files: "${{ github.workspace }}/state-values.yaml"
+      - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
-        run: |
-          kind get kubeconfig --name cfk8s > kind/temp/kubeconfig
-          docker run --rm --net=host --env-file kind/temp/secrets.env \
-            -v "${{ github.workspace }}/kind/temp/certs:/certs" \
-            -v "${{ github.workspace }}:/wd" \
-            -e KUBECONFIG=/wd/kind/temp/kubeconfig \
-            --workdir /wd ghcr.io/helmfile/helmfile:v$HELMFILE_VERSION \
-            helmfile sync -f kind/helmfile.yaml.gotmpl --state-values-set charts.diego.url=../diego/helm
+        with:
+          test-repo: cf-smoke-tests
+          test-branch: main
+          config-template: ${{ github.workspace }}/kind-deployment/.github/smoke-config.tpl
+          config-output: ${{ github.workspace }}/.github/smoke-config.json
+      - name: run smoke test
+        if: steps.check.outputs.should_run == 'true'
         env:
-          # renovate: dataSource=docker depName=helmfile/helmfile packageName=ghcr.io/helmfile/helmfile
-          HELMFILE_VERSION: "1.8.1"
+          CONFIG: "${{ github.workspace }}/.github/smoke-config.json"
+          GINKGO_NO_COLOR: "true"
+        run: |
+          ./cf-smoke-tests/bin/test --no-color --github-output --timeout=30m --procs=4 --json-report report.json

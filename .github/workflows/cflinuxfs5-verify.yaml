@@ -40,13 +40,14 @@ jobs:
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           stacks:
             cflinuxfs5:
-              image: cflinuxfs5:latest
+              image: cflinuxfs5
+              tag: latest
           EOF
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-          load-images: "cflinuxfs5"
+          load-images: "cflinuxfs5:latest"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
