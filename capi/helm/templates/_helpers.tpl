@@ -1,41 +1,31 @@
 {{/*
 capi.storageCliConfig — build a storage-cli blobstore config JSON from the BOSH-shaped
 connection_config, mirroring capi-release's storage_cli_config_*.json.erb translation.
-
-Input: dict with
-  provider    - cc.<blob>.blobstore_provider (azurebs|gcs|s3|alioss|dav)
-  cfg         - cc.<blob>.connection_config (BOSH property names)
-  resourceDir - the blob's directory key (used to compose the dav endpoint)
-  root        - chart root context ($), used to tpl the host value
-
-Mandatory keys use `required` so a misconfigured blobstore fails at render, like BOSH's
-bare p(). Optional keys are copied only when present and non-empty (false/0 are kept).
 */}}
 {{- define "capi.storageCliConfig" -}}
 {{- $provider := .provider -}}
-{{- $conn := .cfg | default dict }}{{- /* default dict: treat an absent connection_config as empty */ -}}
+{{- $conn := .cfg | default dict }}
 {{- $out := dict "provider" $provider -}}
-{{- /* $optional maps a storage-cli output key -> the connection_config key to copy from */ -}}
 {{- $optional := dict -}}
 {{- if eq $provider "azurebs" -}}
-  {{- $_ := set $out "account_name" (required "capi.storageCliConfig azurebs: connection_config.azure_storage_account_name is required" (index $conn "azure_storage_account_name")) -}}
+  {{- $_ := set $out "account_name" (required "capi.storageCliConfig azurebs: connectionConfig.azureStorageAccountName is required" (index $conn "azureStorageAccountName")) -}}
   {{- $_ := set $out "container_name" (required "capi.storageCliConfig azurebs: connection_config.container_name is required" (index $conn "container_name")) -}}
-  {{- $_ := set $out "account_key" (required "capi.storageCliConfig azurebs: connection_config.azure_storage_access_key is required" (index $conn "azure_storage_access_key")) -}}
+  {{- $_ := set $out "account_key" (required "capi.storageCliConfig azurebs: connectionConfig.azureStorageAccessKey is required" (index $conn "azureStorageAccessKey")) -}}
   {{- $_ := set $out "environment" (default "AzureCloud" (index $conn "environment")) -}}
   {{- $optional = dict "put_timeout_in_seconds" "put_timeout_in_seconds" "http_request_timeout" "http_request_timeout" "http_response_header_timeout" "http_response_header_timeout" -}}
 {{- else if eq $provider "gcs" -}}
   {{- $_ := set $out "credentials_source" "static" -}}
-  {{- $_ := set $out "json_key" (required "capi.storageCliConfig gcs: connection_config.google_json_key_string is required" (index $conn "google_json_key_string")) -}}
+  {{- $_ := set $out "json_key" (required "capi.storageCliConfig gcs: connectionConfig.googleJsonKeyString is required" (index $conn "googleJsonKeyString")) -}}
   {{- $_ := set $out "bucket_name" (required "capi.storageCliConfig gcs: connection_config.bucket_name is required" (index $conn "bucket_name")) -}}
   {{- $optional = dict "storage_class" "storage_class" "encryption_key" "encryption_key" "http_request_timeout" "http_request_timeout" "http_response_header_timeout" "http_response_header_timeout" -}}
 {{- else if eq $provider "s3" -}}
   {{- $_ := set $out "bucket_name" (required "capi.storageCliConfig s3: connection_config.bucket_name is required" (index $conn "bucket_name")) -}}
-  {{- if index $conn "use_iam_profile" -}}
+  {{- if index $conn "useIamProfile" -}}
     {{- $_ := set $out "credentials_source" "env_or_profile" -}}
   {{- else -}}
     {{- $_ := set $out "credentials_source" "static" -}}
-    {{- $_ := set $out "access_key_id" (required "capi.storageCliConfig s3: connection_config.aws_access_key_id is required (or set use_iam_profile)" (index $conn "aws_access_key_id")) -}}
-    {{- $_ := set $out "secret_access_key" (required "capi.storageCliConfig s3: connection_config.aws_secret_access_key is required (or set use_iam_profile)" (index $conn "aws_secret_access_key")) -}}
+    {{- $_ := set $out "access_key_id" (required "capi.storageCliConfig s3: connectionConfig.awsAccessKeyId is required (or set use_iam_profile)" (index $conn "awsAccessKeyId")) -}}
+    {{- $_ := set $out "secret_access_key" (required "capi.storageCliConfig s3: connectionConfig.awsSecretAccessKey is required (or set use_iam_profile)" (index $conn "awsSecretAccessKey")) -}}
   {{- end -}}
   {{- /* two keys are renamed (encryption->server_side_encryption, kms id->sse_kms_key_id); the rest keep their name */ -}}
   {{- $optional = dict
@@ -53,17 +43,17 @@ bare p(). Optional keys are copied only when present and non-empty (false/0 are 
       "uploader_request_checksum_calculation_enabled" "uploader_request_checksum_calculation_enabled"
       "http_request_timeout" "http_request_timeout" "http_response_header_timeout" "http_response_header_timeout" -}}
 {{- else if eq $provider "alioss" -}}
-  {{- $_ := set $out "access_key_id" (required "capi.storageCliConfig alioss: connection_config.aliyun_accesskey_id is required" (index $conn "aliyun_accesskey_id")) -}}
-  {{- $_ := set $out "access_key_secret" (required "capi.storageCliConfig alioss: connection_config.aliyun_accesskey_secret is required" (index $conn "aliyun_accesskey_secret")) -}}
-  {{- $_ := set $out "endpoint" (required "capi.storageCliConfig alioss: connection_config.aliyun_oss_endpoint is required" (index $conn "aliyun_oss_endpoint")) -}}
-  {{- $_ := set $out "bucket_name" (required "capi.storageCliConfig alioss: connection_config.aliyun_oss_bucket is required" (index $conn "aliyun_oss_bucket")) -}}
+  {{- $_ := set $out "access_key_id" (required "capi.storageCliConfig alioss: connectionConfig.aliyunAccesskeyId is required" (index $conn "aliyunAccesskeyId")) -}}
+  {{- $_ := set $out "access_key_secret" (required "capi.storageCliConfig alioss: connectionConfig.aliyunAccesskeySecret is required" (index $conn "aliyunAccesskeySecret")) -}}
+  {{- $_ := set $out "endpoint" (required "capi.storageCliConfig alioss: connectionConfig.aliyunOssEndpoint is required" (index $conn "aliyunOssEndpoint")) -}}
+  {{- $_ := set $out "bucket_name" (required "capi.storageCliConfig alioss: connectionConfig.aliyunOssBucket is required" (index $conn "aliyunOssBucket")) -}}
   {{- $optional = dict "http_request_timeout" "http_request_timeout" "http_response_header_timeout" "http_response_header_timeout" -}}
 {{- else if eq $provider "dav" -}}
   {{- $_ := set $out "user" (required "capi.storageCliConfig dav: connection_config.username is required" (index $conn "username")) -}}
   {{- $_ := set $out "password" (required "capi.storageCliConfig dav: connection_config.password is required" (index $conn "password")) -}}
-  {{- $_ := set $out "endpoint" (printf "%s/admin/%s" (required "capi.storageCliConfig dav: connection_config.private_endpoint is required" (index $conn "private_endpoint")) .resourceDir) -}}
+  {{- $_ := set $out "endpoint" (printf "%s/admin/%s" (required "capi.storageCliConfig dav: connectionConfig.privateEndpoint is required" (index $conn "privateEndpoint")) .resourceDir) -}}
   {{- $optional = dict "public_endpoint" "public_endpoint" "secret" "secret" "retry_attempts" "retry_attempts" -}}
-  {{- $caCert := index $conn "ca_cert" -}}
+  {{- $caCert := index $conn "caCert" -}}
   {{- if $caCert -}}{{- $_ := set $out "tls" (dict "cert" (dict "ca" $caCert)) -}}{{- end -}}
 {{- else -}}
   {{- fail (printf "capi.storageCliConfig: unsupported blobstore_provider %q (expected azurebs|gcs|s3|alioss|dav)" $provider) -}}
@@ -82,10 +72,53 @@ bare p(). Optional keys are copied only when present and non-empty (false/0 are 
 {{- end -}}
 
 
-{{/*
-capi.validateAppDomains — fail if an internal app domain also names a router group.
-Input: the app_domains list (strings and/or {name, internal, router_group_name} maps).
-*/}}
+{{- define "capi.ccCertVolumeMounts" -}}
+- name: mutual-tls
+  mountPath: /etc/ssl/certs/mutual-tls
+  readOnly: true
+- name: loggregator
+  mountPath: /etc/ssl/certs/loggregator
+  readOnly: true
+- name: logcache
+  mountPath: /etc/ssl/certs/logcache
+  readOnly: true
+- name: uaa
+  mountPath: /etc/ssl/certs/uaa
+  readOnly: true
+- name: credhub
+  mountPath: /etc/ssl/certs/credhub
+  readOnly: true
+{{- if .Values.ccdb.caCertificateSecret }}
+- name: db-ca
+  mountPath: /etc/ssl/certs/db-ca
+  readOnly: true
+{{- end }}
+{{- end -}}
+
+{{- define "capi.ccCertVolumes" -}}
+- name: mutual-tls
+  secret:
+    secretName: {{ required "cloudController.certificates.mutualTLS is required" .Values.cloudController.certificates.mutualTLS }}
+- name: loggregator
+  secret:
+    secretName: {{ required "cloudController.certificates.loggregatorTLS is required" .Values.cloudController.certificates.loggregatorTLS }}
+- name: logcache
+  secret:
+    secretName: {{ required "cloudController.certificates.logcacheTLS is required" .Values.cloudController.certificates.logcacheTLS }}
+- name: uaa
+  secret:
+    secretName: {{ required "cloudController.certificates.uaaCA is required" .Values.cloudController.certificates.uaaCA }}
+- name: credhub
+  secret:
+    secretName: {{ required "cloudController.certificates.credhubCA is required" .Values.cloudController.certificates.credhubCA }}
+{{- if .Values.ccdb.caCertificateSecret }}
+- name: db-ca
+  secret:
+    secretName: {{ .Values.ccdb.caCertificateSecret }}
+{{- end }}
+{{- end -}}
+
+
 {{- define "capi.validateAppDomains" -}}
 {{- range $domain := . -}}
 {{- if and (kindIs "map" $domain) (index $domain "internal") (hasKey $domain "router_group_name") -}}
@@ -94,31 +127,17 @@ Input: the app_domains list (strings and/or {name, internal, router_group_name} 
 {{- end -}}
 {{- end -}}
 
-
-{{/*
-capi.clientSecret — resolve a UAA client secret, falling back to the shared
-oauthClientsSecret, and fail if neither is set.
-Input: dict with  root (the chart root context $), name (the uaa.clients key)
-*/}}
 {{- define "capi.clientSecret" -}}
 {{- $client := index .root.Values.cloudController.config.uaa.clients .name | default dict -}}
 {{- $client.secret | default .root.Values.oauthClientsSecret | required (printf "cloudController.config.uaa.clients.%s.secret or oauthClientsSecret must be provided" .name) | quote -}}
 {{- end -}}
 
-
-{{/*
-capi.databaseEncryption — render the db_encryption_key line and the database_encryption
-block, mirroring the BOSH ERB. database_encryption.keys may be either:
-  - a map {label: key, ...} with an explicit current_key_label, or
-  - a list [{label, encryption_key, active}] whose single active entry sets current_key_label.
-Input: the cloudController.config map.
-*/}}
 {{- define "capi.databaseEncryption" -}}
-{{- $enc := .database_encryption -}}
-{{- $legacyKey := .db_encryption_key -}}
-{{- $rawKeys := $enc.keys | default dict -}}{{- /* default dict: treat unset keys as "none" */ -}}
+{{- $enc := .databaseEncryption -}}
+{{- $legacyKey := .dbEncryptionKey -}}
+{{- $rawKeys := $enc.keys | default dict -}}
 {{- $keys := dict -}}
-{{- $currentLabel := $enc.current_key_label | default "" -}}
+{{- $currentLabel := $enc.currentKeyLabel | default "" -}}
 {{- if kindIs "slice" $rawKeys -}}
   {{- $activeLabels := list -}}
   {{- range $key := $rawKeys -}}
@@ -131,7 +150,7 @@ Input: the cloudController.config map.
   {{- $keys = $rawKeys -}}
 {{- end -}}
 {{- if and (not $legacyKey) (empty $keys) }}{{- fail "cloudController.config: set db_encryption_key or database_encryption.keys" -}}{{- end -}}
-{{- if not $enc.skip_validation -}}
+{{- if not $enc.skipValidation -}}
   {{- if or $currentLabel (not (empty $keys)) -}}
     {{- if not (hasKey $keys $currentLabel) }}{{- fail "cloudController.config.database_encryption.current_key_label is not present in database_encryption.keys" -}}{{- end -}}
   {{- end -}}
@@ -142,6 +161,6 @@ database_encryption:
   keys:
 {{- toYaml $keys | nindent 4 }}
   current_key_label: {{ $currentLabel | quote }}
-  pbkdf2_hmac_iterations: {{ $enc.experimental_pbkdf2_hmac_iterations }}
+  pbkdf2_hmac_iterations: {{ $enc.experimentalPbkdf2HmacIterations }}
 {{- end -}}
 {{- end -}}

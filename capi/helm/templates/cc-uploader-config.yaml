@@ -7,28 +7,28 @@ metadata:
 data:
   cc-uploader.json: |-
     {
-      "log_level": {{ .Values.ccUploader.config.log_level | quote }},
-      "dropsonde_port": {{ .Values.ccUploader.config.dropsonde_port }},
+      "log_level": {{ .Values.ccUploader.config.logLevel | quote }},
+      "dropsonde_port": {{ .Values.ccUploader.config.dropsondePort }},
       "lager_config": {
-        "log_level": {{ .Values.ccUploader.config.log_level | quote }},
+        "log_level": {{ .Values.ccUploader.config.logLevel | quote }},
         "time_format": {{ .Values.ccUploader.config.logging.format.timestamp | quote }}
       },
-      {{- if .Values.ccUploader.config.debug_port }}
+      {{- if .Values.ccUploader.config.debugPort }}
       "debug_server_config": {
-        "debug_address": "{{ .Values.ccUploader.config.debug_bind_addr }}:{{ .Values.ccUploader.config.debug_port }}"
+        "debug_address": "{{ .Values.ccUploader.config.debugBindAddr }}:{{ .Values.ccUploader.config.debugPort }}"
       },
       {{- end }}
-      {{- if .Values.ccUploader.config.cc.job_polling_interval_in_seconds }}
-      "job_polling_interval_in_seconds": "{{ .Values.ccUploader.config.cc.job_polling_interval_in_seconds }}s",
+      {{- if .Values.ccUploader.config.cc.jobPollingIntervalInSeconds }}
+      "job_polling_interval_in_seconds": "{{ .Values.ccUploader.config.cc.jobPollingIntervalInSeconds }}s",
       {{- end }}
-      "cc_ca_cert": "/etc/ssl/certs/cc-uploader/ca.crt",
-      "cc_client_cert": "/etc/ssl/certs/cc-uploader/tls.crt",
-      "cc_client_key": "/etc/ssl/certs/cc-uploader/tls.key",
+      "cc_ca_cert": "/etc/ssl/certs/cc-uploader-client/ca.crt",
+      "cc_client_cert": "/etc/ssl/certs/cc-uploader-client/tls.crt",
+      "cc_client_key": "/etc/ssl/certs/cc-uploader-client/tls.key",
       "mutual_tls": {
-        "listen_addr": "{{ .Values.ccUploader.config.bind_addr }}:{{ .Values.ccUploader.config.https_port }}",
-        "ca_cert": "/etc/ssl/certs/cc-uploader/ca.crt",
-        "server_cert": "/etc/ssl/certs/cc-uploader/tls.crt",
-        "server_key": "/etc/ssl/certs/cc-uploader/tls.key"
+        "listen_addr": "{{ .Values.ccUploader.config.bindAddr }}:{{ .Values.ccUploader.config.httpsPort }}",
+        "ca_cert": "/etc/ssl/certs/cc-uploader-server/ca.crt",
+        "server_cert": "/etc/ssl/certs/cc-uploader-server/tls.crt",
+        "server_key": "/etc/ssl/certs/cc-uploader-server/tls.key"
       }
     }
 {{ end }}

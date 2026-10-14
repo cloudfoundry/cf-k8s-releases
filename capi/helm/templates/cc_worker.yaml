@@ -19,13 +19,13 @@ spec:
       labels:
         app.kubernetes.io/name: cc-worker
     spec:
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.worker_grace_period_seconds 1 }}
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}
       containers:
         - name: cc-worker
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
-          {{- if .Values.cloudController.config.jobs.generic.number_of_worker_threads }}
-          command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME),{{ .Values.cloudController.config.jobs.generic.number_of_worker_threads }},{{ sub .Values.cloudController.config.jobs.generic.worker_grace_period_seconds 1 }}]"]
+          {{- if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }}
+          command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME),{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}]"]
           {{- else }}
           command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME)]"]
           {{- end }}
@@ -46,13 +46,7 @@ spec:
             {{- toYaml .Values.ccWorker.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cloud-controller
-              mountPath: /etc/ssl/certs/cloud-controller
-            {{- if .Values.ccdb.caCertificateSecret }}
-            - name: db-ca
-              mountPath: /etc/ssl/certs/db-ca
-              readOnly: true
-            {{- end }}
+            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
             - name: tmpdir
@@ -66,14 +60,7 @@ spec:
         {{- toYaml .Values.ccWorker.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: cloud-controller
-          secret:
-            secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}
-        {{- if .Values.ccdb.caCertificateSecret }}
-        - name: db-ca
-          secret:
-            secretName: {{ .Values.ccdb.caCertificateSecret }}
-        {{- end }}
+        {{- include "capi.ccCertVolumes" $ | nindent 8 }}
         - name: etc-cloud-controller
           secret:
             secretName: cloud-controller-config

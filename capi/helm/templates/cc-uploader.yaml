@@ -18,20 +18,24 @@ spec:
       annotations:
         checksum/cc-uploader-config: {{ include (print $.Template.BasePath "/cc-uploader-config.yaml") . | sha256sum }}
     spec:
-      terminationGracePeriodSeconds: {{ add (mul .Values.ccUploader.config.cc_uploader_drain_timeout_in_minutes 60) 1 }}
+      terminationGracePeriodSeconds: {{ add (mul .Values.ccUploader.config.ccUploaderDrainTimeoutInMinutes 60) 1 }}
       containers:
         - name: cc-uploader
           image: {{ .Values.ccUploader.image.repository }}:{{ default .Chart.AppVersion .Values.ccUploader.image.tag }}
           imagePullPolicy: {{ .Values.ccUploader.image.imagePullPolicy }}
           ports:
-            - containerPort: {{ .Values.ccUploader.config.https_port }}
+            - containerPort: {{ .Values.ccUploader.config.httpsPort }}
           {{- if .Values.ccUploader.resources }}
           resources:
             {{- toYaml .Values.ccUploader.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cc-uploader
-              mountPath: /etc/ssl/certs/cc-uploader
+            - name: cc-uploader-client
+              mountPath: /etc/ssl/certs/cc-uploader-client
+              readOnly: true
+            - name: cc-uploader-server
+              mountPath: /etc/ssl/certs/cc-uploader-server
+              readOnly: true
             - name: cc-uploader-config
               mountPath: /cc-uploader
       {{- if .Values.ccUploader.nodeSelector }}
@@ -43,9 +47,12 @@ spec:
         {{- toYaml .Values.ccUploader.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: cc-uploader
+        - name: cc-uploader-client
           secret:
-            secretName: {{ required "ccUploader.certificateSecret is required" .Values.ccUploader.certificateSecret }}
+            secretName: {{ required "ccUploader.certificates.ccClient is required" .Values.ccUploader.certificates.ccClient }}
+        - name: cc-uploader-server
+          secret:
+            secretName: {{ required "ccUploader.certificates.server is required" .Values.ccUploader.certificates.server }}
         - name: cc-uploader-config
           configMap:
             name: cc-uploader-config
@@ -58,8 +65,8 @@ metadata:
     app: cc-uploader
 spec:
   ports:
-    - port: {{ .Values.ccUploader.config.https_port }}
-      targetPort: {{ .Values.ccUploader.config.https_port }}
+    - port: {{ .Values.ccUploader.config.httpsPort }}
+      targetPort: {{ .Values.ccUploader.config.httpsPort }}
       name: tcp
       protocol: TCP
   selector:

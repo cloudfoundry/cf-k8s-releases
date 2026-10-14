@@ -17,4 +17,6 @@ data:
     {{- tpl (.Files.Get "files/nginx/mime.types") . | nindent 4 }}
   nginx_server_public_tls.conf: |-
     {{- tpl (.Files.Get "files/nginx/nginx_server_public_tls.conf") . | nindent 4 }}
+  prom_scraper_mtls.conf: |-
+    {{- tpl (.Files.Get "files/nginx/prom_scraper_mtls.conf") . | nindent 4 }}
 {{ end }}

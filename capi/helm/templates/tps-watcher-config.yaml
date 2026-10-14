@@ -7,29 +7,29 @@ metadata:
 data:
   tps-watcher.json: |-
     {
-      "bbs_client_cert": "/etc/ssl/certs/tps-watcher/tls.crt",
-      "bbs_client_key": "/etc/ssl/certs/tps-watcher/tls.key",
-      "bbs_ca_cert": "/etc/ssl/certs/tps-watcher/ca.crt",
-      "bbs_api_url": "https://{{ tpl .Values.tpsWatcher.config.bbs.api_location . }}",
-      {{- if .Values.tpsWatcher.config.bbs.max_idle_conns_per_host }}
-      "bbs_max_idle_conns_per_host": {{ .Values.tpsWatcher.config.bbs.max_idle_conns_per_host }},
+      "bbs_client_cert": "/etc/ssl/certs/tps-watcher-bbs/tls.crt",
+      "bbs_client_key": "/etc/ssl/certs/tps-watcher-bbs/tls.key",
+      "bbs_ca_cert": "/etc/ssl/certs/tps-watcher-bbs/ca.crt",
+      "bbs_api_url": "https://{{ tpl .Values.tpsWatcher.config.bbs.apiLocation . }}",
+      {{- if .Values.tpsWatcher.config.bbs.maxIdleConnsPerHost }}
+      "bbs_max_idle_conns_per_host": {{ .Values.tpsWatcher.config.bbs.maxIdleConnsPerHost }},
       {{- end }}
-      "cc_base_url": "https://{{ tpl .Values.tpsWatcher.config.cc.internal_service_hostname . }}:{{ .Values.tpsWatcher.config.cc.external_port }}",
-      "cc_client_cert": "/etc/ssl/certs/tps-watcher/tls.crt",
-      "cc_client_key": "/etc/ssl/certs/tps-watcher/tls.key",
-      "cc_ca_cert": "/etc/ssl/certs/tps-watcher/ca.crt",
+      "cc_base_url": "https://{{ tpl .Values.tpsWatcher.config.cc.internalServiceHostname . }}:{{ .Values.tpsWatcher.config.cc.externalPort }}",
+      "cc_client_cert": "/etc/ssl/certs/tps-watcher-cc/tls.crt",
+      "cc_client_key": "/etc/ssl/certs/tps-watcher-cc/tls.key",
+      "cc_ca_cert": "/etc/ssl/certs/tps-watcher-cc/ca.crt",
       "debug_server_config": {
-        "debug_address": {{ .Values.tpsWatcher.config.watcher.debug_addr | quote }}
+        "debug_address": {{ .Values.tpsWatcher.config.watcher.debugAddr | quote }}
       },
-      "dropsonde_port": {{ .Values.tpsWatcher.config.dropsonde_port }},
+      "dropsonde_port": {{ .Values.tpsWatcher.config.dropsondePort }},
       "lager_config": {
-        "log_level": {{ .Values.tpsWatcher.config.log_level | quote }},
+        "log_level": {{ .Values.tpsWatcher.config.logLevel | quote }},
         "time_format": {{ .Values.tpsWatcher.config.logging.format.timestamp | quote }}
       },
-      "locket_client_cert_file": "/etc/ssl/certs/tps-watcher/tls.crt",
-      "locket_client_key_file": "/etc/ssl/certs/tps-watcher/tls.key",
-      "locket_ca_cert_file": "/etc/ssl/certs/tps-watcher/ca.crt",
-      "locket_address": "{{ tpl .Values.tpsWatcher.config.watcher.locket.api_location . }}",
+      "locket_client_cert_file": "/etc/ssl/certs/tps-watcher-bbs/tls.crt",
+      "locket_client_key_file": "/etc/ssl/certs/tps-watcher-bbs/tls.key",
+      "locket_ca_cert_file": "/etc/ssl/certs/tps-watcher-bbs/ca.crt",
+      "locket_address": "{{ tpl .Values.tpsWatcher.config.watcher.locket.apiLocation . }}",
       "instance_id": "62bcb8b5-ee8a-4dd9-bec0-3788beb13855"
     }
 {{ end }}

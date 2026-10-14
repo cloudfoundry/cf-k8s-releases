@@ -59,8 +59,17 @@
         "config": {
           "type": "object"
         },
-        "certificateSecret": {
-          "type": "string"
+        "certificates": {
+          "additionalProperties": false,
+          "properties": {
+            "ccClient": {
+              "type": "string"
+            },
+            "server": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -233,8 +242,32 @@
         "config": {
           "type": "object"
         },
-        "certificateSecret": {
-          "type": "string"
+        "certificates": {
+          "additionalProperties": false,
+          "properties": {
+            "mutualTLS": {
+              "type": "string"
+            },
+            "loggregatorTLS": {
+              "type": "string"
+            },
+            "logcacheTLS": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "credhubCA": {
+              "type": "string"
+            },
+            "promScraperTLS": {
+              "type": "string"
+            },
+            "publicTLS": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "enabled": {
           "type": "boolean"
@@ -253,9 +286,6 @@
             }
           },
           "type": "object"
-        },
-        "publicTLSCertificateSecret": {
-          "type": "string"
         },
         "nodeSelector": {
           "type": [
@@ -383,6 +413,9 @@
           },
           "type": "object"
         },
+        "certificateSecret": {
+          "type": "string"
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -413,8 +446,17 @@
         "config": {
           "type": "object"
         },
-        "certificateSecret": {
-          "type": "string"
+        "certificates": {
+          "additionalProperties": false,
+          "properties": {
+            "bbs": {
+              "type": "string"
+            },
+            "cc": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "enabled": {
           "type": "boolean"

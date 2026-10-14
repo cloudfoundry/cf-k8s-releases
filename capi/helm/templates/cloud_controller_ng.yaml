@@ -14,10 +14,10 @@ spec:
     - port: 9024
       name: https-ext
       targetPort: 9024
-{{- if .Values.cloudController.config.prom_metrics_server_enabled }}
-    - port: {{ .Values.cloudController.config.prom_metrics_server_tls_port }}
+{{- if .Values.cloudController.config.promMetricsServerEnabled }}
+    - port: {{ .Values.cloudController.config.promMetricsServerTlsPort }}
       name: https-metrics
-      targetPort: {{ .Values.cloudController.config.prom_metrics_server_tls_port }}
+      targetPort: {{ .Values.cloudController.config.promMetricsServerTlsPort }}
 {{- end }}
   selector:
     app.kubernetes.io/name: cloud-controller
@@ -43,7 +43,7 @@ spec:
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
     spec:
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.local_worker_grace_period_seconds 1 }}
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds 1 }}
       containers:
         - name: cloud-controller
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
@@ -62,13 +62,7 @@ spec:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cloud-controller
-              mountPath: /etc/ssl/certs/cloud-controller
-            {{- if .Values.ccdb.caCertificateSecret }}
-            - name: db-ca
-              mountPath: /etc/ssl/certs/db-ca
-              readOnly: true
-            {{- end }}
+            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
             - name: var-run
@@ -93,13 +87,14 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cloud-controller
-              mountPath: /etc/ssl/certs/cloud-controller
+            - name: route-registrar
+              mountPath: /etc/ssl/certs/route-registrar
+              readOnly: true
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
             - name: tmpdir
               mountPath: /tmp
-        {{- range $i := until (int .Values.cloudController.config.jobs.local.number_of_workers) }}
+        {{- range $i := until (int .Values.cloudController.config.jobs.local.numberOfWorkers) }}
         - name: local-worker-{{ add $i 1 }}
           image: {{ $.Values.localWorker.image.repository }}:{{ default $.Chart.AppVersion $.Values.localWorker.image.tag }}
           imagePullPolicy: {{ $.Values.localWorker.image.imagePullPolicy }}
@@ -121,13 +116,7 @@ spec:
             {{- toYaml $.Values.localWorker.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cloud-controller
-              mountPath: /etc/ssl/certs/cloud-controller
-            {{- if $.Values.ccdb.caCertificateSecret }}
-            - name: db-ca
-              mountPath: /etc/ssl/certs/db-ca
-              readOnly: true
-            {{- end }}
+            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
             - name: var-run
@@ -154,11 +143,15 @@ spec:
               mountPath: /var/run
             - name: tmpdir
               mountPath: /tmp
-            - name: cloud-controller
-              mountPath: /etc/ssl/certs/cloud-controller
-            {{- if .Values.cloudController.publicTLSCertificateSecret }}
-            - name: cloud-controller-public
-              mountPath: /etc/ssl/certs/cloud-controller-public
+            - name: mutual-tls
+              mountPath: /etc/ssl/certs/mutual-tls
+              readOnly: true
+            - name: public-tls
+              mountPath: /etc/ssl/certs/public-tls
+              readOnly: true
+            {{- if .Values.cloudController.config.promMetricsServerEnabled }}
+            - name: prom-scraper
+              mountPath: /etc/ssl/certs/prom-scraper
               readOnly: true
             {{- end }}
             - name: nginx-config
@@ -179,6 +172,11 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx_server_public_tls.conf
               subPath: nginx_server_public_tls.conf
+            {{- if .Values.cloudController.config.promMetricsServerEnabled }}
+            - name: nginx-config
+              mountPath: /etc/nginx/prom_scraper_mtls.conf
+              subPath: prom_scraper_mtls.conf
+            {{- end }}
         - name: valkey
           image: {{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}
           imagePullPolicy: {{ .Values.valkey.image.imagePullPolicy }}
@@ -199,19 +197,18 @@ spec:
         {{- toYaml .Values.cloudController.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: cloud-controller
+        {{- include "capi.ccCertVolumes" $ | nindent 8 }}
+        - name: public-tls
           secret:
-            secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}
-        {{- if .Values.cloudController.publicTLSCertificateSecret }}
-        - name: cloud-controller-public
+            secretName: {{ required "cloudController.certificates.publicTLS is required" .Values.cloudController.certificates.publicTLS }}
+        {{- if .Values.cloudController.config.promMetricsServerEnabled }}
+        - name: prom-scraper
           secret:
-            secretName: {{ .Values.cloudController.publicTLSCertificateSecret }}
+            secretName: {{ required "cloudController.certificates.promScraperTLS is required when promMetricsServerEnabled" .Values.cloudController.certificates.promScraperTLS }}
         {{- end }}
-        {{- if .Values.ccdb.caCertificateSecret }}
-        - name: db-ca
+        - name: route-registrar
           secret:
-            secretName: {{ .Values.ccdb.caCertificateSecret }}
-        {{- end }}
+            secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
         - name: etc-cloud-controller
           secret:
             secretName: cloud-controller-config

@@ -11,24 +11,25 @@ stringData:
   config.yaml: |-
     {{- tpl (.Files.Get "files/cloud_controller_ng.yaml") . | nindent 4 }}
   cloud_controller_local_worker_override.yml: |-
-    {{- if .Values.ccdb.max_connections_per_local_worker }}
+    {{- if .Values.ccdb.maxConnectionsPerLocalWorker }}
     db:
-      max_connections: {{ .Values.ccdb.max_connections_per_local_worker }}
+      max_connections: {{ .Values.ccdb.maxConnectionsPerLocalWorker }}
     {{- else }}
     {}
     {{- end }}
   stacks.yaml: |-
-    default: {{ .Values.cloudController.config.default_stack }}
+    default: {{ .Values.cloudController.config.defaultStack }}
     stacks:
     {{- range .Values.cloudController.config.stacks }}
     - description: {{ .description }}
       name: {{ .name }}
     {{- end }}
-    deprecated_stacks: {{ .Values.cloudController.config.deprecated_stacks | toJson }}
-  {{- $dirKeys := dict "droplets" "droplet_directory_key" "packages" "app_package_directory_key" "buildpacks" "buildpack_directory_key" "resource_pool" "resource_directory_key" }}
-  {{- range $blob := list "droplets" "packages" "buildpacks" "resource_pool" }}
-  {{- $b := index $.Values.cloudController.config $blob }}
-  storage_cli_config_{{ $blob }}.json: |-
-    {{- include "capi.storageCliConfig" (dict "provider" $b.blobstore_provider "cfg" ($b.connection_config | default dict) "resourceDir" (index $b (index $dirKeys $blob)) "root" $) | nindent 4 }}
+    deprecated_stacks: {{ .Values.cloudController.config.deprecatedStacks | toJson }}
+  {{- $blobKeys := dict "droplets" "droplets" "packages" "packages" "buildpacks" "buildpacks" "resource_pool" "resourcePool" }}
+  {{- $dirKeys := dict "droplets" "dropletDirectoryKey" "packages" "appPackageDirectoryKey" "buildpacks" "buildpackDirectoryKey" "resource_pool" "resourceDirectoryKey" }}
+  {{- range $file := list "droplets" "packages" "buildpacks" "resource_pool" }}
+  {{- $b := index $.Values.cloudController.config (index $blobKeys $file) }}
+  storage_cli_config_{{ $file }}.json: |-
+    {{- include "capi.storageCliConfig" (dict "provider" $b.blobstoreProvider "cfg" ($b.connectionConfig | default dict) "resourceDir" (index $b (index $dirKeys $file)) "root" $) | nindent 4 }}
   {{- end }}
 {{ end }}
