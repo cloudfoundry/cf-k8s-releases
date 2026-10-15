@@ -1,13 +1,14 @@
 {{- if .Values.loggregator.enabled }}
 ---
-kind: Deployment
+kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: doppler
   labels:
     app: doppler
 spec:
-  replicas: 1
+  serviceName: doppler
+  replicas: {{ .Values.doppler.replicas }}
   selector:
     matchLabels:
       app: doppler
@@ -26,22 +27,31 @@ spec:
           {{- end }}
           env:
             - name: AGENT_GRPC_ADDRESS
-              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+              value: "{{ tpl .Values.doppler.metronEndpoint.host $ }}:{{ .Values.doppler.metronEndpoint.grpcPort }}"
             - name: ROUTER_PORT
-              value: "8082"
+              value: "{{ .Values.doppler.grpcPort }}"
             - name: ROUTER_CA_FILE
               value: /etc/ssl/certs/doppler/ca.crt
             - name: ROUTER_CERT_FILE
               value: /etc/ssl/certs/doppler/tls.crt
             - name: ROUTER_KEY_FILE
               value: /etc/ssl/certs/doppler/tls.key
+            - name: ROUTER_CIPHER_SUITES
+              value: {{ .Values.doppler.cipherSuites | replace ":" "," | quote }}
+            - name: ROUTER_PPROF_PORT
+              value: "{{ .Values.doppler.pprofPort }}"
             - name: INGRESS_BUFFER_SIZE
-              value: "10000"
-            - name: "EGRESS_BUFFER_SIZE"
-              value: "1000"
+              value: "{{ .Values.doppler.ingressBufferSize }}"
+            - name: EGRESS_BUFFER_SIZE
+              value: "{{ .Values.doppler.egressBufferSize }}"
+            - name: USE_RFC339
+              value: {{ eq .Values.doppler.loggingFormatTimestamp "rfc3339" | quote }}
           volumeMounts:
             - name: doppler
               mountPath: /etc/ssl/certs/doppler
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.doppler.grpcPort }}
       {{- if .Values.doppler.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.doppler.nodeSelector | nindent 8 }}
@@ -51,8 +61,6 @@ spec:
         {{- toYaml .Values.doppler.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: tmp
-          emptyDir: {}
         - name: doppler
           secret:
             secretName: {{ required "doppler.certificateSecret is required" .Values.doppler.certificateSecret }}
@@ -64,9 +72,10 @@ metadata:
   labels:
     app: doppler
 spec:
+  clusterIP: None
   ports:
-    - port: 8082
-      targetPort: 8082
+    - port: {{ .Values.doppler.grpcPort }}
+      targetPort: {{ .Values.doppler.grpcPort }}
       name: https
       protocol: TCP
   selector:

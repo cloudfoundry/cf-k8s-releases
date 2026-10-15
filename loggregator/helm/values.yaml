@@ -4,7 +4,17 @@ loggregator:
   enabled: false
 
 doppler:
+  replicas: 1
   certificateSecret: ""
+  grpcPort: 8082
+  pprofPort: 0
+  ingressBufferSize: 10000
+  egressBufferSize: 1000
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  loggingFormatTimestamp: deprecated
+  metronEndpoint:
+    host: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+    grpcPort: 3458
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/doppler
@@ -13,8 +23,23 @@ doppler:
   nodeSelector: ~
   tolerations: ~
 
+logApi:
+  replicas: 1
+
 reverseLogProxy:
   certificateSecret: ""
+  egress:
+    port: 8082
+    maxStreams: 1000
+  pprof:
+    port: 0
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  metricEmitter:
+    interval: 1m
+  loggingFormatTimestamp: deprecated
+  metronEndpoint:
+    host: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+    grpcPort: 3458
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/reverse-log-proxy
@@ -22,7 +47,27 @@ reverseLogProxy:
     imagePullPolicy: IfNotPresent
 
 reverseLogProxyGateway:
-  certificateSecret: ""
+  certificateSecrets:
+    httpTLS: ""
+    logsProvider: ""
+    cc: ""
+    uaaCA: ""
+    metrics: ""
+  http:
+    address: ":8088"
+  logsProvider:
+    commonName: reverselogproxy
+  cc:
+    address: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+    commonName: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+  uaa:
+    clientId: ""
+    clientSecret: ""
+    internalAddr: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
+  skipCertVerify: false
+  metrics:
+    port: 8089
+  loggingFormatTimestamp: deprecated
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/reverse-log-proxy-gateway
@@ -30,7 +75,30 @@ reverseLogProxyGateway:
     imagePullPolicy: IfNotPresent
 
 trafficcontroller:
-  certificateSecret: ""
+  certificateSecrets:
+    routerTLS: ""
+    cc: ""
+    outgoing: ""
+    uaaCA: ""
+  outgoingDropsondePort: 8081
+  disableAccessControl: false
+  securityEventLogging:
+    enabled: false
+  pprofPort: 0
+  skipCertVerify: false
+  metricEmitter:
+    interval: 1m
+  loggingFormatTimestamp: deprecated
+  metronEndpoint:
+    host: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+    grpcPort: 3458
+  cc:
+    internalServiceHostname: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+    tlsPort: 9023
+  uaa:
+    client: doppler
+    clientSecret: ""
+    internalUrl: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/traffic-controller
@@ -39,9 +107,8 @@ trafficcontroller:
   nodeSelector: ~
   tolerations: ~
 
-oauthClientsSecret: ~
-
 routeRegistrar:
+  certificateSecret: ""
   nats:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   image:

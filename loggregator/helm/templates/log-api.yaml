@@ -1,6 +1,5 @@
 
 {{ if .Values.loggregator.enabled }}
-{{ $_ := required ".Values.oauthClientsSecret must be provided" .Values.oauthClientsSecret }}
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -9,7 +8,7 @@ metadata:
   labels:
     app: log-api
 spec:
-  replicas: 1
+  replicas: {{ .Values.logApi.replicas }}
   selector:
     matchLabels:
       app: log-api
@@ -30,9 +29,9 @@ spec:
           {{- end }}
           env:
           - name: RLP_PORT
-            value: "8082"
+            value: "{{ .Values.reverseLogProxy.egress.port }}"
           - name: MAX_EGRESS_STREAMS
-            value: "1000"
+            value: "{{ .Values.reverseLogProxy.egress.maxStreams }}"
           - name: RLP_CERT_FILE
             value: "/etc/ssl/certs/reverse-log-proxy/tls.crt"
           - name: RLP_KEY_FILE
@@ -40,13 +39,17 @@ spec:
           - name: RLP_CA_FILE
             value: "/etc/ssl/certs/reverse-log-proxy/ca.crt"
           - name: RLP_CIPHER_SUITES
-            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            value: {{ .Values.reverseLogProxy.cipherSuites | replace ":" "," | quote }}
+          - name: RLP_PPROF_PORT
+            value: "{{ .Values.reverseLogProxy.pprof.port }}"
           - name: RLP_METRIC_EMITTER_INTERVAL
-            value: "1m"
+            value: {{ .Values.reverseLogProxy.metricEmitter.interval | quote }}
+          - name: USE_RFC339
+            value: {{ eq .Values.reverseLogProxy.loggingFormatTimestamp "rfc3339" | quote }}
           - name: ROUTER_ADDRS
-            value: "doppler.{{ .Release.Namespace }}.svc.cluster.local:8082"
+            value: {{ include "loggregator.dopplerAddrs" . | quote }}
           - name: AGENT_ADDR
-            value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+            value: "{{ tpl .Values.reverseLogProxy.metronEndpoint.host $ }}:{{ .Values.reverseLogProxy.metronEndpoint.grpcPort }}"
           volumeMounts:
             - name: reverse-log-proxy
               mountPath: /etc/ssl/certs/reverse-log-proxy
@@ -59,50 +62,64 @@ spec:
           {{- end }}
           env:
           - name: GATEWAY_ADDR
-            value: "0.0.0.0:8088"
+            value: {{ .Values.reverseLogProxyGateway.http.address | quote }}
           - name: HTTP_CERT_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.crt
+            value: /etc/ssl/certs/http/tls.crt
           - name: HTTP_KEY_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.key
+            value: /etc/ssl/certs/http/tls.key
           - name: LOG_ACCESS_ADDR_EXTERNAL
-            value: http://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9022
+            value: "http://{{ tpl .Values.reverseLogProxyGateway.cc.address $ }}:9022"
           - name: LOG_ACCESS_ADDR
-            value: https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9023
+            value: "https://{{ tpl .Values.reverseLogProxyGateway.cc.address $ }}:9023"
           - name: LOG_ACCESS_CERT_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.crt
+            value: /etc/ssl/certs/cc/tls.crt
           - name: LOG_ACCESS_KEY_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.key
+            value: /etc/ssl/certs/cc/tls.key
           - name: LOG_ACCESS_CA_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/ca.crt
+            value: /etc/ssl/certs/cc/ca.crt
           - name: LOG_ACCESS_COMMON_NAME
-            value: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+            value: {{ tpl .Values.reverseLogProxyGateway.cc.commonName $ | quote }}
           - name: LOG_ADMIN_CLIENT_ID
-            value: "doppler"
+            value: {{ required "reverseLogProxyGateway.uaa.clientId is required" .Values.reverseLogProxyGateway.uaa.clientId | quote }}
           - name: LOG_ADMIN_CLIENT_SECRET
-            value: {{ .Values.oauthClientsSecret | quote }}
+            value: {{ required "reverseLogProxyGateway.uaa.clientSecret is required" .Values.reverseLogProxyGateway.uaa.clientSecret | quote }}
           - name: LOG_ADMIN_ADDR
-            value: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
+            value: {{ tpl .Values.reverseLogProxyGateway.uaa.internalAddr $ | quote }}
           - name: LOG_ADMIN_CA_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/ca.crt
+            value: /etc/ssl/certs/uaa/ca.crt
           - name: LOGS_PROVIDER_ADDR
-            value: "127.0.0.1:8082"
+            value: "127.0.0.1:{{ .Values.reverseLogProxy.egress.port }}"
           - name: LOGS_PROVIDER_CLIENT_CERT_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.crt
+            value: /etc/ssl/certs/logs-provider/tls.crt
           - name: LOGS_PROVIDER_CLIENT_KEY_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.key
+            value: /etc/ssl/certs/logs-provider/tls.key
           - name: LOGS_PROVIDER_CA_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/ca.crt
+            value: /etc/ssl/certs/logs-provider/ca.crt
           - name: LOGS_PROVIDER_COMMON_NAME
-            value: "reverse-log-proxy"
+            value: {{ .Values.reverseLogProxyGateway.logsProvider.commonName | quote }}
+          - name: SKIP_CERT_VERIFY
+            value: {{ .Values.reverseLogProxyGateway.skipCertVerify | quote }}
+          - name: METRICS_PORT
+            value: "{{ .Values.reverseLogProxyGateway.metrics.port }}"
           - name: METRICS_CA_FILE_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/ca.crt
+            value: /etc/ssl/certs/metrics/ca.crt
           - name: METRICS_CERT_FILE_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.crt
+            value: /etc/ssl/certs/metrics/tls.crt
           - name: METRICS_KEY_FILE_PATH
-            value: /etc/ssl/certs/reverse-log-proxy-gateway/tls.key
+            value: /etc/ssl/certs/metrics/tls.key
+          - name: USE_RFC339
+            value: {{ eq .Values.reverseLogProxyGateway.loggingFormatTimestamp "rfc3339" | quote }}
           volumeMounts:
-            - name: reverse-log-proxy-gateway
-              mountPath: /etc/ssl/certs/reverse-log-proxy-gateway
+            - name: rlp-gateway-http
+              mountPath: /etc/ssl/certs/http
+            - name: rlp-gateway-logs-provider
+              mountPath: /etc/ssl/certs/logs-provider
+            - name: rlp-gateway-cc
+              mountPath: /etc/ssl/certs/cc
+            - name: rlp-gateway-uaa
+              mountPath: /etc/ssl/certs/uaa
+            - name: rlp-gateway-metrics
+              mountPath: /etc/ssl/certs/metrics
         - name: trafficcontroller
           image: {{ .Values.trafficcontroller.image.repository }}:{{ default .Chart.AppVersion .Values.trafficcontroller.image.tag }}
           imagePullPolicy: {{ .Values.trafficcontroller.image.imagePullPolicy }}
@@ -111,53 +128,75 @@ spec:
             {{- toYaml .Values.trafficcontroller.resources | nindent 12 }}
           {{- end }}
           env:
-          - name: AGENT_ADDR
-            value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
-          - name: "ROUTER_ADDRS"
-            value: "doppler.{{ .Release.Namespace }}.svc.cluster.local:8082"
+          - name: AGENT_GRPC_ADDRESS
+            value: "{{ tpl .Values.trafficcontroller.metronEndpoint.host $ }}:{{ .Values.trafficcontroller.metronEndpoint.grpcPort }}"
+          - name: ROUTER_ADDRS
+            value: {{ include "loggregator.dopplerAddrs" . | quote }}
           - name: ROUTER_CERT_FILE
-            value: "/etc/ssl/certs/trafficcontroller/tls.crt"
+            value: "/etc/ssl/certs/router/tls.crt"
           - name: ROUTER_KEY_FILE
-            value: "/etc/ssl/certs/trafficcontroller/tls.key"
+            value: "/etc/ssl/certs/router/tls.key"
           - name: ROUTER_CA_FILE
-            value: "/etc/ssl/certs/trafficcontroller/ca.crt"
+            value: "/etc/ssl/certs/router/ca.crt"
           - name: CC_CERT_FILE
-            value: "/etc/ssl/certs/trafficcontroller/tls.crt"
+            value: "/etc/ssl/certs/cc/tls.crt"
           - name: CC_KEY_FILE
-            value: "/etc/ssl/certs/trafficcontroller/tls.key"
+            value: "/etc/ssl/certs/cc/tls.key"
           - name: CC_CA_FILE
-            value: "/etc/ssl/certs/trafficcontroller/ca.crt"
+            value: "/etc/ssl/certs/cc/ca.crt"
           - name: CC_SERVER_NAME
-            value: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+            value: {{ tpl .Values.trafficcontroller.cc.internalServiceHostname $ | quote }}
           - name: TRAFFIC_CONTROLLER_API_HOST
-            value: "https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9023"
+            value: "https://{{ tpl .Values.trafficcontroller.cc.internalServiceHostname $ }}:{{ .Values.trafficcontroller.cc.tlsPort }}"
           - name: TRAFFIC_CONTROLLER_OUTGOING_CERT_FILE
-            value: "/etc/ssl/certs/trafficcontroller/tls.crt"
+            value: "/etc/ssl/certs/outgoing/tls.crt"
           - name: TRAFFIC_CONTROLLER_OUTGOING_KEY_FILE
-            value: "/etc/ssl/certs/trafficcontroller/tls.key"
+            value: "/etc/ssl/certs/outgoing/tls.key"
           - name: TRAFFIC_CONTROLLER_OUTGOING_DROPSONDE_PORT
-            value: "8081"
+            value: "{{ .Values.trafficcontroller.outgoingDropsondePort }}"
           - name: TRAFFIC_CONTROLLER_SKIP_CERT_VERIFY
-            value: "true"
+            value: {{ .Values.trafficcontroller.skipCertVerify | quote }}
           - name: TRAFFIC_CONTROLLER_UAA_HOST
-            value: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
+            value: {{ tpl .Values.trafficcontroller.uaa.internalUrl $ | quote }}
           - name: TRAFFIC_CONTROLLER_UAA_CLIENT
-            value: doppler
+            value: {{ .Values.trafficcontroller.uaa.client | quote }}
           - name: TRAFFIC_CONTROLLER_UAA_CLIENT_SECRET
-            value: {{ .Values.oauthClientsSecret | quote }}
+            value: {{ required "trafficcontroller.uaa.clientSecret is required" .Values.trafficcontroller.uaa.clientSecret | quote }}
+          {{- if .Values.trafficcontroller.uaa.internalUrl }}
           - name: TRAFFIC_CONTROLLER_UAA_CA_CERT
-            value: "/etc/ssl/certs/trafficcontroller/ca.crt"
+            value: "/etc/ssl/certs/uaa/ca.crt"
+          {{- end }}
           - name: TRAFFIC_CONTROLLER_METRIC_EMITTER_INTERVAL
-            value: "1m"
+            value: {{ .Values.trafficcontroller.metricEmitter.interval | quote }}
+          - name: TRAFFIC_CONTROLLER_PPROF_PORT
+            value: "{{ .Values.trafficcontroller.pprofPort }}"
+          - name: TRAFFIC_CONTROLLER_DISABLE_ACCESS_CONTROL
+            value: {{ .Values.trafficcontroller.disableAccessControl | quote }}
           - name: TRAFFIC_CONTROLLER_SYSTEM_DOMAIN
-            value: {{ .Values.systemDomain }}
+            value: {{ .Values.systemDomain | quote }}
+          - name: USE_RFC339
+            value: {{ eq .Values.trafficcontroller.loggingFormatTimestamp "rfc3339" | quote }}
+          {{- if .Values.trafficcontroller.securityEventLogging.enabled }}
+          - name: TRAFFIC_CONTROLLER_SECURITY_EVENT_LOG
+            value: /tmp/loggregator_trafficcontroller_security_events.log
+          {{- end }}
           - name: TRAFFIC_CONTROLLER_IP
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
           volumeMounts:
-            - name: trafficcontroller
-              mountPath: /etc/ssl/certs/trafficcontroller
+            - name: trafficcontroller-router
+              mountPath: /etc/ssl/certs/router
+            - name: trafficcontroller-cc
+              mountPath: /etc/ssl/certs/cc
+            - name: trafficcontroller-outgoing
+              mountPath: /etc/ssl/certs/outgoing
+            {{- if .Values.trafficcontroller.uaa.internalUrl }}
+            - name: trafficcontroller-uaa
+              mountPath: /etc/ssl/certs/uaa
+            {{- end }}
+            - name: tmp
+              mountPath: /tmp
         - name: route-registrar
           image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
           imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
@@ -171,8 +210,8 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: reverse-log-proxy-gateway
-              mountPath: /etc/ssl/certs/reverse-log-proxy-gateway
+            - name: route-registrar
+              mountPath: /etc/ssl/certs/route-registrar
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
             - name: tmp
@@ -188,15 +227,41 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
-        - name: trafficcontroller
-          secret:
-            secretName: {{ required "trafficcontroller.certificateSecret is required" .Values.trafficcontroller.certificateSecret }}
         - name: reverse-log-proxy
           secret:
             secretName: {{ required "reverseLogProxy.certificateSecret is required" .Values.reverseLogProxy.certificateSecret }}
-        - name: reverse-log-proxy-gateway
+        - name: rlp-gateway-http
           secret:
-            secretName: {{ required "reverseLogProxyGateway.certificateSecret is required" .Values.reverseLogProxyGateway.certificateSecret }}
+            secretName: {{ required "reverseLogProxyGateway.certificateSecrets.httpTLS is required" .Values.reverseLogProxyGateway.certificateSecrets.httpTLS }}
+        - name: rlp-gateway-logs-provider
+          secret:
+            secretName: {{ required "reverseLogProxyGateway.certificateSecrets.logsProvider is required" .Values.reverseLogProxyGateway.certificateSecrets.logsProvider }}
+        - name: rlp-gateway-cc
+          secret:
+            secretName: {{ required "reverseLogProxyGateway.certificateSecrets.cc is required" .Values.reverseLogProxyGateway.certificateSecrets.cc }}
+        - name: rlp-gateway-uaa
+          secret:
+            secretName: {{ required "reverseLogProxyGateway.certificateSecrets.uaaCA is required" .Values.reverseLogProxyGateway.certificateSecrets.uaaCA }}
+        - name: rlp-gateway-metrics
+          secret:
+            secretName: {{ required "reverseLogProxyGateway.certificateSecrets.metrics is required" .Values.reverseLogProxyGateway.certificateSecrets.metrics }}
+        - name: trafficcontroller-router
+          secret:
+            secretName: {{ required "trafficcontroller.certificateSecrets.routerTLS is required" .Values.trafficcontroller.certificateSecrets.routerTLS }}
+        - name: trafficcontroller-cc
+          secret:
+            secretName: {{ required "trafficcontroller.certificateSecrets.cc is required" .Values.trafficcontroller.certificateSecrets.cc }}
+        - name: trafficcontroller-outgoing
+          secret:
+            secretName: {{ required "trafficcontroller.certificateSecrets.outgoing is required" .Values.trafficcontroller.certificateSecrets.outgoing }}
+        {{- if .Values.trafficcontroller.uaa.internalUrl }}
+        - name: trafficcontroller-uaa
+          secret:
+            secretName: {{ required "trafficcontroller.certificateSecrets.uaaCA is required" .Values.trafficcontroller.certificateSecrets.uaaCA }}
+        {{- end }}
+        - name: route-registrar
+          secret:
+            secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
         - name: etc-route-registrar
           configMap:
             name: log-api-route-registrar-config

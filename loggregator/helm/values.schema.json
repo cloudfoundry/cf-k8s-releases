@@ -5,11 +5,71 @@
     "systemDomain": {
       "type": "string"
     },
+    "global": {
+      "type": "object"
+    },
+    "loggregator": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "logApi": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
     "doppler": {
       "additionalProperties": false,
       "properties": {
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
         "certificateSecret": {
           "type": "string"
+        },
+        "grpcPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "pprofPort": {
+          "type": "integer"
+        },
+        "ingressBufferSize": {
+          "type": "integer"
+        },
+        "egressBufferSize": {
+          "type": "integer"
+        },
+        "cipherSuites": {
+          "type": "string"
+        },
+        "loggingFormatTimestamp": {
+          "type": "string"
+        },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "grpcPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "host": {
+              "type": "string"
+            }
+          }
         },
         "image": {
           "additionalProperties": false,
@@ -62,26 +122,63 @@
       },
       "type": "object"
     },
-    "global": {
-      "type": "object"
-    },
-    "loggregator": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "oauthClientsSecret": {
-      "type": ["string", "null"]
-    },
     "reverseLogProxy": {
       "additionalProperties": false,
       "properties": {
         "certificateSecret": {
           "type": "string"
+        },
+        "egress": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "maxStreams": {
+              "type": "integer"
+            }
+          }
+        },
+        "pprof": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "port": {
+              "type": "integer"
+            }
+          }
+        },
+        "cipherSuites": {
+          "type": "string"
+        },
+        "metricEmitter": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "interval": {
+              "type": "string"
+            }
+          }
+        },
+        "loggingFormatTimestamp": {
+          "type": "string"
+        },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "grpcPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "host": {
+              "type": "string"
+            }
+          }
         },
         "image": {
           "additionalProperties": false,
@@ -107,7 +204,87 @@
     "reverseLogProxyGateway": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "httpTLS": {
+              "type": "string"
+            },
+            "logsProvider": {
+              "type": "string"
+            },
+            "cc": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "metrics": {
+              "type": "string"
+            }
+          }
+        },
+        "http": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
+        },
+        "logsProvider": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "commonName": {
+              "type": "string"
+            }
+          }
+        },
+        "cc": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "commonName": {
+              "type": "string"
+            }
+          }
+        },
+        "uaa": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "clientId": {
+              "type": "string"
+            },
+            "clientSecret": {
+              "type": "string"
+            },
+            "internalAddr": {
+              "type": "string"
+            }
+          }
+        },
+        "skipCertVerify": {
+          "type": "boolean"
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "loggingFormatTimestamp": {
           "type": "string"
         },
         "image": {
@@ -134,8 +311,101 @@
     "trafficcontroller": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "routerTLS": {
+              "type": "string"
+            },
+            "cc": {
+              "type": "string"
+            },
+            "outgoing": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            }
+          }
+        },
+        "outgoingDropsondePort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "disableAccessControl": {
+          "type": "boolean"
+        },
+        "securityEventLogging": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "pprofPort": {
+          "type": "integer"
+        },
+        "skipCertVerify": {
+          "type": "boolean"
+        },
+        "metricEmitter": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "interval": {
+              "type": "string"
+            }
+          }
+        },
+        "loggingFormatTimestamp": {
           "type": "string"
+        },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "grpcPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "host": {
+              "type": "string"
+            }
+          }
+        },
+        "cc": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "internalServiceHostname": {
+              "type": "string"
+            },
+            "tlsPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "uaa": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "client": {
+              "type": "string"
+            },
+            "clientSecret": {
+              "type": "string"
+            },
+            "internalUrl": {
+              "type": "string"
+            }
+          }
         },
         "image": {
           "additionalProperties": false,
@@ -191,6 +461,9 @@
     "routeRegistrar": {
       "additionalProperties": false,
       "properties": {
+        "certificateSecret": {
+          "type": "string"
+        },
         "nats": {
           "additionalProperties": false,
           "type": "object",
