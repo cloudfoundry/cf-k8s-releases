@@ -5,6 +5,13 @@ loggregator:
 
 doppler:
   certificateSecret: ""
+  grpcPort: 8082
+  metronEndpoint:
+    host: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+    grpcPort: 3458
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  ingressBufferSize: 10000
+  egressBufferSize: 1000
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/doppler
