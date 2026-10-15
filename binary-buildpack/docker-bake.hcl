@@ -4,7 +4,7 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/binary-buildpack
-    default = "2.0.0"
+    default = "2.0.1"
 }
 
 group "default" {
