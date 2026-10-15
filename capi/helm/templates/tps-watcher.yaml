@@ -7,7 +7,7 @@ metadata:
   labels:
     app: tps-watcher
 spec:
-  replicas: 1
+  replicas: {{ .Values.tpsWatcher.replicas }}
   selector:
     matchLabels:
       app: tps-watcher
@@ -18,17 +18,39 @@ spec:
       annotations:
         checksum/tps-watcher-config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: set-instance-id
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - sed "s|\${POD_NAME}|${POD_NAME}|g" /tps-watcher/tps-watcher.json > /tmp/tps-watcher.json
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: tps-watcher-config
+              mountPath: /tps-watcher
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: tps-watcher
           image: {{ .Values.tpsWatcher.image.repository }}:{{ default .Chart.AppVersion .Values.tpsWatcher.image.tag }}
           imagePullPolicy: {{ .Values.tpsWatcher.image.imagePullPolicy }}
+          args: ["-configPath", "/tmp/tps-watcher.json"]
           {{- if .Values.tpsWatcher.resources }}
           resources:
             {{- toYaml .Values.tpsWatcher.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: tps-watcher
-              mountPath: /etc/ssl/certs/tps-watcher
+            - name: tps-watcher-bbs
+              mountPath: /etc/ssl/certs/tps-watcher-bbs
+              readOnly: true
+            - name: tps-watcher-cc
+              mountPath: /etc/ssl/certs/tps-watcher-cc
+              readOnly: true
             - name: tps-watcher-config
               mountPath: /tps-watcher
             - name: tmp
@@ -44,9 +66,12 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
-        - name: tps-watcher
+        - name: tps-watcher-bbs
           secret:
-            secretName: {{ required "tpsWatcher.certificateSecret is required" .Values.tpsWatcher.certificateSecret }}
+            secretName: {{ required "tpsWatcher.certificateSecrets.bbs is required" .Values.tpsWatcher.certificateSecrets.bbs }}
+        - name: tps-watcher-cc
+          secret:
+            secretName: {{ required "tpsWatcher.certificateSecrets.cc is required" .Values.tpsWatcher.certificateSecrets.cc }}
         - name: tps-watcher-config
           configMap:
             name: tps-watcher-config

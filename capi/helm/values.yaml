@@ -1,137 +1,421 @@
 ccDeploymentUpdater:
+  replicas: 1
   resources: ~
   nodeSelector: ~
   tolerations: ~
 
 ccWorker:
+  replicas: 1
   resources: ~
   nodeSelector: ~
   tolerations: ~
 
 ccUploader:
+  replicas: 1
   resources: ~
-  certificateSecret: ""
+  certificateSecrets:
+    ccClient: ""
+    server: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/cc-uploader
     tag: ""
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  config:
+    httpsPort: 9091
+    bindAddr: 0.0.0.0
+    debugBindAddr: 127.0.0.1
+    debugPort: ~
+    logLevel: info
+    logging:
+      format:
+        timestamp: rfc3339
+    dropsondePort: 3457
+    cc:
+      jobPollingIntervalInSeconds: ~
+    ccUploaderDrainTimeoutInMinutes: 15
 
 ccWorkerClock:
+  replicas: 1
   resources: ~
   nodeSelector: ~
   tolerations: ~
 
 cloudController:
   enabled: false
+  replicas: 1
   resources: ~
-  certificateSecret: ""
-  appDomains:
-    - apps.127-0-0-1.nip.io
-  internalServiceHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
-  systemDomain: cf.127-0-0-1.nip.io
-  systemDomainOrganization: system
-  sshProxyKeyFingerprint: ""
-  externalHost: api
-  externalPort: 9022
-  externalProtocol: https
-  loginProtocol: https
-  appSSH:
-    port: 2222
-  doppler:
-    useSSL: true
-    port: 443
-  tlsPort: 9023
-  publicTLS:
-    port: 9024
-  logcache:
-    host: log-cache.{{ .Release.Namespace }}.svc.cluster.local
-    port: 8080
-    tls:
-      subjectName: log_cache
-  uaa:
-    internalHost: uaa.{{ .Release.Namespace }}.svc.cluster.local
-    ssl:
-      port: 8443
-  locket:
-    host: locket.{{ .Release.Namespace }}.svc.cluster.local
-    port: 8891
+  certificateSecrets:
+    mutualTLS: ""
+    loggregatorTLS: ""
+    logcacheTLS: ""
+    uaaCA: ""
+    credhubCA: ""
+    promScraperTLS: ""
+    publicTLS: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/cloud-controller
     tag: ""
     imagePullPolicy: IfNotPresent
-  loggregator:
-    endpoint: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
-    subjectName: metron
-  blobstore:
-    type: storage-cli
-    provider: s3
-    resource_directory_key: cc-resources
-    app_package_directory_key: cc-packages
-    droplet_directory_key: cc-droplets
-    buildpack_directory_key: cc-buildpacks
-    storage_cli:
-      host: http://blobstore.127-0-0-1.nip.io
-      region: us-east-1
-      aws_access_key_id: admin
-      aws_secret_access_key: ~
-    fog_connection:
-      provider: ~
-  diego:
-    fileServerUrl: http://fileserver.{{ .Release.Namespace }}.svc.cluster.local:8080
-    ccUploaderUrl: https://cc-uploader.{{ .Release.Namespace }}.svc.cluster.local:9091
-    bbs:
-      url: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
-      connectTimeout: 10
-      sendTimeout: 10
-      receiveTimeout: 10
-    pidLimit: 2048
-  credhubApi:
-    internalUrl: https://credhub.{{ .Release.Namespace }}.svc.cluster.local:8844
-    externalUrl: ""
   nodeSelector: ~
   tolerations: ~
-  enableCommaDelimitedDestinations: false
-  stacks:
-  - description: Cloud Foundry Linux-based filesystem (Ubuntu 22.04)
-    name: cflinuxfs4
-  default_stack: cflinuxfs4
-  lifecycle_bundles:
-    buildpack/cflinuxfs4: buildpack_app_lifecycle/buildpack_app_lifecycle.tgz
-    cnb/cflinuxfs4: cnb_app_lifecycle/cnb_app_lifecycle.tgz
-    docker: docker_app_lifecycle/docker_app_lifecycle.tgz
-  droplet_destinations:
-    cflinuxfs4: /home/vcap
-  docker_staging_stack: cflinuxfs4
-  securityGroupDefinitions:
-    - name: "public_networks"
-      rules:
-        - destination: "0.0.0.0-9.255.255.255"
-          protocol: "all"
-        - destination: "11.0.0.0-169.253.255.255"
-          protocol: "all"
-        - destination: "169.255.0.0-172.15.255.255"
-          protocol: "all"
-        - destination: "172.32.0.0-192.167.255.255"
-          protocol: "all"
-        - destination: "192.169.0.0-255.255.255.255"
-          protocol: "all"
-    - name: "dns"
-      rules:
-        - destination: "0.0.0.0/0"
-          ports: "53"
-          protocol: "tcp"
-        - destination: "0.0.0.0/0"
-          ports: "53"
-          protocol: "udp"
-  defaultStagingSecurityGroups:
-    - "public_networks"
-    - "dns"
-  defaultRunningSecurityGroups:
-    - "public_networks"
-    - "dns"
-  configOverrides: {}
+  config:
+    systemDomain: cf.127-0-0-1.nip.io
+    systemDomainOrganization: system
+    externalHost: api
+    externalProtocol: https
+    externalPort: 9022
+    tlsPort: 9023
+    publicTLS:
+      port: 9024
+    promMetricsServerTlsPort: 9025
+    promMetricsServerEnabled: false
+    internalServiceHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
+    temporary_disable_non_tls_endpoints: false
+    requestTimeoutInSeconds: 900
+    serverKeepaliveTimeout: 100
+    nginxUpstreamKeepaliveTimeout: 15
+    nginxErrorLogLevel: error
+    nginxAccessLogEscaping: default
+    nginxAccessLogFormat: '$host - [$time_local] "$request" $status $bytes_sent "$http_referer" "$http_user_agent" $proxy_add_x_forwarded_for vcap_request_id:$upstream_http_x_vcap_request_id response_time:$upstream_response_time'
+    nginxRateLimitGeneral: ~
+    nginxRateLimitZones: []
+    clientMaxBodySize: "15M"
+    appBitsMaxBodySize: "2048M"
+    appBitsUploadGracePeriodInSeconds: 1200
+    experimental:
+      useYjitCompiler: false
+    readinessPort:
+      cloudControllerWorker: -1
+      clock: -1
+      deploymentUpdater: -1
+    puma:
+      automaticWorkerCount: false
+      workers: 2
+      maxThreads: 10
+      maxDbConnectionsPerProcess: 10
+    allowDockerRootUser: true
+    additionalAllowedProcessUsers: []
+    temporaryDisableDeployments: false
+    developmentMode: false
+    deploymentUpdater:
+      updateFrequencyInSeconds: 5
+    appDomains:
+      - apps.127-0-0-1.nip.io
+      - name: apps.internal
+        internal: true
+    systemHostnames: [api, proxy, uaa, login, blobstore, log-cache, doppler, log-stream, credhub, ssh]
+    reservedPrivateDomains: ~
+    customRootLinks: ~
+    maxRouteOptionsSize: 1024
+    disablePrivateDomainCrossSpaceContextPathRouteSharing: false
+    jobs:
+      enableDynamicJobPriorities: false
+      global:
+        timeoutInSeconds: 14400
+        workerSleepDelayInSeconds: 5
+      queues:
+        ccGeneric:
+          timeoutInSeconds: ~
+      blobstoreDelete:
+        timeoutInSeconds: ~
+      dropletUpload:
+        timeoutInSeconds: ~
+      priorities: ~
+      readAhead: ~
+      appUsageEventsCleanup:
+        timeoutInSeconds: ~
+      diegoSync:
+        timeoutInSeconds: 600
+      generic:
+        numberOfWorkerThreads: ~
+        workerGracePeriodSeconds: 15
+      local:
+        numberOfWorkers: 2
+        localWorkerGracePeriodSeconds: 300
+    appUsageEvents:
+      cutoffAgeInDays: 31
+    serviceUsageEvents:
+      cutoffAgeInDays: 31
+    auditEvents:
+      cutoffAgeInDays: 31
+    failedJobs:
+      cutoffAgeInDays: 31
+      frequencyInSeconds: 14400
+      maxNumberOfFailedDelayedJobs: ~
+    pollableJobs:
+      cutoffAgeInDays: 90
+    completedTasks:
+      cutoffAgeInDays: 31
+    serviceOperationsInitialCleanup:
+      frequencyInSeconds: 300
+    serviceOperationsCreateInProgressCleanup:
+      frequencyInSeconds: 3600
+    serviceOperationsUpdateStuckInProgressFailed:
+      frequencyInSeconds: 3600
+    serviceOperationsDeleteStuckInProgressRetry:
+      frequencyInSeconds: 3600
+    serviceOperationsBindingDeleteStuckInProgressRetry:
+      frequencyInSeconds: 3600
+    diegoSync:
+      frequencyInSeconds: 30
+    pendingDroplets:
+      frequencyInSeconds: 300
+    pendingBuilds:
+      frequencyInSeconds: 300
+    maxRetainedDeploymentsPerApp: 100
+    maxRetainedBuildsPerApp: 100
+    maxRetainedRevisionsPerApp: 100
+    cpuWeightMinMemory: 128
+    cpuWeightMaxMemory: 8192
+    defaultAppMemory: 1024
+    defaultAppDiskInMb: 1024
+    defaultAppLogRateLimitInBytesPerSecond: -1
+    maximumAppDiskInMb: 2048
+    instanceFileDescriptorLimit: 16384
+    defaultAppLifecycle: buildpack
+    defaultHealthCheckTimeout: 60
+    maximumHealthCheckTimeout: 180
+    disableCustomBuildpacks: false
+    allowAppSshAccess: true
+    defaultAppSshAccess: true
+    appLogRevision: false
+    appInstanceStoppingState: true
+    sharedIsolationSegmentName: shared
+    brokerClientTimeoutSeconds: 60
+    brokerClientDefaultAsyncPollIntervalSeconds: 60
+    brokerClientMaxAsyncPollDurationMinutes: 10080
+    brokerClientAsyncPollExponentialBackoffRate: 1.0
+    brokerClientMaxAsyncPollIntervalSeconds: 86400
+    brokerClientResponseParser:
+      logErrors: false
+      logValidators: false
+      logResponseFields: {}
+    maxConcurrentServiceBrokerRequests: 0
+    maxServiceCredentialBindingsPerAppServiceInstance: 5
+    maxManifestServiceBindingPollDurationInSeconds: 60
+    credentialReferences:
+      interpolateServiceBindings: true
+    name: vcap
+    build: "2222"
+    version: 60
+    supportAddress: http://support.cloudfoundry.com
+    description: CF API on Kubernetes
+    minCliVersion: "8.14.0"
+    minRecommendedCliVersion: latest
+    warnIfBelowMinCliVersion: false
+    info:
+      custom: ~
+    appSsh:
+      port: 2222
+      oauthClientId: ssh-proxy
+      hostKeyFingerprint: ""
+    login:
+      enabled: true
+      protocol: https
+      url: ~
+    doppler:
+      useSsl: true
+      port: 443
+    uaa:
+      url: ~
+      internalUrl: uaa.{{ .Release.Namespace }}.svc.cluster.local
+      ssl:
+        port: 8443
+      clientTimeout: 60
+      cc:
+        tokenSecret: ~
+        tokenSecret2: ~
+      # Secrets default to .Values.oauthClientsSecret when unset.
+      clients:
+        ccServiceDashboards:
+          secret: ~
+          scope: openid,cloud_controller_service_permissions.read
+        cloudControllerUsernameLookup:
+          secret: ~
+        ccServiceKeyClient:
+          secret: ~
+        ccRouting:
+          secret: ~
+        cloudControllerShadowUserCreation:
+          secret: ~
+    uaaResourceId: cloud_controller,cloud_controller_service_permissions
+    logcache:
+      host: log-cache.{{ .Release.Namespace }}.svc.cluster.local
+      port: 8080
+    logcacheTLS:
+      subjectName: log_cache
+    metronEndpoint:
+      host: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
+      port: 3458
+    loggregatorTLS:
+      subjectName: metron
+    locket:
+      host: locket.{{ .Release.Namespace }}.svc.cluster.local
+      port: 8891
+    credhubApi:
+      enabled: true
+      hostname: credhub.{{ .Release.Namespace }}.svc.cluster.local
+      port: 8844
+      externalUrl: ""
+    loggingLevel: info
+    loggingMaxRetries: 1
+    loggingAnonymizeIps: false
+    logging:
+      format:
+        timestamp: rfc3339
+    logAuditEvents: true
+    securityEventLogging:
+      enabled: false
+    telemetryLoggingEnabled: true
+    enableStatsdMetrics: true
+    statsdHost: 127.0.0.1
+    statsdPort: 8125
+    publishMetrics: false
+    prometheusPort: 9397
+    customMetricTagPrefixList: ["metric.tag.cloudfoundry.org"]
+    updateMetricTagsOnRename: true
+    maxAnnotationsPerResource: 200
+    maxLabelsPerResource: 50
+    enableIpv6: ~
+    allowUserCreationByOrgManager: ~
+    featureFlagOverrides: {}
+    routingApi:
+      enabled: false
+    router:
+      routeServicesSecret: ""
+    volumeServicesEnabled: false
+    ssl:
+      skipCertVerify: false
+    quotaDefinitions:
+      default:
+        memory_limit: 102400
+        non_basic_services_allowed: true
+        total_reserved_route_ports: 100
+        total_routes: 1000
+        total_services: -1
+    defaultQuotaDefinition: default
+    stacks:
+      - description: Cloud Foundry Linux-based filesystem (Ubuntu 22.04)
+        name: cflinuxfs4
+    defaultStack: cflinuxfs4
+    deprecatedStacks: []
+    securityGroupDefinitions: []
+    defaultStagingSecurityGroups: []
+    defaultRunningSecurityGroups: []
+    securityGroups:
+      enableCommaDelimitedDestinations: false
+    allowedCorsDomains: []
+    rateLimiter:
+      enabled: false
+      generalLimit: 2000
+      unauthenticatedLimit: 100
+      adminLimit: -1
+      resetIntervalInMinutes: 60
+    rateLimiterV2Api:
+      enabled: false
+      generalLimit: 2000
+      adminLimit: 2000
+      resetIntervalInMinutes: 60
+    temporaryEnableV2: false
+    temporaryEnableAsyncRecursiveDelete:
+      apps: false
+      serviceInstances: false
+    renderer:
+      maxResultsPerPage: 100
+      defaultResultsPerPage: 50
+      maxInlineRelationsDepth: 2
+      maxTotalResults: ~
+    stagingTimeoutInSeconds: 900
+    stagingFileDescriptorLimit: 16384
+    stagingUploadUser: ~
+    stagingUploadPassword: ~
+    minimumStagingMemoryMb: 1024
+    minimumStagingDiskMb: 4096
+    legacyMd5BuildpackPathsEnabled: false
+    resourcePool:
+      blobstoreType: storage-cli
+      minimumSize: 65536
+      maximumSize: 536870912
+      resourceDirectoryKey: cc-resources
+      blobstoreProvider: s3
+      connectionConfig:
+        bucket_name: cc-resources
+        awsAccessKeyId: admin
+        awsSecretAccessKey: ~
+        host: http://blobstore.{{ .Values.cloudController.config.systemDomain }}
+        region: us-east-1
+    packages:
+      blobstoreType: storage-cli
+      appPackageDirectoryKey: cc-packages
+      maxValidPackagesStored: 5
+      maxPackageSize: 1073741824
+      blobstoreProvider: s3
+      connectionConfig:
+        bucket_name: cc-packages
+        awsAccessKeyId: admin
+        awsSecretAccessKey: ~
+        host: http://blobstore.{{ .Values.cloudController.config.systemDomain }}
+        region: us-east-1
+    droplets:
+      blobstoreType: storage-cli
+      dropletDirectoryKey: cc-droplets
+      maxStagedDropletsStored: 5
+      blobstoreProvider: s3
+      connectionConfig:
+        bucket_name: cc-droplets
+        awsAccessKeyId: admin
+        awsSecretAccessKey: ~
+        host: http://blobstore.{{ .Values.cloudController.config.systemDomain }}
+        region: us-east-1
+    buildpacks:
+      blobstoreType: storage-cli
+      buildpackDirectoryKey: cc-buildpacks
+      blobstoreProvider: s3
+      connectionConfig:
+        bucket_name: cc-buildpacks
+        awsAccessKeyId: admin
+        awsSecretAccessKey: ~
+        host: http://blobstore.{{ .Values.cloudController.config.systemDomain }}
+        region: us-east-1
+    storageCliOptionalFlags: ~
+    performBlobCleanup: true
+    diego:
+      fileServerUrl: http://fileserver.{{ .Release.Namespace }}.svc.cluster.local:8080
+      ccUploaderUrl: https://cc-uploader.{{ .Release.Namespace }}.svc.cluster.local:9091
+      bbs:
+        url: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
+        connectTimeout: 10
+        sendTimeout: 10
+        receiveTimeout: 10
+      pidLimit: 1024
+      usePrivilegedContainersForRunning: false
+      usePrivilegedContainersForStaging: false
+      enableDeclarativeAssetDownloads: false
+      insecureDockerRegistryList: []
+      temporaryOciBuildpackMode: ~
+      dockerStagingStack: cflinuxfs4
+      lifecycleBundles:
+        buildpack/cflinuxfs4: buildpack_app_lifecycle/buildpack_app_lifecycle.tgz
+        cnb/cflinuxfs4: cnb_app_lifecycle/cnb_app_lifecycle.tgz
+        docker: docker_app_lifecycle/docker_app_lifecycle.tgz
+      dropletDestinations:
+        cflinuxfs4: /home/vcap
+      sshd:
+        allowedCiphers: ~
+        allowedHostKeyAlgorithms: ~
+        allowedKeyExchanges: ~
+        allowedMacs: ~
+    dbEncryptionKey: ~
+    databaseEncryption:
+      keys: {}
+      currentKeyLabel: ""
+      experimentalPbkdf2HmacIterations: 2048
+      skipValidation: false
+    dbLoggingLevel: debug2
+    logDbQueries: false
+    querySizeLogThreshold: ~
 
 localWorker:
   image:
@@ -149,6 +433,7 @@ routeRegistrar:
     tag: "0.397.0"
     imagePullPolicy: IfNotPresent
   resources: ~
+  certificateSecret: ""
 
 nginx:
   image:
@@ -157,25 +442,72 @@ nginx:
     imagePullPolicy: IfNotPresent
   resources: ~
 
+valkey:
+  image:
+    repository: valkey/valkey
+    tag: "8"
+    imagePullPolicy: IfNotPresent
+  resources: ~
+
 tpsWatcher:
   enabled: false
+  replicas: 1
   resources: ~
-  certificateSecret: ""
+  certificateSecrets:
+    bbs: ""
+    cc: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/tps-watcher
     tag: ""
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  config:
+    logLevel: info
+    logging:
+      format:
+        timestamp: rfc3339
+    dropsondePort: 3457
+    bbs:
+      apiLocation: bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
+      maxIdleConnsPerHost: ~
+    cc:
+      externalPort: 9023
+      internalServiceHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
+    watcher:
+      debugAddr: ""
+      locket:
+        apiLocation: locket.{{ .Release.Namespace }}.svc.cluster.local:8891
 
+# Mirrors the ccdb.* properties of the capi-release jobs.
 ccdb:
   name: cc
-  password: ~
+  dbScheme: postgres
   user: postgres
-  port: 5432
+  password: ~
   address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+  port: 5432
   caCertificateSecret: ""
-  skipSSLVerify: true
-  skipHostnameVerify: false
+  sslVerifyHostname: true
+  maxConnections: 25
+  maxConnectionsPerLocalWorker: ~
+  poolTimeout: 10
+  readTimeout: 3600
+  connectionValidationTimeout: 3600
+  connectionExpirationTimeout: ~
+  connectionExpirationRandomDelay: ~
+  enablePaginateWindow: true
+  migrationPsqlWorkerMemoryKb: ~
+  maxMigrationDurationInMinutes: 20160
+  maxMigrationStatementRuntimeInSeconds: 30
+  migrationPsqlConcurrentStatementTimeoutInSeconds: 1800
+  skipBigintIdMigration: false
+  psql:
+    statementTimeout: 900000
+    idleInTransactionSessionTimeout: 600000
+    keepalives: 1
+    keepalivesIdle: 30
+    keepalivesInterval: 10
+    keepalivesCount: 3
 
 oauthClientsSecret: ~

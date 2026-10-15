@@ -13,8 +13,10 @@ RUN STORAGE_CLI_RELEASE_VERSION=$(sed -n 's/.*storage_cli_version="\([^"]*\)".*/
 
 FROM ruby:4.0.6-slim
 
-RUN apt update && apt install -y postgresql-client libpq-dev default-libmysqlclient-dev libyaml-dev build-essential zip git procps && useradd -u 1000 -d /nonexistent -s /sbin/nologin --no-create-home vcap && \
-    rm -rf /var/lib/apt/lists/* 
+RUN apt update && apt install -y postgresql-client libpq-dev default-libmysqlclient-dev libyaml-dev build-essential zip git procps libjemalloc2 && useradd -u 1000 -d /nonexistent -s /sbin/nologin --no-create-home vcap && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LD_PRELOAD=libjemalloc.so.2
 
 COPY --from=src . /capi-release/src
 COPY --from=builder /usr/local/bin/storage-cli /usr/local/bin/storage-cli

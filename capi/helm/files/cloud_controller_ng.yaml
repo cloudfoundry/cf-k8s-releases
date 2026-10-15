@@ -1,367 +1,447 @@
-{{ $_ := required ".Values.oauthClientsSecret must be provided" .Values.oauthClientsSecret }}
+{{- $c := .Values.cloudController.config }}
+{{- $ccdb := .Values.ccdb }}
+{{- $replicas := int .Values.cloudController.replicas }}
+{{- $rateLimiterInstances := ternary $replicas 1 $c.rateLimiter.enabled }}
+{{- $rateLimiterV2Instances := ternary $replicas 1 $c.rateLimiterV2Api.enabled }}
+{{- $uaaUrl := $c.uaa.url | default (printf "%s://uaa.%s" $c.login.protocol $c.systemDomain) }}
+{{- include "capi.validateAppDomains" $c.appDomains -}}
 webserver: puma
 puma:
-  automatic_worker_count: false
-  workers: 4
-  max_threads: 10
-  max_db_connections_per_process: 10
-allow_docker_root_user: true
-additional_allowed_process_users:
-- vcap
+  automatic_worker_count: {{ $c.puma.automaticWorkerCount }}
+  workers: {{ $c.puma.workers }}
+  max_threads: {{ $c.puma.maxThreads }}
+  max_db_connections_per_process: {{ $c.puma.maxDbConnectionsPerProcess }}
+allow_docker_root_user: {{ $c.allowDockerRootUser }}
+additional_allowed_process_users: {{ toJson $c.additionalAllowedProcessUsers }}
 local_route: 127.0.0.1
-tls_port: {{ .Values.cloudController.tlsPort }}
+tls_port: {{ $c.tlsPort }}
 pid_filename: /tmp/cloud_controller.pid
 readiness_port:
-  cloud_controller_worker: -1
-  clock: -1
-  deployment_updater: -1
-external_protocol: {{ .Values.cloudController.externalProtocol }}
-external_domain: {{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}
-external_port: {{ .Values.cloudController.externalPort }}
-temporary_disable_deployments: false
+  cloud_controller_worker: {{ $c.readinessPort.cloudControllerWorker }}
+  clock: {{ $c.readinessPort.clock }}
+  deployment_updater: {{ $c.readinessPort.deploymentUpdater }}
+external_protocol: {{ $c.externalProtocol }}
+external_domain: {{ $c.externalHost }}.{{ $c.systemDomain }}
+external_port: {{ $c.externalPort }}
+temporary_disable_deployments: {{ $c.temporaryDisableDeployments }}
+development_mode: {{ $c.developmentMode }}
 deployment_updater:
-  update_frequency_in_seconds: 5
-  lock_key: "cf-deployment-updater"
-  lock_owner: "cf_deployment_updater.bosh-vm-id"
-internal_service_hostname: {{ tpl .Values.cloudController.internalServiceHostname . }}
-system_domain_organization: {{ .Values.cloudController.systemDomainOrganization }}
-system_domain: {{ .Values.cloudController.systemDomain }}
+  update_frequency_in_seconds: {{ $c.deploymentUpdater.updateFrequencyInSeconds }}
+  lock_key: "cc-deployment-updater"
+  lock_owner: "${POD_NAME}"
+internal_service_hostname: {{ tpl $c.internalServiceHostname . }}
+system_domain_organization: {{ $c.systemDomainOrganization }}
+system_domain: {{ $c.systemDomain }}
 app_domains:
-{{ toYaml .Values.cloudController.appDomains | indent 2 }}
-  - name: apps.internal
-    internal: true
+{{- toYaml $c.appDomains | nindent 2 }}
 system_hostnames:
-  - api
-  - uaa
-  - login
-  - doppler
-  - loggregator
-max_route_options_size: 1024
+{{- toYaml $c.systemHostnames | nindent 2 }}
+{{- if $c.reservedPrivateDomains }}
+reserved_private_domains: {{ $c.reservedPrivateDomains }}
+{{- end }}
+{{- if $c.customRootLinks }}
+custom_root_links: {{ toJson $c.customRootLinks }}
+{{- end }}
+max_route_options_size: {{ $c.maxRouteOptionsSize }}
+disable_private_domain_cross_space_context_path_route_sharing: {{ $c.disablePrivateDomainCrossSpaceContextPathRouteSharing }}
+warn_if_below_min_cli_version: {{ $c.warnIfBelowMinCliVersion }}
 jobs:
+  enable_dynamic_job_priorities: {{ $c.jobs.enableDynamicJobPriorities }}
   global:
-    timeout_in_seconds: 14400
-    worker_sleep_delay_in_seconds: 5
-  queues: {}
+    timeout_in_seconds: {{ $c.jobs.global.timeoutInSeconds }}
+    worker_sleep_delay_in_seconds: {{ $c.jobs.global.workerSleepDelayInSeconds }}
+  queues:
+{{- if $c.jobs.queues.ccGeneric.timeoutInSeconds }}
+    cc_generic:
+      timeout_in_seconds: {{ $c.jobs.queues.ccGeneric.timeoutInSeconds }}
+{{- else }}
+    {}
+{{- end }}
+{{- if $c.jobs.blobstoreDelete.timeoutInSeconds }}
+  blobstore_delete:
+    timeout_in_seconds: {{ $c.jobs.blobstoreDelete.timeoutInSeconds }}
+{{- end }}
+{{- if $c.jobs.dropletUpload.timeoutInSeconds }}
+  droplet_upload:
+    timeout_in_seconds: {{ $c.jobs.dropletUpload.timeoutInSeconds }}
+{{- end }}
+{{- if $c.jobs.priorities }}
+  priorities: {{ toJson $c.jobs.priorities }}
+{{- end }}
+{{- if $c.jobs.readAhead }}
+  read_ahead: {{ $c.jobs.readAhead }}
+{{- end }}
+{{- if $c.jobs.appUsageEventsCleanup.timeoutInSeconds }}
+  app_usage_events_cleanup:
+    timeout_in_seconds: {{ $c.jobs.appUsageEventsCleanup.timeoutInSeconds }}
+{{- end }}
+{{- if $c.jobs.diegoSync.timeoutInSeconds }}
+  diego_sync:
+    timeout_in_seconds: {{ $c.jobs.diegoSync.timeoutInSeconds }}
+{{- end }}
 app_usage_events:
-  cutoff_age_in_days: 31
+  cutoff_age_in_days: {{ $c.appUsageEvents.cutoffAgeInDays }}
 service_usage_events:
-  cutoff_age_in_days: 31
+  cutoff_age_in_days: {{ $c.serviceUsageEvents.cutoffAgeInDays }}
 audit_events:
-  cutoff_age_in_days: 31
+  cutoff_age_in_days: {{ $c.auditEvents.cutoffAgeInDays }}
 failed_jobs:
-  cutoff_age_in_days: 31
-  frequency_in_seconds: 144000 #4h
+  cutoff_age_in_days: {{ $c.failedJobs.cutoffAgeInDays }}
+  frequency_in_seconds: {{ $c.failedJobs.frequencyInSeconds }}
+{{- if $c.failedJobs.maxNumberOfFailedDelayedJobs }}
+  max_number_of_failed_delayed_jobs: {{ $c.failedJobs.maxNumberOfFailedDelayedJobs }}
+{{- end }}
 pollable_jobs:
-  cutoff_age_in_days: 90
+  cutoff_age_in_days: {{ $c.pollableJobs.cutoffAgeInDays }}
 service_operations_initial_cleanup:
-  frequency_in_seconds: 300
+  frequency_in_seconds: {{ $c.serviceOperationsInitialCleanup.frequencyInSeconds }}
 completed_tasks:
-  cutoff_age_in_days: 31
+  cutoff_age_in_days: {{ $c.completedTasks.cutoffAgeInDays }}
 service_operations_create_in_progress_cleanup:
-  frequency_in_seconds: 3600
+  frequency_in_seconds: {{ $c.serviceOperationsCreateInProgressCleanup.frequencyInSeconds }}
 service_operations_update_stuck_in_progress_failed:
-  frequency_in_seconds: 3600 #1h
+  frequency_in_seconds: {{ $c.serviceOperationsUpdateStuckInProgressFailed.frequencyInSeconds }}
 service_operations_delete_stuck_in_progress_retry:
-  frequency_in_seconds: 3600 #1h
+  frequency_in_seconds: {{ $c.serviceOperationsDeleteStuckInProgressRetry.frequencyInSeconds }}
 service_operations_binding_delete_stuck_in_progress_retry:
-  frequency_in_seconds: 3600 #1h
-cpu_weight_min_memory: 128 #mb
-cpu_weight_max_memory: 8192 #mb
-default_app_memory: 1024 #mb
-default_app_disk_in_mb: 1024
-default_app_log_rate_limit_in_bytes_per_second: -1
-maximum_app_disk_in_mb: 2048
-max_retained_deployments_per_app: 100
-max_retained_builds_per_app: 100
-max_retained_revisions_per_app: 100
-broker_client_default_async_poll_interval_seconds: 60
-broker_client_max_async_poll_duration_minutes: 10080
-broker_client_async_poll_exponential_backoff_rate: 1.0
-broker_client_max_async_poll_interval_seconds: 86400
+  frequency_in_seconds: {{ $c.serviceOperationsBindingDeleteStuckInProgressRetry.frequencyInSeconds }}
+cpu_weight_min_memory: {{ $c.cpuWeightMinMemory }}
+cpu_weight_max_memory: {{ $c.cpuWeightMaxMemory }}
+default_app_memory: {{ $c.defaultAppMemory }}
+default_app_disk_in_mb: {{ $c.defaultAppDiskInMb }}
+default_app_log_rate_limit_in_bytes_per_second: {{ $c.defaultAppLogRateLimitInBytesPerSecond }}
+maximum_app_disk_in_mb: {{ $c.maximumAppDiskInMb }}
+max_retained_deployments_per_app: {{ $c.maxRetainedDeploymentsPerApp }}
+max_retained_builds_per_app: {{ $c.maxRetainedBuildsPerApp }}
+max_retained_revisions_per_app: {{ $c.maxRetainedRevisionsPerApp }}
+broker_client_default_async_poll_interval_seconds: {{ $c.brokerClientDefaultAsyncPollIntervalSeconds }}
+broker_client_max_async_poll_duration_minutes: {{ $c.brokerClientMaxAsyncPollDurationMinutes }}
+broker_client_async_poll_exponential_backoff_rate: {{ $c.brokerClientAsyncPollExponentialBackoffRate }}
+broker_client_max_async_poll_interval_seconds: {{ $c.brokerClientMaxAsyncPollIntervalSeconds }}
 broker_client_response_parser:
-  log_errors: true
-  log_validators: true
-  log_response_fields:
-    fetch_service_instance_last_operation:
-      - state
-    fetch_service_binding_last_operation:
-      - state
-shared_isolation_segment_name: "shared"
+  log_errors: {{ $c.brokerClientResponseParser.logErrors }}
+  log_response_fields: {{ toJson $c.brokerClientResponseParser.logResponseFields }}
+  log_validators: {{ $c.brokerClientResponseParser.logValidators }}
+shared_isolation_segment_name: {{ $c.sharedIsolationSegmentName | quote }}
 info:
-  name: "vcap"
-  build: "2222"
-  version: 2
-  support_address: "http://support.cloudfoundry.com"
-  description: "CF API on Kubernetes"
-  app_ssh_endpoint: "ssh.{{ .Values.cloudController.systemDomain }}:{{ .Values.cloudController.appSSH.port }}"
-  app_ssh_host_key_fingerprint: {{ .Values.cloudController.sshProxyKeyFingerprint | quote }}
-  app_ssh_oauth_client: "ssh-proxy"
-  min_cli_version: "8.14.0"
-  min_recommended_cli_version: "latest"
-instance_file_descriptor_limit: 16384
+  name: {{ $c.name | quote }}
+  build: {{ $c.build | quote }}
+  version: {{ $c.version }}
+  support_address: {{ $c.supportAddress | quote }}
+  description: {{ $c.description | quote }}
+  app_ssh_endpoint: "ssh.{{ $c.systemDomain }}:{{ $c.appSsh.port }}"
+  app_ssh_oauth_client: {{ $c.appSsh.oauthClientId | quote }}
+  min_cli_version: {{ $c.minCliVersion | quote }}
+  min_recommended_cli_version: {{ $c.minRecommendedCliVersion | quote }}
+{{- if $c.appSsh.hostKeyFingerprint }}
+  app_ssh_host_key_fingerprint: {{ $c.appSsh.hostKeyFingerprint | quote }}
+{{- end }}
+{{- if $c.info.custom }}
+  custom: {{ toJson $c.info.custom }}
+{{- end }}
+instance_file_descriptor_limit: {{ $c.instanceFileDescriptorLimit }}
 login:
-  url: "{{ .Values.cloudController.loginProtocol }}://login.{{ .Values.cloudController.systemDomain }}"
-  enabled: true
-lifecycle_type_backfill:
-  frequency_in_seconds: 3600
+  url: "{{ if $c.login.enabled }}{{ $c.login.url | default (printf "%s://login.%s" $c.login.protocol $c.systemDomain) }}{{ else }}{{ $uaaUrl }}{{ end }}"
 nginx:
   use_nginx: true
   instance_socket: "/var/run/cloud_controller.sock"
   metrics_socket: "/var/run/cloud_controller_metrics.sock"
 logging:
   file: /dev/stdout
-  level: info
-  anonymize_ips: false
+  level: {{ $c.loggingLevel }}
+  max_retries: {{ $c.loggingMaxRetries }}
+  anonymize_ips: {{ $c.loggingAnonymizeIps }}
   format:
-    timestamp: "rfc3339"
-  stdout_sink_enabled: false
-log_audit_events: false
+    timestamp: {{ $c.logging.format.timestamp | quote }}
+log_audit_events: {{ $c.logAuditEvents }}
+{{- if $c.telemetryLoggingEnabled }}
 telemetry_log_path: /tmp/cloud_controller_telemetry.log
+{{- end }}
 loggregator:
-  endpoint: {{ tpl .Values.cloudController.loggregator.endpoint . }}
-  subject_name: {{ .Values.cloudController.loggregator.subjectName }}
-  key_file: "/etc/ssl/certs/cloud-controller/tls.key"
-  cert_file: "/etc/ssl/certs/cloud-controller/tls.crt"
-  ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
+  endpoint: {{ tpl $c.metronEndpoint.host . }}:{{ $c.metronEndpoint.port }}
+  subject_name: {{ $c.loggregatorTLS.subjectName }}
+  key_file: "/etc/ssl/certs/loggregator/tls.key"
+  cert_file: "/etc/ssl/certs/loggregator/tls.crt"
+  ca_file: "/etc/ssl/certs/loggregator/ca.crt"
 logcache:
-  host: {{ tpl .Values.cloudController.logcache.host . }}
-  port: {{ .Values.cloudController.logcache.port }}
+  host: {{ tpl $c.logcache.host . }}
+  port: {{ $c.logcache.port }}
+  temporary_ignore_server_unavailable_errors: false
 logcache_tls:
-  key_file: "/etc/ssl/certs/cloud-controller/tls.key"
-  cert_file: "/etc/ssl/certs/cloud-controller/tls.crt"
-  ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
-  subject_name: {{ .Values.cloudController.logcache.tls.subjectName }}
+  key_file: "/etc/ssl/certs/logcache/tls.key"
+  cert_file: "/etc/ssl/certs/logcache/tls.crt"
+  ca_file: "/etc/ssl/certs/logcache/ca.crt"
+  subject_name: {{ $c.logcacheTLS.subjectName }}
 doppler:
-  url: "ws{{ if .Values.cloudController.doppler.useSSL }}s{{ end }}://doppler.{{ .Values.cloudController.systemDomain }}:{{ .Values.cloudController.doppler.port }}"
+  url: "ws{{ if $c.doppler.useSsl }}s{{ end }}://doppler.{{ $c.systemDomain }}:{{ $c.doppler.port }}"
 log_cache:
-  url: "https://log-cache.{{ .Values.cloudController.systemDomain }}"
+  url: "https://log-cache.{{ $c.systemDomain }}"
 log_stream:
-  url: "https://log-stream.{{ .Values.cloudController.systemDomain }}"
+  url: "https://log-stream.{{ $c.systemDomain }}"
 uaa:
-  url: "{{ .Values.cloudController.loginProtocol }}://uaa.{{ .Values.cloudController.systemDomain }}"
-  internal_url: https://{{ tpl .Values.cloudController.uaa.internalHost . }}:{{ .Values.cloudController.uaa.ssl.port }}
-  resource_id: "cloud_controller,cloud_controller_service_permissions"
-  ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
-  client_timeout: 60
+  url: "{{ $uaaUrl }}"
+  internal_url: https://{{ tpl $c.uaa.internalUrl . }}:{{ $c.uaa.ssl.port }}
+  resource_id: {{ $c.uaaResourceId | quote }}
+  ca_file: "/etc/ssl/certs/uaa/ca.crt"
+  client_timeout: {{ $c.uaa.clientTimeout }}
+{{- if $c.uaa.cc.tokenSecret }}
+  symmetric_secret: {{ $c.uaa.cc.tokenSecret | quote }}
+{{- end }}
+{{- if $c.uaa.cc.tokenSecret2 }}
+  symmetric_secret2: {{ $c.uaa.cc.tokenSecret2 | quote }}
+{{- end }}
+{{- $shadowSecret := (index $c.uaa.clients "cloudControllerShadowUserCreation").secret }}
+{{- if $shadowSecret }}
+  clients:
+  - name: "cloud_controller_shadow_user_creation"
+    id: "cloud_controller_shadow_user_creation"
+    secret: {{ $shadowSecret | quote }}
+{{- end }}
 
 uaa_client_name: "cc-service-dashboards"
-uaa_client_secret: {{ .Values.oauthClientsSecret | quote }}
-uaa_client_scope: openid,cloud_controller_service_permissions.read
+uaa_client_secret: {{ include "capi.clientSecret" (dict "root" $ "name" "ccServiceDashboards") }}
+uaa_client_scope: {{ (index $c.uaa.clients "ccServiceDashboards").scope }}
 
 cloud_controller_username_lookup_client_name: "cloud_controller_username_lookup"
-cloud_controller_username_lookup_client_secret: {{ .Values.oauthClientsSecret | quote }}
+cloud_controller_username_lookup_client_secret: {{ include "capi.clientSecret" (dict "root" $ "name" "cloudControllerUsernameLookup") }}
 
 cc_service_key_client_name: "cc_service_key_client"
-cc_service_key_client_secret: {{ .Values.oauthClientsSecret | quote }}
+cc_service_key_client_secret: {{ include "capi.clientSecret" (dict "root" $ "name" "ccServiceKeyClient") }}
 
+{{- if $c.routingApi.enabled }}
 routing_api:
-  url: "{{ .Values.cloudController.externalProtocol }}://{{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}/routing"
+  url: "https://api.{{ $c.systemDomain }}/routing"
   routing_client_name: "cc_routing"
-  routing_client_secret: {{ .Values.oauthClientsSecret | quote }}
-route_services_enabled: true
-volume_services_enabled: true
-disable_private_domain_cross_space_context_path_route_sharing: false
+  routing_client_secret: {{ include "capi.clientSecret" (dict "root" $ "name" "ccRouting") }}
+{{- end }}
+route_services_enabled: {{ not (empty $c.router.routeServicesSecret) }}
+volume_services_enabled: {{ $c.volumeServicesEnabled }}
 quota_definitions:
-  default:
-    memory_limit: 10240
-    non_basic_services_allowed: true
-    total_reserved_route_ports: 100
-    total_routes: 1000
-    total_services: -1
-default_quota_definition: default
-{{- if .Values.cloudController.blobstore.storage_cli }}
+{{- toYaml $c.quotaDefinitions | nindent 2 }}
+default_quota_definition: {{ $c.defaultQuotaDefinition }}
 storage_cli_config_file_droplets: /etc/cloud-controller/storage_cli_config_droplets.json
 storage_cli_config_file_packages: /etc/cloud-controller/storage_cli_config_packages.json
 storage_cli_config_file_buildpacks: /etc/cloud-controller/storage_cli_config_buildpacks.json
 storage_cli_config_file_resource_pool: /etc/cloud-controller/storage_cli_config_resource_pool.json
+{{- if $c.storageCliOptionalFlags }}
+storage_cli_optional_flags: {{ $c.storageCliOptionalFlags }}
 {{- end }}
 resource_pool:
-  blobstore_type: {{ .Values.cloudController.blobstore.type }}
-  blobstore_provider: {{ .Values.cloudController.blobstore.provider }}
-  # minimum_size raised above all vendor tar.gz files (largest: werkzeug ~807KB = 826240 bytes)
-  # This ensures vendor files are ALWAYS uploaded fresh, bypassing resource matching.
-  # Root cause: with minimum_size=65536, files like click(336KB) were cached in the resource pool.
-  # After a MinIO pod restart (ephemeral storage), resource pool DB still had the SHA1 entry,
-  # but MinIO had lost the actual file -> CF client skips upload, staging fails.
-  minimum_size: 1048576
-  maximum_size: 536870912
-  resource_directory_key: {{ .Values.cloudController.blobstore.resource_directory_key }}
-  fog_connection:
-  {{- toYaml .Values.cloudController.blobstore.fog_connection | nindent 4 }}
-  fog_aws_storage_options: {}
-  fog_gcp_storage_options: {}
+  blobstore_type: {{ $c.resourcePool.blobstoreType }}
+  minimum_size: {{ $c.resourcePool.minimumSize | int64 }}
+  maximum_size: {{ $c.resourcePool.maximumSize | int64 }}
+  resource_directory_key: {{ $c.resourcePool.resourceDirectoryKey }}
 packages:
-  blobstore_type: {{ .Values.cloudController.blobstore.type }}
-  blobstore_provider: {{ .Values.cloudController.blobstore.provider }}
-  app_package_directory_key: {{ .Values.cloudController.blobstore.app_package_directory_key }}
-  max_valid_packages_stored: 5
-  max_package_size: 1073741824
-  fog_connection:
-  {{- toYaml .Values.cloudController.blobstore.fog_connection | nindent 4 }}
-  fog_aws_storage_options: {}
-  fog_gcp_storage_options: {}
+  blobstore_type: {{ $c.packages.blobstoreType }}
+  app_package_directory_key: {{ $c.packages.appPackageDirectoryKey }}
+  max_valid_packages_stored: {{ $c.packages.maxValidPackagesStored }}
+  max_package_size: {{ $c.packages.maxPackageSize | int64 }}
 droplets:
-  blobstore_type: {{ .Values.cloudController.blobstore.type }}
-  blobstore_provider: {{ .Values.cloudController.blobstore.provider }}
-  droplet_directory_key: {{ .Values.cloudController.blobstore.droplet_directory_key }}
-  fog_connection:
-  {{- toYaml .Values.cloudController.blobstore.fog_connection | nindent 4 }}
-  fog_aws_storage_options: {}
-  fog_gcp_storage_options: {}
-  max_staged_droplets_stored: 5
+  blobstore_type: {{ $c.droplets.blobstoreType }}
+  droplet_directory_key: {{ $c.droplets.dropletDirectoryKey }}
+  max_staged_droplets_stored: {{ $c.droplets.maxStagedDropletsStored }}
 buildpacks:
-  blobstore_type: {{ .Values.cloudController.blobstore.type }}
-  blobstore_provider: {{ .Values.cloudController.blobstore.provider }}
-  buildpack_directory_key: {{ .Values.cloudController.blobstore.buildpack_directory_key }}
-  fog_connection:
-  {{- toYaml .Values.cloudController.blobstore.fog_connection | nindent 4 }}
-  fog_aws_storage_options: {}
-  fog_gcp_storage_options: {}
-db_encryption_key: "asdfasdfasdf"
-database_encryption:
-  keys: { "encryption_key_0": "asdfasdfasdf" }
-  current_key_label: "encryption_key_0"
-  pbkdf2_hmac_iterations: 2048
-default_health_check_timeout: 60
-maximum_health_check_timeout: 180
-disable_custom_buildpacks: false
-broker_client_timeout_seconds: 60
-allow_app_ssh_access: true
-default_app_ssh_access: true
+  blobstore_type: {{ $c.buildpacks.blobstoreType }}
+  buildpack_directory_key: {{ $c.buildpacks.buildpackDirectoryKey }}
+{{ include "capi.databaseEncryption" $c }}
+default_health_check_timeout: {{ $c.defaultHealthCheckTimeout }}
+maximum_health_check_timeout: {{ $c.maximumHealthCheckTimeout }}
+disable_custom_buildpacks: {{ $c.disableCustomBuildpacks }}
+install_buildpacks: []
+broker_client_timeout_seconds: {{ $c.brokerClientTimeoutSeconds }}
+allow_app_ssh_access: {{ $c.allowAppSshAccess }}
+default_app_ssh_access: {{ $c.defaultAppSshAccess }}
 renderer:
-  max_results_per_page: 100
-  default_results_per_page: 50
-  max_inline_relations_depth: 3
-install_buildpacks:
-  - name: java_buildpack
-    package: buildpack_java
-  - name: ruby_buildpack
-    package: buildpack_ruby
-  - name: node_buildpack
-    package: buildpack_node
+  max_results_per_page: {{ $c.renderer.maxResultsPerPage }}
+  default_results_per_page: {{ $c.renderer.defaultResultsPerPage }}
+  max_inline_relations_depth: {{ $c.renderer.maxInlineRelationsDepth }}
+{{- if $c.renderer.maxTotalResults }}
+  max_total_results: {{ $c.renderer.maxTotalResults }}
+{{- end }}
 security_group_definitions:
-  {{- toYaml .Values.cloudController.securityGroupDefinitions | nindent 2 }}
+{{- toYaml $c.securityGroupDefinitions | nindent 2 }}
 default_staging_security_groups:
-  {{- toYaml .Values.cloudController.defaultStagingSecurityGroups | nindent 2 }}
+{{- toYaml $c.defaultStagingSecurityGroups | nindent 2 }}
 default_running_security_groups:
-  {{- toYaml .Values.cloudController.defaultRunningSecurityGroups | nindent 2 }}
+{{- toYaml $c.defaultRunningSecurityGroups | nindent 2 }}
 security_groups:
-  enable_comma_delimited_destinations: {{ .Values.cloudController.enableCommaDelimitedDestinations }}
+  enable_comma_delimited_destinations: {{ $c.securityGroups.enableCommaDelimitedDestinations }}
 allowed_cors_domains:
-  - http://*.appspot.com
-  - http://*.inblue.net
-  - http://talkoncorners.com
-  - http://borrowedheaven.org
+{{- toYaml $c.allowedCorsDomains | nindent 2 }}
 rate_limiter:
-  enabled: false
-  per_process_general_limit: 2000
-  global_general_limit: 20000
-  per_process_unauthenticated_limit: 100
-  global_unauthenticated_limit: 1000
-  reset_interval_in_minutes: 60
+  enabled: {{ $c.rateLimiter.enabled }}
+  global_general_limit: {{ $c.rateLimiter.generalLimit }}
+  per_process_general_limit: {{ int (ceil (divf $c.rateLimiter.generalLimit $rateLimiterInstances)) }}
+  global_unauthenticated_limit: {{ $c.rateLimiter.unauthenticatedLimit }}
+  per_process_unauthenticated_limit: {{ int (ceil (divf $c.rateLimiter.unauthenticatedLimit $rateLimiterInstances)) }}
+  global_admin_limit: {{ $c.rateLimiter.adminLimit }}
+  per_process_admin_limit: {{ if eq (int $c.rateLimiter.adminLimit) -1 }}-1{{ else }}{{ int (ceil (divf $c.rateLimiter.adminLimit $rateLimiterInstances)) }}{{ end }}
+  reset_interval_in_minutes: {{ $c.rateLimiter.resetIntervalInMinutes }}
 rate_limiter_v2_api:
-  enabled: false
-  per_process_general_limit: 1000
-  global_general_limit: 10000
-  per_process_admin_limit: 2000
-  global_admin_limit: 20000
-  reset_interval_in_minutes: 60
-temporary_enable_v2: true
-max_concurrent_service_broker_requests: 0
+  enabled: {{ $c.rateLimiterV2Api.enabled }}
+  global_general_limit: {{ $c.rateLimiterV2Api.generalLimit }}
+  per_process_general_limit: {{ int (ceil (divf $c.rateLimiterV2Api.generalLimit $rateLimiterV2Instances)) }}
+  global_admin_limit: {{ $c.rateLimiterV2Api.adminLimit }}
+  per_process_admin_limit: {{ int (ceil (divf $c.rateLimiterV2Api.adminLimit $rateLimiterV2Instances)) }}
+  reset_interval_in_minutes: {{ $c.rateLimiterV2Api.resetIntervalInMinutes }}
+temporary_enable_v2: {{ $c.temporaryEnableV2 }}
+temporary_enable_async_recursive_delete:
+  apps: {{ $c.temporaryEnableAsyncRecursiveDelete.apps }}
+  service_instances: {{ $c.temporaryEnableAsyncRecursiveDelete.serviceInstances }}
+max_concurrent_service_broker_requests: {{ $c.maxConcurrentServiceBrokerRequests }}
 diego:
-  file_server_url: {{ tpl .Values.cloudController.diego.fileServerUrl . }}
-  cc_uploader_url: {{ tpl .Values.cloudController.diego.ccUploaderUrl . }}
-  use_privileged_containers_for_running: false
-  use_privileged_containers_for_staging: false
-  enable_declarative_asset_downloads: false
+  file_server_url: {{ tpl $c.diego.fileServerUrl . }}
+  cc_uploader_url: {{ tpl $c.diego.ccUploaderUrl . }}
+  use_privileged_containers_for_running: {{ $c.diego.usePrivilegedContainersForRunning }}
+  use_privileged_containers_for_staging: {{ $c.diego.usePrivilegedContainersForStaging }}
+  enable_declarative_asset_downloads: {{ $c.diego.enableDeclarativeAssetDownloads }}
+{{- if $c.diego.temporaryOciBuildpackMode }}
+  temporary_oci_buildpack_mode: {{ $c.diego.temporaryOciBuildpackMode }}
+{{- end }}
   lifecycle_bundles:
-    {{- .Values.cloudController.lifecycle_bundles | toYaml | nindent 4 }}
+    {{- $c.diego.lifecycleBundles | toYaml | nindent 4 }}
   droplet_destinations:
-    {{- .Values.cloudController.droplet_destinations | toYaml | nindent 4 }}
-  insecure_docker_registry_list: []
-  docker_staging_stack: {{ .Values.cloudController.docker_staging_stack }}
+    {{- $c.diego.dropletDestinations | toYaml | nindent 4 }}
+  insecure_docker_registry_list:
+{{- toYaml $c.diego.insecureDockerRegistryList | nindent 4 }}
+  docker_staging_stack: {{ $c.diego.dockerStagingStack }}
   bbs:
-    url: {{ tpl .Values.cloudController.diego.bbs.url . }}
-    key_file: /etc/ssl/certs/cloud-controller/tls.key
-    cert_file: /etc/ssl/certs/cloud-controller/tls.crt
-    ca_file: /etc/ssl/certs/cloud-controller/ca.crt
-    connect_timeout: {{ .Values.cloudController.diego.bbs.connectTimeout }}
-    send_timeout: {{ .Values.cloudController.diego.bbs.sendTimeout }}
-    receive_timeout: {{ .Values.cloudController.diego.bbs.receiveTimeout }}
-  pid_limit: {{ .Values.cloudController.diego.pidLimit }}
+    url: {{ tpl $c.diego.bbs.url . }}
+    key_file: /etc/ssl/certs/mutual-tls/tls.key
+    cert_file: /etc/ssl/certs/mutual-tls/tls.crt
+    ca_file: /etc/ssl/certs/mutual-tls/ca.crt
+    connect_timeout: {{ $c.diego.bbs.connectTimeout }}
+    send_timeout: {{ $c.diego.bbs.sendTimeout }}
+    receive_timeout: {{ $c.diego.bbs.receiveTimeout }}
+  pid_limit: {{ $c.diego.pidLimit }}
+{{- if or $c.diego.sshd.allowedCiphers $c.diego.sshd.allowedHostKeyAlgorithms $c.diego.sshd.allowedKeyExchanges $c.diego.sshd.allowedMacs }}
+  sshd:
+{{- if $c.diego.sshd.allowedCiphers }}
+    allowed_ciphers: {{ $c.diego.sshd.allowedCiphers | quote }}
+{{- end }}
+{{- if $c.diego.sshd.allowedHostKeyAlgorithms }}
+    allowed_host_key_algorithms: {{ $c.diego.sshd.allowedHostKeyAlgorithms | quote }}
+{{- end }}
+{{- if $c.diego.sshd.allowedKeyExchanges }}
+    allowed_key_exchanges: {{ $c.diego.sshd.allowedKeyExchanges | quote }}
+{{- end }}
+{{- if $c.diego.sshd.allowedMacs }}
+    allowed_macs: {{ $c.diego.sshd.allowedMacs | quote }}
+{{- end }}
+{{- end }}
 directories:
   tmpdir: /tmp
-  diagnostics: tmp
+  diagnostics: /tmp
 stacks_file: /etc/cloud-controller/stacks.yaml
 newrelic_enabled: false
-max_annotations_per_resource: 200
-max_labels_per_resource: 50
-max_migration_duration_in_minutes: 45
-max_migration_statement_runtime_in_seconds: 30
-migration_psql_concurrent_statement_timeout_in_seconds: 1800
+max_annotations_per_resource: {{ $c.maxAnnotationsPerResource }}
+max_labels_per_resource: {{ $c.maxLabelsPerResource }}
+{{- if $c.enableIpv6 }}
+enable_ipv6: {{ $c.enableIpv6 }}
+{{- end }}
+{{- if $c.allowUserCreationByOrgManager }}
+allow_user_creation_by_org_manager: {{ $c.allowUserCreationByOrgManager }}
+{{- end }}
+feature_flag_overrides: {{ toJson ($c.featureFlagOverrides | default dict) }}
+skip_bigint_id_migration: {{ $ccdb.skipBigintIdMigration }}
+max_migration_duration_in_minutes: {{ $ccdb.maxMigrationDurationInMinutes }}
+max_migration_statement_runtime_in_seconds: {{ $ccdb.maxMigrationStatementRuntimeInSeconds }}
+migration_psql_concurrent_statement_timeout_in_seconds: {{ $ccdb.migrationPsqlConcurrentStatementTimeoutInSeconds }}
 db:
-  log_level: "info"
-  ssl_verify_hostname: {{ not .Values.ccdb.skipHostnameVerify }}
-  max_connections: 42
-  pool_timeout: 60
-  log_db_queries: false
-  {{- if not .Values.ccdb.skipSSLVerify }}
-  ca_cert_path: "/etc/ssl/certs/postgres/ca.crt"
-  {{- end }}
-  read_timeout: 3600
-  connection_validation_timeout: 3600
-  enable_paginate_window: true
+  database:
+    adapter: {{ ternary "mysql2" $ccdb.dbScheme (eq $ccdb.dbScheme "mysql") }}
+    host: {{ tpl $ccdb.address . }}
+    port: {{ $ccdb.port }}
+    user: {{ $ccdb.user }}
+    password: {{ $ccdb.password | quote }}
+    database: {{ $ccdb.name }}
+  log_level: {{ $c.dbLoggingLevel | quote }}
+  ssl_verify_hostname: {{ $ccdb.sslVerifyHostname }}
+  max_connections: {{ $ccdb.maxConnections }}
+  pool_timeout: {{ $ccdb.poolTimeout }}
+  log_db_queries: {{ $c.logDbQueries }}
+{{- if $c.querySizeLogThreshold }}
+  query_size_log_threshold: {{ $c.querySizeLogThreshold }}
+{{- end }}
+{{- if $ccdb.caCertificateSecret }}
+  ca_cert_path: "/etc/ssl/certs/db-ca/ca.crt"
+{{- end }}
+  read_timeout: {{ $ccdb.readTimeout }}
+  connection_validation_timeout: {{ $ccdb.connectionValidationTimeout }}
+{{- if $ccdb.connectionExpirationTimeout }}
+  connection_expiration_timeout: {{ $ccdb.connectionExpirationTimeout }}
+{{- end }}
+{{- if $ccdb.connectionExpirationRandomDelay }}
+  connection_expiration_random_delay: {{ $ccdb.connectionExpirationRandomDelay }}
+{{- end }}
+{{- if $ccdb.migrationPsqlWorkerMemoryKb }}
+  migration_psql_worker_memory_kb: {{ $ccdb.migrationPsqlWorkerMemoryKb }}
+{{- end }}
+  enable_paginate_window: {{ $ccdb.enablePaginateWindow }}
+  psql:
+    statement_timeout: {{ $ccdb.psql.statementTimeout }}
+    idle_in_transaction_session_timeout: {{ $ccdb.psql.idleInTransactionSessionTimeout }}
+    keepalives: {{ $ccdb.psql.keepalives }}
+    keepalives_idle: {{ $ccdb.psql.keepalivesIdle }}
+    keepalives_interval: {{ $ccdb.psql.keepalivesInterval }}
+    keepalives_count: {{ $ccdb.psql.keepalivesCount }}
 index: 0
-name: api
-request_timeout_in_seconds: 600
-skip_cert_verify: true
-app_bits_upload_grace_period_in_seconds: 500
+name: ""
+request_timeout_in_seconds: {{ $c.requestTimeoutInSeconds }}
+skip_cert_verify: {{ $c.ssl.skipCertVerify }}
+app_bits_upload_grace_period_in_seconds: {{ $c.appBitsUploadGracePeriodInSeconds }}
 security_event_logging:
-  enabled: false
+  enabled: {{ $c.securityEventLogging.enabled }}
   file: /tmp/security_events.log
 staging:
-  timeout_in_seconds: 900
-  legacy_md5_buildpack_paths_enabled: false
-  minimum_staging_memory_mb: 1024
-  minimum_staging_disk_mb: 4096
-  minimum_staging_file_descriptor_limit: 16384
+  timeout_in_seconds: {{ $c.stagingTimeoutInSeconds }}
+  legacy_md5_buildpack_paths_enabled: {{ $c.legacyMd5BuildpackPathsEnabled }}
+  minimum_staging_memory_mb: {{ $c.minimumStagingMemoryMb }}
+  minimum_staging_disk_mb: {{ $c.minimumStagingDiskMb }}
+  minimum_staging_file_descriptor_limit: {{ $c.stagingFileDescriptorLimit }}
   auth:
-    user: "bob"
-    password: "laura"
-statsd_host: "127.0.0.1"
-statsd_port: 8125
-enable_statsd_metrics: true
-perform_blob_cleanup: false
+    user: {{ required "cloudController.config.staging_upload_user must be provided" $c.stagingUploadUser | quote }}
+    password: {{ required "cloudController.config.staging_upload_password must be provided" $c.stagingUploadPassword | quote }}
+statsd_host: {{ $c.statsdHost | quote }}
+statsd_port: {{ $c.statsdPort }}
+enable_statsd_metrics: {{ $c.enableStatsdMetrics }}
+perform_blob_cleanup: {{ $c.performBlobCleanup }}
 diego_sync:
-  frequency_in_seconds: 30
+  frequency_in_seconds: {{ $c.diegoSync.frequencyInSeconds }}
 pending_droplets:
-  frequency_in_seconds: 300
-  expiration_in_seconds: 42
+  frequency_in_seconds: {{ $c.pendingDroplets.frequencyInSeconds }}
+  expiration_in_seconds: {{ $c.stagingTimeoutInSeconds }}
 pending_builds:
-  expiration_in_seconds: 42
-  frequency_in_seconds: 300
+  expiration_in_seconds: {{ $c.stagingTimeoutInSeconds }}
+  frequency_in_seconds: {{ $c.pendingBuilds.frequencyInSeconds }}
+{{- if $c.credhubApi.enabled }}
 credhub_api:
-  internal_url: {{ tpl .Values.cloudController.credhubApi.internalUrl . }}
-  {{- if .Values.cloudController.credhubApi.externalUrl }}
-  external_url: {{ .Values.cloudController.credhubApi.externalUrl }}
+  internal_url: https://{{ tpl $c.credhubApi.hostname . }}:{{ $c.credhubApi.port }}
+  {{- if $c.credhubApi.externalUrl }}
+  external_url: {{ $c.credhubApi.externalUrl }}
   {{- end }}
-  ca_cert_path: "/etc/ssl/certs/cloud-controller/ca.crt"
+  ca_cert_path: "/etc/ssl/certs/credhub/ca.crt"
+{{- end }}
 credential_references:
-  interpolate_service_bindings: true
-internal_route_vip_range: "127.128.0.0/9"
+  interpolate_service_bindings: {{ $c.credentialReferences.interpolateServiceBindings }}
 locket:
-  host: {{ tpl .Values.cloudController.locket.host . }}
-  port: {{ .Values.cloudController.locket.port }}
-  ca_file: "/etc/ssl/certs/cloud-controller/ca.crt"
-  cert_file: "/etc/ssl/certs/cloud-controller/tls.crt"
-  key_file: "/etc/ssl/certs/cloud-controller/tls.key"
+  host: {{ tpl $c.locket.host . }}
+  port: {{ $c.locket.port }}
+  ca_file: "/etc/ssl/certs/mutual-tls/ca.crt"
+  cert_file: "/etc/ssl/certs/mutual-tls/tls.crt"
+  key_file: "/etc/ssl/certs/mutual-tls/tls.key"
 threadpool_size: 20
-default_app_lifecycle: buildpack
-custom_metric_tag_prefix_list: ["metric.tag.cloudfoundry.org"]
-max_manifest_service_binding_poll_duration_in_seconds: 60
-update_metric_tags_on_rename: true
-app_log_revision: false
-app_instance_stopping_state: true
-max_service_credential_bindings_per_app_service_instance: 5
-publish_metrics: true
-prometheus_port: 9397
+perm:
+  enabled: false
+redis:
+  socket: "/var/run/valkey.sock"
+default_app_lifecycle: {{ $c.defaultAppLifecycle }}
+custom_metric_tag_prefix_list:
+{{- toYaml $c.customMetricTagPrefixList | nindent 2 }}
+max_manifest_service_binding_poll_duration_in_seconds: {{ $c.maxManifestServiceBindingPollDurationInSeconds }}
+update_metric_tags_on_rename: {{ $c.updateMetricTagsOnRename }}
+app_log_revision: {{ $c.appLogRevision }}
+app_instance_stopping_state: {{ $c.appInstanceStoppingState }}
+max_service_credential_bindings_per_app_service_instance: {{ $c.maxServiceCredentialBindingsPerAppServiceInstance }}
+publish_metrics: {{ $c.publishMetrics }}
+prometheus_port: {{ $c.prometheusPort }}

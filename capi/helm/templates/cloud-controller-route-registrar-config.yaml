@@ -14,22 +14,22 @@ data:
       ],
       "nats_mtls_config": {
         "enabled": true,
-        "cert_path": "/etc/ssl/certs/cloud-controller/tls.crt",
-        "key_path": "/etc/ssl/certs/cloud-controller/tls.key",
-        "ca_path": "/etc/ssl/certs/cloud-controller/ca.crt"
+        "cert_path": "/etc/ssl/certs/route-registrar/tls.crt",
+        "key_path": "/etc/ssl/certs/route-registrar/tls.key",
+        "ca_path": "/etc/ssl/certs/route-registrar/ca.crt"
       },
       "host": "",
       "routes": [
         {
           "name": "api",
-          "tls_port": {{ .Values.cloudController.publicTLS.port }},
+          "tls_port": {{ .Values.cloudController.config.publicTLS.port }},
           "registration_interval": "10s",
-          "server_cert_domain_san": "{{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}",
+          "server_cert_domain_san": "{{ .Values.cloudController.config.externalHost }}.{{ .Values.cloudController.config.systemDomain }}",
           "tags": {
             "component": "CloudController"
           },
           "uris": [
-            "{{ .Values.cloudController.externalHost }}.{{ .Values.cloudController.systemDomain }}"
+            "{{ .Values.cloudController.config.externalHost }}.{{ .Values.cloudController.config.systemDomain }}"
           ]
         }
       ]

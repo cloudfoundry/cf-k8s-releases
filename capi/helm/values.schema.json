@@ -46,6 +46,9 @@
             ],
             "type": "object"
           }
+        },
+        "replicas": {
+          "type": "integer"
         }
       },
       "type": "object"
@@ -53,8 +56,20 @@
     "ccUploader": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
+        "config": {
+          "type": "object"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "ccClient": {
+              "type": "string"
+            },
+            "server": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -112,6 +127,9 @@
             ],
             "type": "object"
           }
+        },
+        "replicas": {
+          "type": "integer"
         }
       },
       "type": "object"
@@ -160,6 +178,9 @@
             ],
             "type": "object"
           }
+        },
+        "replicas": {
+          "type": "integer"
         }
       },
       "type": "object"
@@ -208,6 +229,9 @@
             ],
             "type": "object"
           }
+        },
+        "replicas": {
+          "type": "integer"
         }
       },
       "type": "object"
@@ -215,138 +239,38 @@
     "cloudController": {
       "additionalProperties": false,
       "properties": {
-        "configOverrides": {
-          "type": [
-            "object"
-          ]
-        },
-        "appDomains": {
-          "type": [
-            "array"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "appSSH": {
-          "additionalProperties": false,
-          "properties": {
-            "port": {
-              "type": "integer"
-            }
-          },
+        "config": {
           "type": "object"
         },
-        "blobstore": {
+        "certificateSecrets": {
           "additionalProperties": false,
           "properties": {
-            "app_package_directory_key": {
+            "mutualTLS": {
               "type": "string"
             },
-            "buildpack_directory_key": {
+            "loggregatorTLS": {
               "type": "string"
             },
-            "droplet_directory_key": {
+            "logcacheTLS": {
               "type": "string"
             },
-            "fog_connection": {
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "resource_directory_key": {
+            "uaaCA": {
               "type": "string"
             },
-            "storage_cli": {
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "type": {
+            "credhubCA": {
               "type": "string"
             },
-            "provider": {
+            "promScraperTLS": {
+              "type": "string"
+            },
+            "publicTLS": {
               "type": "string"
             }
           },
           "type": "object"
-        },
-        "certificateSecret": {
-          "type": "string"
-        },
-        "credhubApi": {
-          "additionalProperties": false,
-          "properties": {
-            "externalUrl": {
-              "type": "string"
-            },
-            "internalUrl": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "diego": {
-          "additionalProperties": false,
-          "properties": {
-            "ccUploaderUrl": {
-              "type": "string"
-            },
-            "fileServerUrl": {
-              "type": "string"
-            },
-            "bbs": {
-              "additionalProperties": false,
-              "properties": {
-                "url": {
-                  "type": "string"
-                },
-                "connectTimeout": {
-                  "type": "integer"
-                },
-                "sendTimeout": {
-                  "type": "integer"
-                },
-                "receiveTimeout": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "pidLimit": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "doppler": {
-          "additionalProperties": false,
-          "properties": {
-            "port": {
-              "type": "integer"
-            },
-            "useSSL": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
-        "enableCommaDelimitedDestinations": {
-          "type": "boolean"
         },
         "enabled": {
           "type": "boolean"
-        },
-        "externalHost": {
-          "type": "string"
-        },
-        "externalPort": {
-          "type": "integer"
-        },
-        "externalProtocol": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,
@@ -363,69 +287,6 @@
           },
           "type": "object"
         },
-        "internalServiceHostname": {
-          "type": "string"
-        },
-        "locket": {
-          "additionalProperties": false,
-          "properties": {
-            "host": {
-              "type": "string"
-            },
-            "port": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "logcache": {
-          "additionalProperties": false,
-          "properties": {
-            "host": {
-              "type": "string"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": false,
-              "properties": {
-                "subjectName": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "loginProtocol": {
-          "type": "string"
-        },
-        "loggregator": {
-          "additionalProperties": false,
-          "properties": {
-            "endpoint": {
-              "type": "string"
-            },
-            "subjectName": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "publicTLS": {
-          "additionalProperties": false,
-          "properties": {
-            "port": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "tlsPort": {
-          "type": "integer"
-        },
         "nodeSelector": {
           "type": [
             "object",
@@ -437,97 +298,6 @@
             "object",
             "null"
           ]
-        },
-        "sshProxyKeyFingerprint": {
-          "type": "string"
-        },
-        "systemDomain": {
-          "type": "string"
-        },
-        "systemDomainOrganization": {
-          "type": "string"
-        },
-        "uaa": {
-          "additionalProperties": false,
-          "properties": {
-            "internalHost": {
-              "type": "string"
-            },
-            "ssl": {
-              "additionalProperties": false,
-              "properties": {
-                "port": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "stacks": {
-          "type": [
-            "array"
-          ],
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "description": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "default_stack": {
-          "type": "string"
-        },
-        "docker_staging_stack": {
-          "type": "string"
-        },
-        "lifecycle_bundles": {
-          "type": [
-            "object"
-          ]
-        },
-        "droplet_destinations": {
-          "type": [
-            "object"
-          ]
-        },
-        "securityGroupDefinitions": {
-          "type": "array",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "rules": {
-                "type": "array"
-              }
-            },
-            "required": [
-              "name",
-              "rules"
-            ],
-            "type": "object"
-          }
-        },
-        "defaultStagingSecurityGroups": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "defaultRunningSecurityGroups": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         },
         "tolerations": {
           "type": [
@@ -558,41 +328,14 @@
             ],
             "type": "object"
           }
+        },
+        "replicas": {
+          "type": "integer"
         }
       },
       "type": "object"
     },
     "ccdb": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "user": {
-          "type": "string"
-        },
-        "password": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "address": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer"
-        },
-        "caCertificateSecret": {
-          "type": "string"
-        },
-        "skipSSLVerify": {
-          "type": "boolean"
-        },
-        "skipHostnameVerify": {
-          "type": "boolean"
-        }
-      },
       "type": "object"
     },
     "global": {
@@ -670,6 +413,9 @@
           },
           "type": "object"
         },
+        "certificateSecret": {
+          "type": "string"
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -697,8 +443,20 @@
     "tpsWatcher": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
+        "config": {
+          "type": "object"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "bbs": {
+              "type": "string"
+            },
+            "cc": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "enabled": {
           "type": "boolean"
@@ -719,7 +477,10 @@
           "type": "object"
         },
         "nodeSelector": {
-          "type": "null"
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "resources": {
           "type": [
@@ -756,8 +517,14 @@
             ],
             "type": "object"
           }
+        },
+        "replicas": {
+          "type": "integer"
         }
       }
+    },
+    "valkey": {
+      "type": "object"
     }
   },
   "type": "object"

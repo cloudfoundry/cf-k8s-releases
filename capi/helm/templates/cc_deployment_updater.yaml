@@ -7,9 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cc-deployment-updater
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
+  replicas: {{ .Values.ccDeploymentUpdater.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cc-deployment-updater
@@ -21,6 +19,24 @@ spec:
       labels:
         app.kubernetes.io/name: cc-deployment-updater
     spec:
+      initContainers:
+        - name: set-lock-owner
+          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
+          imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - sed "s|\${POD_NAME}|${POD_NAME}|g" /etc/cloud-controller/config.yaml > /tmp/config.yaml
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: etc-cloud-controller
+              mountPath: /etc/cloud-controller
+            - name: tmpdir
+              mountPath: /tmp
       containers:
         - name: cc-deployment-updater
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
@@ -29,18 +45,15 @@ spec:
           envFrom:
             - secretRef:
                 name: cc-shared
+          env:
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /tmp/config.yaml
           {{- if .Values.ccDeploymentUpdater.resources }}
           resources:
             {{- toYaml .Values.ccDeploymentUpdater.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cloud-controller
-              mountPath: /etc/ssl/certs/cloud-controller
-            {{- if not .Values.ccdb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
-              readOnly: true
-            {{- end }}
+            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
             - name: tmpdir
@@ -54,14 +67,7 @@ spec:
         {{- toYaml .Values.ccDeploymentUpdater.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: cloud-controller
-          secret:
-            secretName: {{ required "cloudController.certificateSecret is required" .Values.cloudController.certificateSecret }}
-        {{- if not .Values.ccdb.skipSSLVerify }}
-        - name: postgres-ca
-          secret:
-            secretName: {{ required "ccdb.caCertificateSecret is required when ccdb.skipSSLVerify is false" .Values.ccdb.caCertificateSecret }}
-        {{- end }}
+        {{- include "capi.ccCertVolumes" $ | nindent 8 }}
         - name: etc-cloud-controller
           secret:
             secretName: cloud-controller-config
