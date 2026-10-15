@@ -200,11 +200,11 @@ spec:
         {{- include "capi.ccCertVolumes" $ | nindent 8 }}
         - name: public-tls
           secret:
-            secretName: {{ required "cloudController.certificates.publicTLS is required" .Values.cloudController.certificates.publicTLS }}
+            secretName: {{ required "cloudController.certificateSecrets.publicTLS is required" .Values.cloudController.certificateSecrets.publicTLS }}
         {{- if .Values.cloudController.config.promMetricsServerEnabled }}
         - name: prom-scraper
           secret:
-            secretName: {{ required "cloudController.certificates.promScraperTLS is required when promMetricsServerEnabled" .Values.cloudController.certificates.promScraperTLS }}
+            secretName: {{ required "cloudController.certificateSecrets.promScraperTLS is required when promMetricsServerEnabled" .Values.cloudController.certificateSecrets.promScraperTLS }}
         {{- end }}
         - name: route-registrar
           secret:

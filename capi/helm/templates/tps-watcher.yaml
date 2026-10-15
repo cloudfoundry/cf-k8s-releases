@@ -68,10 +68,10 @@ spec:
           emptyDir: {}
         - name: tps-watcher-bbs
           secret:
-            secretName: {{ required "tpsWatcher.certificates.bbs is required" .Values.tpsWatcher.certificates.bbs }}
+            secretName: {{ required "tpsWatcher.certificateSecrets.bbs is required" .Values.tpsWatcher.certificateSecrets.bbs }}
         - name: tps-watcher-cc
           secret:
-            secretName: {{ required "tpsWatcher.certificates.cc is required" .Values.tpsWatcher.certificates.cc }}
+            secretName: {{ required "tpsWatcher.certificateSecrets.cc is required" .Values.tpsWatcher.certificateSecrets.cc }}
         - name: tps-watcher-config
           configMap:
             name: tps-watcher-config

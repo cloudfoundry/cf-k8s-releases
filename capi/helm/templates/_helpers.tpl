@@ -98,19 +98,19 @@ connection_config, mirroring capi-release's storage_cli_config_*.json.erb transl
 {{- define "capi.ccCertVolumes" -}}
 - name: mutual-tls
   secret:
-    secretName: {{ required "cloudController.certificates.mutualTLS is required" .Values.cloudController.certificates.mutualTLS }}
+    secretName: {{ required "cloudController.certificateSecrets.mutualTLS is required" .Values.cloudController.certificateSecrets.mutualTLS }}
 - name: loggregator
   secret:
-    secretName: {{ required "cloudController.certificates.loggregatorTLS is required" .Values.cloudController.certificates.loggregatorTLS }}
+    secretName: {{ required "cloudController.certificateSecrets.loggregatorTLS is required" .Values.cloudController.certificateSecrets.loggregatorTLS }}
 - name: logcache
   secret:
-    secretName: {{ required "cloudController.certificates.logcacheTLS is required" .Values.cloudController.certificates.logcacheTLS }}
+    secretName: {{ required "cloudController.certificateSecrets.logcacheTLS is required" .Values.cloudController.certificateSecrets.logcacheTLS }}
 - name: uaa
   secret:
-    secretName: {{ required "cloudController.certificates.uaaCA is required" .Values.cloudController.certificates.uaaCA }}
+    secretName: {{ required "cloudController.certificateSecrets.uaaCA is required" .Values.cloudController.certificateSecrets.uaaCA }}
 - name: credhub
   secret:
-    secretName: {{ required "cloudController.certificates.credhubCA is required" .Values.cloudController.certificates.credhubCA }}
+    secretName: {{ required "cloudController.certificateSecrets.credhubCA is required" .Values.cloudController.certificateSecrets.credhubCA }}
 {{- if .Values.ccdb.caCertificateSecret }}
 - name: db-ca
   secret:

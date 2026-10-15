@@ -13,7 +13,7 @@ ccWorker:
 ccUploader:
   replicas: 1
   resources: ~
-  certificates:
+  certificateSecrets:
     ccClient: ""
     server: ""
   image:
@@ -46,7 +46,7 @@ cloudController:
   enabled: false
   replicas: 1
   resources: ~
-  certificates:
+  certificateSecrets:
     mutualTLS: ""
     loggregatorTLS: ""
     logcacheTLS: ""
@@ -453,7 +453,7 @@ tpsWatcher:
   enabled: false
   replicas: 1
   resources: ~
-  certificates:
+  certificateSecrets:
     bbs: ""
     cc: ""
   image:

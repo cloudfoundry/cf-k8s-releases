@@ -59,7 +59,7 @@
         "config": {
           "type": "object"
         },
-        "certificates": {
+        "certificateSecrets": {
           "additionalProperties": false,
           "properties": {
             "ccClient": {
@@ -242,7 +242,7 @@
         "config": {
           "type": "object"
         },
-        "certificates": {
+        "certificateSecrets": {
           "additionalProperties": false,
           "properties": {
             "mutualTLS": {
@@ -446,7 +446,7 @@
         "config": {
           "type": "object"
         },
-        "certificates": {
+        "certificateSecrets": {
           "additionalProperties": false,
           "properties": {
             "bbs": {

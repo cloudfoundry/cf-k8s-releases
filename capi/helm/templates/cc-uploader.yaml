@@ -49,10 +49,10 @@ spec:
       volumes:
         - name: cc-uploader-client
           secret:
-            secretName: {{ required "ccUploader.certificates.ccClient is required" .Values.ccUploader.certificates.ccClient }}
+            secretName: {{ required "ccUploader.certificateSecrets.ccClient is required" .Values.ccUploader.certificateSecrets.ccClient }}
         - name: cc-uploader-server
           secret:
-            secretName: {{ required "ccUploader.certificates.server is required" .Values.ccUploader.certificates.server }}
+            secretName: {{ required "ccUploader.certificateSecrets.server is required" .Values.ccUploader.certificateSecrets.server }}
         - name: cc-uploader-config
           configMap:
             name: cc-uploader-config
