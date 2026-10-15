@@ -66,11 +66,11 @@ spec:
               cat /rep/rep.json | envsubst > /tmp/rep.json
 
               if [ ! -f /var/lib/rep/proxy/envoy ]; then
-                curl -sL {{ tpl .Values.rep.fileServer.address . }}/cf-assets/proxy.tgz | tar -xz -C /var/lib/rep/proxy
+                curl -sL --cacert /etc/ssl/certs/rep/ca.crt {{ tpl .Values.rep.fileServer.address . }}/cf-assets/proxy.tgz | tar -xz -C /var/lib/rep/proxy
               fi
 
               if [ ! -f /var/lib/rep/healthcheck/healthcheck ]; then
-                curl -sL {{ tpl .Values.rep.fileServer.address . }}/cf-assets/healthcheck.tgz | tar -xz -C /var/lib/rep/healthcheck
+                curl -sL --cacert /etc/ssl/certs/rep/ca.crt {{ tpl .Values.rep.fileServer.address . }}/cf-assets/healthcheck.tgz | tar -xz -C /var/lib/rep/healthcheck
               fi
 
               if [ ! -f /var/lib/rep/bin/init ]; then

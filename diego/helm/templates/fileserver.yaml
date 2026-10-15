@@ -8,8 +8,15 @@ metadata:
     app.kubernetes.io/name: fileserver
 spec:
   ports:
+{{- if .Values.fileserver.useSSL }}
+    - port: 8443
+      name: https
+      targetPort: 8443
+{{- else }}
     - port: 8080
+      name: http
       targetPort: 8080
+{{- end }}
   selector:
     app.kubernetes.io/name: fileserver
 ---
@@ -39,13 +46,24 @@ spec:
           image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.AppVersion .Values.fileserver.image.tag }}
           imagePullPolicy: {{ .Values.fileserver.image.imagePullPolicy }}
           ports:
+{{- if .Values.fileserver.useSSL }}
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+{{- else }}
             - name: http
               containerPort: 8080
               protocol: TCP
+{{- end }}
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+          {{- if .Values.fileserver.useSSL }}
+            - name: fileserver-tls
+              mountPath: /etc/fileserver/tls
+              readOnly: true
+          {{- end }}
           {{- if .Values.fileserver.resources }}
           resources:
             {{- toYaml .Values.fileserver.resources | nindent 12 }}
@@ -62,4 +80,9 @@ spec:
         - name: nginx-config
           configMap:
             name: fileserver-config
+      {{- if .Values.fileserver.useSSL }}
+        - name: fileserver-tls
+          secret:
+            secretName: {{ required "fileserver.certificateSecret is required" .Values.fileserver.certificateSecret }}
+      {{- end}}
 {{- end }}
