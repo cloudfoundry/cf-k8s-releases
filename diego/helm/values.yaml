@@ -27,7 +27,7 @@ bbs:
 
 fileserver:
   enabled: false
-  enableHttps: false
+  useSSL: false
   certificateSecret: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/fileserver

@@ -11,7 +11,7 @@ spec:
     - port: 8080
       name: http
       targetPort: 8080
-{{- if .Values.fileserver.enableHttps }}
+{{- if .Values.fileserver.useSSL }}
     - port: 443
       name: https
       targetPort: 443
@@ -48,7 +48,7 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-{{- if .Values.fileserver.enableHttps }}
+{{- if .Values.fileserver.useSSL }}
             - name: https
               containerPort: 443
               protocol: TCP
@@ -57,7 +57,7 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-          {{- if .Values.fileserver.enableHttps }}
+          {{- if .Values.fileserver.useSSL }}
             - name: fileserver-tls
               mountPath: /etc/fileserver/tls
               readOnly: true
@@ -78,7 +78,7 @@ spec:
         - name: nginx-config
           configMap:
             name: fileserver-config
-      {{- if .Values.fileserver.enableHttps }}
+      {{- if .Values.fileserver.useSSL }}
         - name: fileserver-tls
           secret:
             secretName: {{ required "fileserver.certificateSecret is required" .Values.fileserver.certificateSecret }}
