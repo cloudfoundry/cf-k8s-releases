@@ -8,13 +8,14 @@ metadata:
     app.kubernetes.io/name: fileserver
 spec:
   ports:
+{{- if .Values.fileserver.useSSL }}
+    - port: 8443
+      name: https
+      targetPort: 8443
+{{- else }}
     - port: 8080
       name: http
       targetPort: 8080
-{{- if .Values.fileserver.useSSL }}
-    - port: 443
-      name: https
-      targetPort: 443
 {{- end }}
   selector:
     app.kubernetes.io/name: fileserver
@@ -45,12 +46,13 @@ spec:
           image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.AppVersion .Values.fileserver.image.tag }}
           imagePullPolicy: {{ .Values.fileserver.image.imagePullPolicy }}
           ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
 {{- if .Values.fileserver.useSSL }}
             - name: https
-              containerPort: 443
+              containerPort: 8443
+              protocol: TCP
+{{- else }}
+            - name: http
+              containerPort: 8080
               protocol: TCP
 {{- end }}
           volumeMounts:
