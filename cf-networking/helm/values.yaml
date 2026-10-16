@@ -2,13 +2,39 @@ policyServer:
   enabled: false
   resources: ~
   certificateSecret: ""
+  uaaCaSecret: ""
+  ccCaCertSecret: ""
+  internal:
+    certificateSecret: ""
+    debugPort: 31945
+    listenPort: 4003
+  asgSyncer:
+    ccInternalClientSecret: ""
+    locketSecret: ""
   systemDomain: cf.127-0-0-1.nip.io
   image:
     repository: ghcr.io/cloudfoundry/k8s/policy-server
     tag: ""
     imagePullPolicy: IfNotPresent
   oauthClientsSecret: ""
+  logLevel: info
+  listenIp: "0.0.0.0"
+  listenPort: 4002
+  debugPort: 31821
+  metronPort: 3457
+  uaaClient: network-policy
+  uaaPort: 8443
+  skipSSLValidation: false
+  enableSpaceDeveloperSelfService: true
+  enableTls: true
+  tagLength: 2
+  policyCleanupInterval: 60
+  maxPoliciesPerAppSource: 150
+  allowedCorsDomains: []
+  asgPollIntervalSeconds: 60
+  retryDeadlineSeconds: 300
   networkpolicydb:
+    type: postgres
     name: network_policy
     password: ~
     user: postgres
@@ -17,14 +43,26 @@ policyServer:
     caCertificateSecret: ""
     skipSSLVerify: true
     skipHostnameVerify: false
+    connectTimeoutSeconds: 120
+    maxOpenConnections: 200
+    maxIdleConnections: 10
+    connectionsMaxLifetimeSeconds: 3600
   nodeSelector: ~
   tolerations: ~
 serviceDiscoveryController:
   enabled: false
   resources: ~
   certificateSecret: ""
+  clientCaSecret: ""
   hostname: service-discovery-controller.{{ .Release.Namespace }}.svc.cluster.local
+  address: "0.0.0.0"
   port: 8054
+  logLevelAddress: "127.0.0.1"
+  logLevelPort: 8055
+  metronPort: 3457
+  stalenessThresholdSeconds: 180
+  routeEmitterIntervalSeconds: 60
+  readHeaderTimeout: "30s"
   image:
     repository: ghcr.io/cloudfoundry/k8s/service-discovery-controller
     tag: ""
@@ -32,12 +70,25 @@ serviceDiscoveryController:
   nats:
     host: nats.{{ .Release.Namespace }}.svc.cluster.local
     port: 4222
+    user: ""
+    password: ""
+    tlsEnabled: true
+    certificateSecret: ""
   nodeSelector: ~
   tolerations: ~
 boshDnsAdapter:
   enabled: false
+  address: "127.0.0.1"
+  port: 8053
+  metronPort: 3457
+  logLevelAddress: "127.0.0.1"
+  logLevelPort: 8066
   resources: ~
   certificateSecret: ""
+  serverCaSecret: ""
+  internalDomains:
+    - apps.internal.
+  internalServiceMeshDomains: []
   image:
     repository: ghcr.io/cloudfoundry/k8s/bosh-dns-adapter
     tag: ""
@@ -52,6 +103,14 @@ boshDns:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+udpForwarder:
+  certificateSecret: ""
+  image:
+    repository: ghcr.io/cloudfoundry/k8s/udp-forwarder
+    # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
+    tag: "8.3.30"
+    imagePullPolicy: IfNotPresent
+  resources: ~
 routeRegistrar:
   resources: ~
   nats:

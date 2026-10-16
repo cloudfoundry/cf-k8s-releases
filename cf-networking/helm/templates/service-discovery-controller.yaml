@@ -29,8 +29,41 @@ spec:
           volumeMounts:
             - name: service-discovery-controller
               mountPath: /etc/ssl/certs/service-discovery-controller
+            - name: client-ca
+              mountPath: /etc/ssl/certs/service-discovery-controller-client-ca
+            {{- if .Values.serviceDiscoveryController.nats.tlsEnabled }}
+            - name: nats-certificate
+              mountPath: /etc/ssl/certs/service-discovery-controller-nats
+            {{- end }}
             - name: service-discovery-controller-config
               mountPath: /service-discovery-controller
+        - name: udp-forwarder
+          image: {{ .Values.udpForwarder.image.repository }}:{{ .Values.udpForwarder.image.tag }}
+          imagePullPolicy: {{ .Values.udpForwarder.image.imagePullPolicy }}
+          {{- if .Values.udpForwarder.resources }}
+          resources:
+            {{- toYaml .Values.udpForwarder.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: UDP_PORT
+              value: {{ .Values.serviceDiscoveryController.metronPort | quote }}
+            - name: LOGGREGATOR_AGENT_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+          volumeMounts:
+            - name: udp-forwarder
+              mountPath: /etc/ssl/certs/udp-forwarder
       {{- if .Values.serviceDiscoveryController.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.serviceDiscoveryController.nodeSelector | nindent 8 }}
@@ -43,9 +76,20 @@ spec:
         - name: service-discovery-controller
           secret:
             secretName: {{ required "serviceDiscoveryController.certificateSecret is required" .Values.serviceDiscoveryController.certificateSecret }}
+        - name: client-ca
+          secret:
+            secretName: {{ required "serviceDiscoveryController.clientCaSecret is required" .Values.serviceDiscoveryController.clientCaSecret | quote }}
+        {{- if .Values.serviceDiscoveryController.nats.tlsEnabled }}
+        - name: nats-certificate
+          secret:
+            secretName: {{ required "serviceDiscoveryController.nats.certificateSecret is required when serviceDiscoveryController.nats.tlsEnabled is true" .Values.serviceDiscoveryController.nats.certificateSecret | quote }}
+        {{- end }}
         - name: service-discovery-controller-config
-          configMap:
-            name: service-discovery-controller-config
+          secret:
+            secretName: service-discovery-controller-config
+        - name: udp-forwarder
+          secret:
+            secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
 ---
 kind: Service
 apiVersion: v1
