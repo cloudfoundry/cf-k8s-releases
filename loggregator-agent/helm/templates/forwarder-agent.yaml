@@ -43,9 +43,26 @@ spec:
               value: /etc/ssl/certs/forwarder-agent/tls.crt
             - name: METRICS_KEY_FILE_PATH
               value: /etc/ssl/certs/forwarder-agent/tls.key
+            {{- if .Values.forwarderAgent.otelCollector.enabled }}
+            - name: DOWNSTREAM_INGRESS_PORT_GLOB
+              value: /etc/forwarder/downstream/*.yml
+            - name: EMIT_OTEL_LOGS
+              value: "true"
+            - name: EMIT_OTEL_METRICS
+              value: "true"
+            - name: EMIT_OTEL_TRACES
+              value: "true"
+            - name: OTEL_COLLECTOR_HOST
+              value: {{ required "forwarderAgent.otelCollector.host is required" .Values.forwarderAgent.otelCollector.host | quote }}
+            {{- end }}
           volumeMounts:
             - name: forwarder-agent
               mountPath: /etc/ssl/certs/forwarder-agent
+            {{- if .Values.forwarderAgent.otelCollector.enabled }}
+            - name: forwarder-agent-downstream
+              mountPath: /etc/forwarder/downstream
+              readOnly: true
+            {{- end }}
         - name: loggregator-agent
           image: {{ .Values.loggregatorAgent.image.repository }}:{{ default .Chart.AppVersion .Values.loggregatorAgent.image.tag }}
           imagePullPolicy: {{ .Values.loggregatorAgent.image.imagePullPolicy }}
@@ -138,6 +155,11 @@ spec:
         - name: loggregator-agent
           secret:
             secretName: {{ required "loggregatorAgent.certificateSecret is required" .Values.loggregatorAgent.certificateSecret }}
+        {{- if .Values.forwarderAgent.otelCollector.enabled }}
+        - name: forwarder-agent-downstream
+          configMap:
+            name: forwarder-agent-otel-downstream
+        {{- end }}
 ---
 kind: Service
 apiVersion: v1
@@ -152,4 +174,17 @@ spec:
       protocol: TCP
   selector:
     app: forwarder-agent
+{{- if .Values.forwarderAgent.otelCollector.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forwarder-agent-otel-downstream
+  labels:
+    app: forwarder-agent
+data:
+  ingress_port.yml: |
+    ingress: 4317
+    protocol: otelcol
+{{- end }}
 {{- end }}

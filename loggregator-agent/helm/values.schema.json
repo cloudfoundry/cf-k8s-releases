@@ -32,6 +32,18 @@
         "nodeSelector": {
           "type": ["object", "null"]
         },
+        "otelCollector": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "resources": {
           "type": ["object", "null"]
         },

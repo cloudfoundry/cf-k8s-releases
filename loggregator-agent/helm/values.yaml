@@ -9,6 +9,9 @@ forwarderAgent:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
+  otelCollector:
+    enabled: false
+    host: ""
 
 loggregatorAgent:
   doppler:
