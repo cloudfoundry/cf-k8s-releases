@@ -11,6 +11,34 @@
         "certificateSecret": {
           "type": "string"
         },
+        "grpcPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "grpcPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "host": {
+              "type": "string"
+            }
+          }
+        },
+        "cipherSuites": {
+          "type": "string"
+        },
+        "ingressBufferSize": {
+          "type": "integer"
+        },
+        "egressBufferSize": {
+          "type": "integer"
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
