@@ -6,7 +6,7 @@ metadata:
   labels:
     app: uaa
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app: uaa
@@ -53,18 +53,18 @@ spec:
               mountPath: /uaa.yml
               subPath: uaa.yml
               readOnly: true
-            - name: uaa-config
-              mountPath: /secrets/admin_client_credentials.yml
-              subPath: admin_client_credentials.yml
-              readOnly: true
             - name: uaa-spring-config
               mountPath: /application.yml
               subPath: application.yml
               readOnly: true
-            - name: uaa
+            - name: uaa-spring-config
+              mountPath: /log4j2.properties
+              subPath: log4j2.properties
+              readOnly: true
+            - name: server-tls
               mountPath: /ssl
               readOnly: true
-            {{- if not .Values.uaadb.skipSSLVerify }}
+            {{- if include "uaa.needsPostgresCa" . }}
             - name: postgres-ca
               mountPath: /etc/ssl/certs/postgres
               readOnly: true
@@ -84,8 +84,9 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: uaa
-              mountPath: /etc/ssl/certs/uaa
+            - name: route-registrar
+              mountPath: /etc/ssl/certs/route-registrar
+              readOnly: true
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
             - name: tmp
@@ -105,13 +106,16 @@ spec:
         - name: uaa-spring-config
           configMap:
             name: uaa-spring-config
-        - name: uaa
+        - name: server-tls
           secret:
-            secretName: {{ required "certificateSecret is required" .Values.certificateSecret }}
-        {{- if not .Values.uaadb.skipSSLVerify }}
+            secretName: {{ required "certificateSecrets.serverTLS is required" .Values.certificateSecrets.serverTLS }}
+        - name: route-registrar
+          secret:
+            secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
+        {{- if include "uaa.needsPostgresCa" . }}
         - name: postgres-ca
           secret:
-            secretName: {{ required "uaadb.caCertificateSecret is required when uaadb.skipSSLVerify is false" .Values.uaadb.caCertificateSecret }}
+            secretName: {{ required "uaadb.caCertificateSecret is required for the verify TLS modes" .Values.uaadb.caCertificateSecret }}
         {{- end }}
         - name: etc-route-registrar
           configMap:

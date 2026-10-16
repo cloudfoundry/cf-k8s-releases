@@ -1,260 +1,348 @@
-{{ $_ := required ".Values.uaadb.password must be provided" .Values.uaadb.password }}
+{{- $u := .Values.uaa -}}
+{{- $l := .Values.login -}}
+{{- $uaaUrl := tpl $u.url . -}}
+{{- $issuer := $u.issuer | default $uaaUrl -}}
+{{- $loginHost := $uaaUrl | replace "://uaa." "://login." -}}
+{{- $entityBaseUrl := $loginHost -}}
+{{- if $l.saml.entityBaseUrl }}{{- $entityBaseUrl = printf "%s://%s" $l.protocol $l.saml.entityBaseUrl -}}{{- end -}}
+{{- $entityId := $l.saml.entityid | default (regexReplaceAll "^https?://" $entityBaseUrl "") -}}
+{{- $loginUrl := $l.url | default $entityBaseUrl -}}
+{{- $authorizeUrl := printf "%s/oauth/authorize" $uaaUrl -}}
+{{- if not .Values.encryption.activeKeyLabel }}{{- fail "encryption.activeKeyLabel is required" -}}{{- end -}}
+{{- if not .Values.encryption.encryptionKeys }}{{- fail "encryption.encryptionKeys is required: a list of {label, passphrase} (passphrase >= 8 chars)" -}}{{- end -}}
+{{- if and (not $u.jwt.policy.keys) (not $u.jwt.signingKey) }}{{- fail "uaa.jwt.policy.keys (with uaa.jwt.policy.activeKeyId) or the deprecated uaa.jwt.signingKey is required" -}}{{- end -}}
+{{- if and $u.jwt.policy.keys (not $u.jwt.policy.activeKeyId) }}{{- fail "uaa.jwt.policy.activeKeyId is required when uaa.jwt.policy.keys is set" -}}{{- end -}}
+{{- if and (not $l.saml.keys) (not $l.saml.serviceProviderKey) }}{{- fail "login.saml.keys (with login.saml.activeKeyId) or the deprecated login.saml.serviceProviderKey/serviceProviderCertificate is required" -}}{{- end -}}
+{{- if and $l.saml.keys (not $l.saml.activeKeyId) }}{{- fail "login.saml.activeKeyId is required when login.saml.keys is set" -}}{{- end -}}
 name: uaa
-disableInternalAuth: false
-disableInternalUserManagement: false
+spring_profiles: {{ include "uaa.springProfiles" . }}
+encryption:
+  active_key_label: {{ .Values.encryption.activeKeyLabel | quote }}
+  encryption_keys:
+    {{- toYaml .Values.encryption.encryptionKeys | nindent 4 }}
+disableInternalAuth: {{ $u.disableInternalAuth }}
+disableInternalUserManagement: {{ $u.disableInternalUserManagement }}
 issuer:
-  uri: https://uaa.{{ .Values.systemDomain }}
-login:
-  url: https://login.{{ .Values.systemDomain }}
-  idpDiscoveryEnabled: false
-  accountChooserEnabled: false
-  aliasEntitiesEnabled: false
-  checkOriginEnabled: false
-  allowOriginLoop: true
-  entityBaseURL: https://login.{{ .Values.systemDomain }}
-  entityID: login.{{ .Values.systemDomain }}
-  selfServiceLinksEnabled: true
-  authorize:
-    url: https://uaa.{{ .Values.systemDomain }}/oauth/authorize
-  prompt:
-    username:
-      text: Email
-    password:
-      text: Password
-  saml:
-    socket:
-      connectionManagerTimeout: 10000
-      soTimeout: 10000
-    signMetaData: true
-    signRequest: true
-    wantAssertionSigned: true
-    disableInResponseToCheck: false
-    activeKeyId: key1
-    keys:
-      key1:
-        key: |
-          -----BEGIN RSA PRIVATE KEY-----
-          MIICXQIBAAKBgQDHtC5gUXxBKpEqZTLkNvFwNGnNIkggNOwOQVNbpO0WVHIivig5
-          L39WqS9u0hnA+O7MCA/KlrAR4bXaeVVhwfUPYBKIpaaTWFQR5cTR1UFZJL/OF9vA
-          fpOwznoD66DDCnQVpbCjtDYWX+x6imxn8HCYxhMol6ZnTbSsFW6VZjFMjQIDAQAB
-          AoGAVOj2Yvuigi6wJD99AO2fgF64sYCm/BKkX3dFEw0vxTPIh58kiRP554Xt5ges
-          7ZCqL9QpqrChUikO4kJ+nB8Uq2AvaZHbpCEUmbip06IlgdA440o0r0CPo1mgNxGu
-          lhiWRN43Lruzfh9qKPhleg2dvyFGQxy5Gk6KW/t8IS4x4r0CQQD/dceBA+Ndj3Xp
-          ubHfxqNz4GTOxndc/AXAowPGpge2zpgIc7f50t8OHhG6XhsfJ0wyQEEvodDhZPYX
-          kKBnXNHzAkEAyCA76vAwuxqAd3MObhiebniAU3SnPf2u4fdL1EOm92dyFs1JxyyL
-          gu/DsjPjx6tRtn4YAalxCzmAMXFSb1qHfwJBAM3qx3z0gGKbUEWtPHcP7BNsrnWK
-          vw6By7VC8bk/ffpaP2yYspS66Le9fzbFwoDzMVVUO/dELVZyBnhqSRHoXQcCQQCe
-          A2WL8S5o7Vn19rC0GVgu3ZJlUrwiZEVLQdlrticFPXaFrn3Md82ICww3jmURaKHS
-          N+l4lnMda79eSp3OMmq9AkA0p79BvYsLshUJJnvbk76pCjR28PK4dV1gSDUEqQMB
-          qy45ptdwJLqLJCeNoR0JUcDNIRhOCuOPND7pcMtX6hI/
-          -----END RSA PRIVATE KEY-----
-        certificate: |
-          -----BEGIN CERTIFICATE-----
-          MIIDSTCCArKgAwIBAgIBADANBgkqhkiG9w0BAQQFADB8MQswCQYDVQQGEwJhdzEO
-          MAwGA1UECBMFYXJ1YmExDjAMBgNVBAoTBWFydWJhMQ4wDAYDVQQHEwVhcnViYTEO
-          MAwGA1UECxMFYXJ1YmExDjAMBgNVBAMTBWFydWJhMR0wGwYJKoZIhvcNAQkBFg5h
-          cnViYUBhcnViYS5hcjAeFw0xNTExMjAyMjI2MjdaFw0xNjExMTkyMjI2MjdaMHwx
-          CzAJBgNVBAYTAmF3MQ4wDAYDVQQIEwVhcnViYTEOMAwGA1UEChMFYXJ1YmExDjAM
-          BgNVBAcTBWFydWJhMQ4wDAYDVQQLEwVhcnViYTEOMAwGA1UEAxMFYXJ1YmExHTAb
-          BgkqhkiG9w0BCQEWDmFydWJhQGFydWJhLmFyMIGfMA0GCSqGSIb3DQEBAQUAA4GN
-          ADCBiQKBgQDHtC5gUXxBKpEqZTLkNvFwNGnNIkggNOwOQVNbpO0WVHIivig5L39W
-          qS9u0hnA+O7MCA/KlrAR4bXaeVVhwfUPYBKIpaaTWFQR5cTR1UFZJL/OF9vAfpOw
-          znoD66DDCnQVpbCjtDYWX+x6imxn8HCYxhMol6ZnTbSsFW6VZjFMjQIDAQABo4Ha
-          MIHXMB0GA1UdDgQWBBTx0lDzjH/iOBnOSQaSEWQLx1syGDCBpwYDVR0jBIGfMIGc
-          gBTx0lDzjH/iOBnOSQaSEWQLx1syGKGBgKR+MHwxCzAJBgNVBAYTAmF3MQ4wDAYD
-          VQQIEwVhcnViYTEOMAwGA1UEChMFYXJ1YmExDjAMBgNVBAcTBWFydWJhMQ4wDAYD
-          VQQLEwVhcnViYTEOMAwGA1UEAxMFYXJ1YmExHTAbBgkqhkiG9w0BCQEWDmFydWJh
-          QGFydWJhLmFyggEAMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEEBQADgYEAYvBJ
-          0HOZbbHClXmGUjGs+GS+xC1FO/am2suCSYqNB9dyMXfOWiJ1+TLJk+o/YZt8vuxC
-          KdcZYgl4l/L6PxJ982SRhc83ZW2dkAZI4M0/Ud3oePe84k8jm3A7EvH5wi5hvCkK
-          RpuRBwn3Ei+jCRouxTbzKPsuCVB+1sNyxMTXzf0=
-          -----END CERTIFICATE-----
-uaa:
-  url: https://uaa.{{ .Values.systemDomain }}
-  limitedFunctionality:
-    statusFile: "/tmp/bbr_limited_mode.lock"
-    whitelist:
-      endpoints:
-      - "/oauth/authorize/**"
-      - "/oauth/token/**"
-      - "/check_token/**"
-      - "/login/**"
-      - "/login.do"
-      - "/logout/**"
-      - "/logout.do"
-      - "/saml/**"
-      - "/autologin/**"
-      - "/authenticate/**"
-      - "/idp_discovery/**"
-      methods:
-      - GET
-      - HEAD
-      - OPTIONS
-  oauth:
-    redirect_uri:
-      allow_unsafe_matching: true
+  uri: {{ $issuer | quote }}
+require_https: true
+https_port: {{ $u.ssl.port }}
+assetBaseUrl: {{ $l.assetBaseUrl | quote }}
+database:
+  url: {{ include "uaa.dbUrl" . | quote }}
+  username: {{ .Values.uaadb.user | quote }}
+  password: {{ required "uaadb.password is required" .Values.uaadb.password | quote }}
+  maxactive: {{ $u.database.maxConnections }}
+  maxidle: {{ $u.database.maxIdleConnections }}
+  minidle: {{ $u.database.minIdleConnections }}
+  removeabandoned: {{ $u.database.removeAbandoned }}
+  logabandoned: {{ $u.database.logAbandoned }}
+  abandonedtimeout: {{ $u.database.abandonedTimeout | int }}
+  testwhileidle: {{ $u.database.testWhileIdle }}
+  {{- if not (kindIs "invalid" $u.database.caseInsensitive) }}
+  caseinsensitive: {{ $u.database.caseInsensitive }}
+  {{- end }}
+authentication:
+  enableUriEncodingCompatibilityMode: {{ $u.authentication.enableUriEncodingCompatibilityMode }}
+  policy:
+    lockoutAfterFailures: {{ $u.authentication.policy.lockoutAfterFailures }}
+    countFailuresWithinSeconds: {{ $u.authentication.policy.countFailuresWithinSeconds | int }}
+    lockoutPeriodSeconds: {{ $u.authentication.policy.lockoutPeriodSeconds | int }}
+    global:
+      lockoutAfterFailures: {{ $u.authentication.policy.global.lockoutAfterFailures }}
+      countFailuresWithinSeconds: {{ $u.authentication.policy.global.countFailuresWithinSeconds | int }}
+      lockoutPeriodSeconds: {{ $u.authentication.policy.global.lockoutPeriodSeconds | int }}
+password:
+  policy:
+    minLength: {{ $u.password.policy.minLength }}
+    maxLength: {{ $u.password.policy.maxLength }}
+    requireUpperCaseCharacter: {{ $u.password.policy.requireUpperCaseCharacter }}
+    requireLowerCaseCharacter: {{ $u.password.policy.requireLowerCaseCharacter }}
+    requireDigit: {{ $u.password.policy.requireDigit }}
+    requireSpecialCharacter: {{ $u.password.policy.requireSpecialCharacter }}
+    expirePasswordInMonths: {{ $u.password.policy.expirePasswordInMonths }}
+    global:
+      minLength: {{ $u.password.policy.global.minLength }}
+      maxLength: {{ $u.password.policy.global.maxLength }}
+      requireUpperCaseCharacter: {{ $u.password.policy.global.requireUpperCaseCharacter }}
+      requireLowerCaseCharacter: {{ $u.password.policy.global.requireLowerCaseCharacter }}
+      requireDigit: {{ $u.password.policy.global.requireDigit }}
+      requireSpecialCharacter: {{ $u.password.policy.global.requireSpecialCharacter }}
+      expirePasswordInMonths: {{ $u.password.policy.global.expirePasswordInMonths }}
 zones:
   internal:
-    hostnames:
-    - uaa.{{ .Release.Namespace }}.svc.cluster.local
-database:
-  maxactive: 100
-  maxidle: 10
-  minidle: 0
-  removeabandoned: false
-  logabandoned: true
-  abandonedtimeout: 300
-  username: {{ .Values.uaadb.user | quote }}
-  password: {{ .Values.uaadb.password | quote }}
-  url: jdbc:postgresql://{{ tpl .Values.uaadb.address . }}:{{ .Values.uaadb.port }}/{{ .Values.uaadb.name }}?{{- if .Values.uaadb.skipSSLVerify }}sslmode=disable{{- else }}sslmode=verify-ca&sslrootcert=/etc/ssl/certs/postgres/ca.crt{{- end }}
-scim:
-  userids_enabled: true
-  user:
-    override: true
-  users:
-{{- range .Values.scim.users }}
-    - {{ .name }}|{{ tpl .password $ }}|{{ .email }}|{{ .firstName }}|{{ .lastName }}|{{ .groups }}|{{ .origin }}
+    hostnames: {{ tpl ($u.zones.internal.hostnames | toJson) . }}
+cors:
+  enforceSystemZonePolicyInAllZones: {{ $u.cors.enforceSystemZonePolicyInAllZones }}
+  {{- $corsDefault := include "uaa.corsSection" $u.cors.default }}
+  {{- if $corsDefault }}
+  default:
+    {{- $corsDefault | nindent 4 }}
+  {{- end }}
+  {{- $corsXhr := include "uaa.corsSection" $u.cors.xhr }}
+  {{- if $corsXhr }}
+  xhr:
+    {{- $corsXhr | nindent 4 }}
+  {{- end }}
+jwt:
+  token:
+    queryString:
+      enabled: {{ $u.jwt.queryString.enabled }}
+    revocable: {{ $u.jwt.revocable }}
+    policy:
+      accessTokenValiditySeconds: {{ $u.jwt.policy.accessTokenValiditySeconds | int }}
+      refreshTokenValiditySeconds: {{ $u.jwt.policy.refreshTokenValiditySeconds | int }}
+      global:
+        accessTokenValiditySeconds: {{ $u.jwt.policy.global.accessTokenValiditySeconds | int }}
+        refreshTokenValiditySeconds: {{ $u.jwt.policy.global.refreshTokenValiditySeconds | int }}
+      {{- if $u.jwt.policy.activeKeyId }}
+      activeKeyId: {{ $u.jwt.policy.activeKeyId | quote }}
+      {{- end }}
+      {{- if $u.jwt.policy.keys }}
+      keys:
+        {{- toYaml $u.jwt.policy.keys | nindent 8 }}
+      {{- end }}
+    {{- if $u.jwt.claims.exclude }}
+    claims:
+      exclude: {{ $u.jwt.claims.exclude | toJson }}
+    {{- end }}
+    refresh:
+      restrict_grant: {{ $u.jwt.refresh.restrictGrant }}
+      unique: {{ $u.jwt.refresh.unique }}
+      rotate: {{ $u.jwt.refresh.rotate }}
+      format: {{ $u.jwt.refresh.format }}
+    {{- if $u.jwt.signingKey }}
+    signing-key: {{ $u.jwt.signingKey | quote }}
+    {{- end }}
+    {{- if $u.jwt.verificationKey }}
+    verification-key: {{ $u.jwt.verificationKey | quote }}
+    {{- end }}
+{{- $clients := dict }}
+{{- range $id, $c := ($u.clients | default dict) }}
+  {{- $cc := omit $c "scopes" }}
+  {{- $_ := set $cc "id" $id }}
+  {{- if $c.scopes }}{{- $_ := set $cc "scope" (join "," $c.scopes) }}{{- end }}
+  {{- $_ := set $clients $id $cc }}
 {{- end }}
-servlet:
-  session-store: memory
-  idle-timeout: 1800
-  session-cookie:
-    max-age: -1
-    encode-base64: true
-require_https: true
-https_port: 8443
-logout:
-  redirect:
-    url: "/login"
-    parameter:
-      disable: false
+{{- if and (not (hasKey $clients "admin")) $u.admin.clientSecret }}
+  {{- $_ := set $clients "admin" (dict "authorized-grant-types" "client_credentials" "authorities" "clients.read,clients.write,clients.secret,uaa.admin,scim.read,scim.write,password.write" "id" "admin" "secret" $u.admin.clientSecret) }}
+{{- end }}
 oauth:
+  clients:
+    {{- toYaml $clients | nindent 4 }}
   user:
-    authorities:
-    - openid
-    - scim.me
-    - cloud_controller.read
-    - cloud_controller.write
-    - cloud_controller_service_permissions.read
-    - password.write
-    - uaa.user
-    - approvals.me
-    - oauth.approvals
-    - notification_preferences.read
-    - notification_preferences.write
-    - profile
-    - roles
-    - user_attributes
-    - uaa.offline_token
+    authorities: {{ $u.user.authorities | toJson }}
+  {{- if eq $l.protocol "https" }}
   authorize:
     ssl: true
+  {{- end }}
   client:
     secret:
       policy:
-        minLength: 0
-        maxLength: 255
-        requireUpperCaseCharacter: 0
-        requireLowerCaseCharacter: 0
-        requireDigit: 0
-        requireSpecialCharacter: 0
-        expireSecretInMonths: 0
-        global:
-          minLength: 0
-          maxLength: 255
-          requireUpperCaseCharacter: 0
-          requireLowerCaseCharacter: 0
-          requireDigit: 0
-          requireSpecialCharacter: 0
-          expireSecretInMonths: 0
-  clients:
-  {{ tpl (.Values.oauth.clients | toYaml) . | nindent 4 }}
-authentication:
-  enableUriEncodingCompatibilityMode: false
-  policy:
-    lockoutAfterFailures: 5
-    countFailuresWithinSeconds: 1200
-    lockoutPeriodSeconds: 300
-    global:
-      lockoutAfterFailures: 5
-      countFailuresWithinSeconds: 3600
-      lockoutPeriodSeconds: 300
-password:
-  policy:
-    minLength: 0
-    maxLength: 255
-    requireUpperCaseCharacter: 0
-    requireLowerCaseCharacter: 0
-    requireDigit: 0
-    requireSpecialCharacter: 0
-    expirePasswordInMonths: 0
-    global:
-      minLength: 0
-      maxLength: 255
-      requireUpperCaseCharacter: 0
-      requireLowerCaseCharacter: 0
-      requireDigit: 0
-      requireSpecialCharacter: 0
-      expirePasswordInMonths: 0
-cors:
-  enforceSystemZonePolicyInAllZones: true
+        {{- toYaml $u.client.secret.policy | nindent 8 }}
+scim:
+  userids_enabled: {{ $u.scim.useridsEnabled }}
+  user:
+    override: {{ $u.scim.user.override }}
+  {{- if $u.scim.users }}
+  users:
+  {{- range $u.scim.users }}
+    - {{ printf "%s|%s|%s|%s|%s|%s|%s" .name (.password | default "") (.email | default .name) (.firstName | default "") (.lastName | default "") (.groups | default (list) | join ",") (.origin | default "uaa") | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if $u.scim.groups }}
+  groups:
+    {{- toYaml $u.scim.groups | nindent 4 }}
+  {{- end }}
+  {{- if $u.scim.externalGroups }}
+  external_groups:
+    {{- toYaml $u.scim.externalGroups | nindent 4 }}
+  {{- end }}
+{{- if $u.ldap.enabled }}
+{{- $ld := $u.ldap }}
+ldap:
+  override: {{ $ld.override }}
+  ldapdebug: "Ldap configured through UAA"
+  profile:
+    file: ldap/ldap-{{ $ld.profileType }}.xml
+  ssl:
+    skipverification: {{ $ld.ssl.skipverification }}
+    tls: {{ $ld.ssl.tls | quote }}
+    {{- if $ld.sslCertificate }}
+    sslCertificate: {{ $ld.sslCertificate | quote }}
+    {{- end }}
+  base:
+    url: {{ $ld.url | quote }}
+    {{- if eq $ld.profileType "simple-bind" }}
+    userDnPattern: {{ $ld.userDNPattern | quote }}
+    userDnPatternDelimiter: {{ $ld.userDNPatternDelimiter | quote }}
+    {{- else }}
+    userDn: {{ $ld.userDN | quote }}
+    password: {{ $ld.userPassword | quote }}
+    searchBase: {{ $ld.searchBase | quote }}
+    searchFilter: {{ $ld.searchFilter | quote }}
+    {{- end }}
+    {{- if eq $ld.profileType "search-and-compare" }}
+    passwordAttributeName: {{ $ld.passwordAttributeName | quote }}
+    passwordEncoder: {{ $ld.passwordEncoder | quote }}
+    localPasswordCompare: {{ $ld.localPasswordCompare | quote }}
+    {{- end }}
+    mailAttributeName: {{ $ld.mailAttributeName | quote }}
+    mailSubstitute: {{ $ld.mailSubstitute | quote }}
+    mailSubstituteOverridesLdap: {{ $ld.mailSubstituteOverridesLdap }}
+    referral: {{ $ld.referral | quote }}
+  {{- if $ld.emailDomain }}
+  emailDomain: {{ $ld.emailDomain | toJson }}
+  {{- end }}
+  {{- if $ld.attributeMappings }}
+  attributeMappings:
+    {{- toYaml $ld.attributeMappings | nindent 4 }}
+  {{- end }}
+  storeCustomAttributes: {{ $ld.storeCustomAttributes }}
+  {{- if $ld.externalGroupsWhitelist }}
+  externalGroupsWhitelist: {{ $ld.externalGroupsWhitelist | toJson }}
+  {{- end }}
+  groups:
+    {{- if eq $ld.groups.profileType "no-groups" }}
+    file: ldap/ldap-groups-null.xml
+    {{- else }}
+    file: ldap/ldap-{{ $ld.groups.profileType }}.xml
+    {{- end }}
+    searchBase: {{ $ld.groups.searchBase | quote }}
+    groupRoleAttribute: {{ $ld.groups.groupRoleAttribute | quote }}
+    groupSearchFilter: {{ $ld.groups.groupSearchFilter | quote }}
+    searchSubtree: {{ $ld.groups.searchSubtree | quote }}
+    maxSearchDepth: {{ $ld.groups.maxSearchDepth | quote }}
+  addShadowUserOnLogin: {{ $ld.addShadowUserOnLogin }}
+{{- end }}
+servlet:
+  session-store: {{ $u.servlet.sessionStore }}
+  idle-timeout: {{ $u.servlet.idleTimeout | int }}
+  session-cookie:
+    max-age: {{ $u.servlet.sessionCookie.maxAge }}
+    encode-base64: {{ $u.servlet.sessionCookie.encodeBase64 }}
 rest:
   template:
-    timeout: 10000
-    maxTotal: 20
-    maxPerRoute: 5
-    maxKeepAlive: 0
-    validateAfterInactivity: 2000
-    retryCount: 0
+    timeout: {{ $u.rest.template.timeout | int }}
+    maxTotal: {{ $u.rest.template.maxTotal }}
+    maxPerRoute: {{ $u.rest.template.maxPerRoute }}
+    maxKeepAlive: {{ $u.rest.template.maxKeepAlive }}
+    validateAfterInactivity: {{ $u.rest.template.validateAfterInactivity | int }}
+    retryCount: {{ $u.rest.template.retryCount }}
+{{- $links := deepCopy ($l.links | default dict) }}
+{{- if $l.homeRedirect }}{{- $_ := set $links "homeRedirect" $l.homeRedirect }}{{- end }}
+{{- if $links }}
 links:
-  global:
-    passwd: "/forgot_password"
-    signup: "/create_account"
-    homeRedirect: "/"
-  passwd: "/forgot_password"
-  signup: "/create_account"
-  homeRedirect: "/"
-jwt:
-  token:
-    policy:
-      activeKeyId: key-id-1
-      keys:
-        key-id-1:
-          signingAlg: RS256
-          signingKey: |
-            -----BEGIN PRIVATE KEY-----
-            MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCowKUlfOfJxXZt
-            DWkVs3xb4BZJiGlLYxUAaGRY2WbG/YjHT/6frOOK+N2jFyrtElHiRXJyhV4PTsOJ
-            YSVhKdAt15A+AoBwGLCKVHfRTLINMpyoNBDmuQKDY42XBXRoyyDvgppd5exXrncB
-            KzcVgS25LVoP8Nvn4XJcXweQejzHLX01SeqwNZCeHUeGSXKfG7a29bR/DagMTWnA
-            2X5YsRU+2VykK1/hVK/4ZrC0GIjrGZiwYEwL3Db0RIcWo/DQ1IJGGXIl/qsME0f/
-            vrqbMr+8TMDivMZMERSoPFOD/wmlGGH0PeqWNKyaoK2lCiWg4BpQoKpIlv+Eo+yl
-            77uv1xibAgMBAAECggEADtC4jwJ/MDuZ6pGtvKSBEgKp7wzyJZa00ZzYo0sVSi1L
-            58FSDiW15Zqn84YSR2iY1l//eY0HVYCDC6aDC07W9cQoaArjLzQ6GslQqm6GOtqX
-            +CJ3q2Uc+RKkuL7XWgEfZDexb4+PwNQfb/OIOgCZCY1kP0sHm3BNEIDQheXD1gtq
-            8KTOBy/TtN7rV940LoudgQ8vzz+ShhmG7Dt5yws/QzaBpryLncGsGYZSDnvvEBYY
-            dlbYQEgfLmzdKSDKW3DNV+duaBDeArxZViD7EqPpQxIOawBvl5bs6Radz7OEGZ7k
-            hTr2fYU4JGn4WJl61yJg4Xm6pp9cJmi+BIgwLrvXNQKBgQDTPjZ6jCPXAfY6WRVD
-            +hTKgrdhMzNALuiZeyWNSKiiDKgtx1A8OhUAgGzY/PeqmDabiVWKtso+EazfMwa+
-            BrScf+HEZFUvNJ5tGxe6nEEFCx0n5ELUM/L4SWCtD6eFCNYcAY1XvzPD1F3KzewE
-            vw8FbT34fef+YayuIF3PPODtJwKBgQDMgcEnXARRzsIC7i1ggqSU8N0OUSu+rA/h
-            Md9Uh9HsY18p8JtNezAQ2vV4RL3R/CUPGXeDvCBYWhXlkNmjdCAsk24DZHs2Q18x
-            TeHZ15PUtmd2tH/tAxANDi6RTTjpQI3w2poXHl2ZVuT8M+XkTv0WzI0c8TNog2RA
-            SzHd5z5JbQKBgQCDlvim5E+bKzywYjfuDYYQFNeZNCTT8aSxn1XoKf/qWooVYlin
-            ++KDWnzzurmpSoKR5z4jV/SqL6aJr6aej1zJNJx2E65A5r1d6AejFp0mQCMca4P5
-            3paXdlZD2EGZjMSb05extojPj6YRpK9G0aHQ1plJB12SSFQicEUfyKOw9wKBgD09
-            ScLoih6ZRH2uJwZ0eKZlLj0AT5IsYiD0V0Uv2svnwfKEK21bSzxw5Prb0t/TmqFX
-            5fMb3a+3YkE5TALnXk8a4uG/MCpCqHnSMaSTKqCS8o6YZIpr1V2jdoxqTHWEsDyE
-            qYnsvOiTHcTsIZZplN5D6KnXDKbqWZXrLoadnYhNAoGACESLgCy552WcM7vNt4Fw
-            7lR/O3gEnwD41gIx5EGa/UoA08Q+i7sBt9PkL4oQrJ/MYCcVNnmg9KrJdlqF4AlE
-            HYeZSkMuQDYHcaO9xtYP3QdhD+nLXbNrCxaSSaSX8tS4BjdcSH1yMyLFg5OqiJYg
-            wYFiptyKFm5QqFhFTY+20aE=
-            -----END PRIVATE KEY-----
-    revocable: false
-    refresh:
-      format: opaque
-      rotate: false
-      unique: false
-    claims:
-      exclude:
-        - excluded-claim1
-        - excluded-claim2
+  {{- toYaml $links | nindent 2 }}
+{{- end }}
+logout:
+  redirect:
+    url: {{ $l.logout.redirect.url | quote }}
+    parameter:
+      disable: false
+      {{- if $l.logout.redirect.parameter.whitelist }}
+      whitelist: {{ $l.logout.redirect.parameter.whitelist | toJson }}
+      {{- end }}
+{{- $smtp := include "uaa.compact" $l.smtp }}
+{{- if and $l.smtp.host (ne $smtp "{}") }}
+smtp:
+  {{- $smtp | nindent 2 }}
+{{- end }}
+{{- if $l.notifications.url }}
+notifications:
+  url: {{ $l.notifications.url | quote }}
+{{- end }}
+{{- if $u.csp.scriptSrc }}
+csp:
+  script-src: {{ $u.csp.scriptSrc | toJson }}
+{{- end }}
+{{- $ratelimit := include "uaa.compact" $u.rateLimiter.config }}
+{{- if ne $ratelimit "{}" }}
+ratelimit:
+  {{- $ratelimit | nindent 2 }}
+{{- end }}
+{{- if $u.delete }}
+delete:
+  {{- toYaml $u.delete | nindent 2 }}
+{{- end }}
+{{- if $u.global.jwk }}
+global:
+  jwk:
+    {{- toYaml $u.global.jwk | nindent 4 }}
+{{- end }}
+uaa:
+  url: {{ $uaaUrl | quote }}
+  shutdown:
+    sleep: {{ $u.shutdown.sleep | int }}
+  limitedFunctionality:
+    statusFile: {{ $u.limitedFunctionality.statusFile | quote }}
+    whitelist:
+      endpoints: {{ $u.limitedFunctionality.whitelist.endpoints | toJson }}
+      methods: {{ $u.limitedFunctionality.whitelist.methods | toJson }}
+  oauth:
+    redirect_uri:
+      allow_unsafe_matching: {{ eq $u.client.redirectUri.matchingMode "legacy" }}
+  {{- if $u.caCerts }}
+  ca_certs: {{ $u.caCerts | toJson }}
+  {{- end }}
+login:
+  url: {{ $loginUrl | quote }}
+  idpDiscoveryEnabled: {{ $l.idpDiscoveryEnabled }}
+  accountChooserEnabled: {{ $l.accountChooserEnabled }}
+  aliasEntitiesEnabled: {{ $l.aliasEntitiesEnabled }}
+  checkOriginEnabled: {{ $l.checkOriginEnabled }}
+  allowOriginLoop: {{ $l.allowOriginLoop }}
+  entityBaseURL: {{ $entityBaseUrl | quote }}
+  entityID: {{ $entityId | quote }}
+  selfServiceLinksEnabled: {{ $l.selfServiceLinksEnabled }}
+  prompt:
+    username:
+      text: {{ $l.prompt.username.text | quote }}
+    password:
+      text: {{ $l.prompt.password.text | quote }}
+  authorize:
+    url: {{ $authorizeUrl | quote }}
+  oauth:
+    externalGroupsFromMappedAuthorities: {{ $l.oauth.externalGroupsFromMappedAuthorities }}
+    {{- if $l.oauth.providers }}
+    providers:
+      {{- toYaml $l.oauth.providers | nindent 6 }}
+    {{- end }}
+  saml:
+    socket:
+      connectionManagerTimeout: {{ $l.saml.socket.connectionManagerTimeout | int }}
+      soTimeout: {{ $l.saml.socket.soTimeout | int }}
+    signMetaData: {{ $l.saml.signMetaData }}
+    signRequest: {{ $l.saml.signRequest }}
+    wantAssertionSigned: {{ $l.saml.wantAssertionSigned }}
+    disableInResponseToCheck: {{ $l.saml.disableInResponseToCheck }}
+    {{- if $l.saml.signatureAlgorithm }}
+    signatureAlgorithm: {{ $l.saml.signatureAlgorithm | quote }}
+    {{- end }}
+    {{- if $l.saml.activeKeyId }}
+    activeKeyId: {{ $l.saml.activeKeyId | quote }}
+    {{- end }}
+    {{- if $l.saml.keys }}
+    keys:
+      {{- toYaml $l.saml.keys | nindent 6 }}
+    {{- end }}
+    {{- if $l.saml.providers }}
+    providers:
+      {{- toYaml $l.saml.providers | nindent 6 }}
+    {{- end }}
+  {{- if $l.defaultIdentityProvider }}
+  defaultIdentityProvider: {{ $l.defaultIdentityProvider | quote }}
+  {{- end }}
+  {{- $branding := include "uaa.compact" $l.branding }}
+  {{- if ne $branding "{}" }}
+  branding:
+    {{- $branding | nindent 4 }}
+  {{- end }}
+  {{- if $l.saml.serviceProviderCertificate }}
+  serviceProviderCertificate: {{ $l.saml.serviceProviderCertificate | quote }}
+  {{- end }}
+  {{- if $l.saml.serviceProviderKey }}
+  serviceProviderKey: {{ $l.saml.serviceProviderKey | quote }}
+  {{- end }}
+  {{- if $l.saml.serviceProviderKeyPassword }}
+  serviceProviderKeyPassword: {{ $l.saml.serviceProviderKeyPassword | quote }}
+  {{- end }}
