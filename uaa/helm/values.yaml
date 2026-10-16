@@ -1,5 +1,5 @@
-certificateSecret: ""
 systemDomain: "cf.127-0-0-1.nip.io"
+replicas: 1
 
 image:
   repository: ghcr.io/cloudfoundry/k8s/uaa
@@ -10,19 +10,11 @@ nodeSelector: ~
 tolerations: ~
 resources: ~
 
-uaaAdminSecret: ~
-ccAdminPassword: changeme
-oauthClientsSecret: changeme
-uaadb:
-  name: uaa
-  password: ~
-  user: postgres
-  port: 5432
-  address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
-  caCertificateSecret: ""
-  skipSSLVerify: true
+certificateSecrets:
+  serverTLS: ""
 
 routeRegistrar:
+  certificateSecret: ""
   nats:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   image:
@@ -32,106 +24,322 @@ routeRegistrar:
     imagePullPolicy: IfNotPresent
   resources: ~
 
-scim:
-  users:
-    - name: ccadmin
-      password: "{{ .Values.ccAdminPassword }}"
-      email: ccadmin
-      firstName: ""
-      lastName: ""
-      groups: clients.read,cloud_controller.admin,doppler.firehose,network.admin,openid,routing.router_groups.read,routing.router_groups.write,scim.read,scim.write
-      origin: uaa
+uaadb:
+  dbScheme: postgresql
+  name: uaa
+  address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+  port: 5432
+  user: postgres
+  password: ~
+  tls: enabled
+  caCertificateSecret: ""
+  tlsProtocols: ~
+  additionalParameters: ~
 
-oauth:
-  clients:
-    cc-service-dashboards:
-      authorities: clients.read,clients.write,clients.admin
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      scope: openid,cloud_controller_service_permissions.read
-      id: cc-service-dashboards
-    cc_routing:
-      authorities: routing.router_groups.read
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: cc_routing
-    cc_service_key_client:
-      authorities: credhub.read,credhub.write
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: cc_service_key_client
-    cf:
-      access-token-validity: 1200
-      authorities: uaa.none
-      authorized-grant-types: password,refresh_token,urn:ietf:params:oauth:grant-type:jwt-bearer
-      override: true
-      refresh-token-validity: 2592000
-      secret: ''
-      scope: network.admin,network.write,cloud_controller.read,cloud_controller.write,openid,password.write,cloud_controller.admin,scim.read,scim.write,doppler.firehose,uaa.user,routing.router_groups.read,routing.router_groups.write,cloud_controller.admin_read_only,cloud_controller.global_auditor,perm.admin,clients.read
-      id: cf
-    cf_smoke_tests:
-      authorities: cloud_controller.admin,clients.read
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: cf_smoke_tests
-    cloud_controller_username_lookup:
-      authorities: scim.userids,scim.read
-      authorized-grant-types: client_credentials
-      override: true
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: cloud_controller_username_lookup
-    credhub_admin_client:
-      authorities: credhub.read,credhub.write
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: credhub_admin_client
-    doppler:
-      authorities: uaa.resource
-      authorized-grant-types: client_credentials
-      override: true
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: doppler
-    gorouter:
-      authorities: routing.routes.read
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: gorouter
-    network-policy:
-      authorities: uaa.resource,cloud_controller.admin_read_only
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: network-policy
-    routing_api_client:
-      authorities: routing.routes.write,routing.routes.read,routing.router_groups.read
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: routing_api_client
-    ssh-proxy:
-      authorized-grant-types: authorization_code
-      autoapprove: true
-      override: true
-      redirect-uri: "https://uaa.{{ .Values.systemDomain }}/login"
-      secret: "{{ .Values.oauthClientsSecret }}"
-      scope: openid,cloud_controller.read,cloud_controller.write,cloud_controller.admin
-      id: ssh-proxy
-    tcp_emitter:
-      authorities: routing.routes.write,routing.routes.read
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: tcp_emitter
-    tcp_router:
-      authorities: routing.routes.read,routing.router_groups.read
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
-      id: tcp_router
-    admin:
-      authorized-grant-types: client_credentials
-      authorities: clients.read,clients.write,clients.secret,uaa.admin,scim.read,scim.write,password.write
-      id: admin
-      secret: "{{ .Values.oauthClientsSecret }}"
-    nfsbroker-credhub-client:
-      authorities: credhub.read,credhub.write
-      authorized-grant-types: client_credentials
-      secret: "{{ .Values.oauthClientsSecret }}"
+encryption:
+  activeKeyLabel: ~
+  encryptionKeys: ~
 
-uaaConfigOverrides: {}
+uaa:
+  url: https://uaa.{{ .Values.systemDomain }}
+  issuer: ~
+  disableInternalAuth: false
+  disableInternalUserManagement: false
+  shutdown:
+    sleep: 5000
+  localhostHttpPort: 8080
+  keepaliveTimeout: 120000
+  proxyIpsRegex: '100\.\d{1,3}\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.1[6-9]{1}\.\d{1,3}\.\d{1,3}|172\.2[0-9]{1}\.\d{1,3}\.\d{1,3}|172\.3[0-1]{1}\.\d{1,3}\.\d{1,3}'
+  proxy:
+    servers: []
+  loggingLevel: info
+  logging:
+    format:
+      timestamp: rfc3339
+  ssl:
+    port: 8443
+    enabledProtocols: "TLSv1.2,TLSv1.3"
+    ciphers: "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384"
+    protocolHeader: x-forwarded-proto
+    portHeader: X-Forwarded-Port
+  zones:
+    internal:
+      hostnames:
+        - uaa.{{ .Release.Namespace }}.svc.cluster.local
+  caCerts: ~
+  csp:
+    scriptSrc: ["'self'"]
+  limitedFunctionality:
+    statusFile: /var/vcap/data/uaa/bbr_limited_mode.lock
+    whitelist:
+      endpoints:
+        - "/oauth/authorize/**"
+        - "/oauth/token/**"
+        - "/check_token/**"
+        - "/login/**"
+        - "/login.do"
+        - "/logout/**"
+        - "/logout.do"
+        - "/saml/**"
+        - "/autologin/**"
+        - "/authenticate/**"
+        - "/idp_discovery/**"
+      methods:
+        - GET
+        - HEAD
+        - OPTIONS
+  admin:
+    clientSecret: ~
+  clients: {}
+  client:
+    redirectUri:
+      matchingMode: exact
+    secret:
+      policy:
+        minLength: 0
+        maxLength: 255
+        requireUpperCaseCharacter: 0
+        requireLowerCaseCharacter: 0
+        requireDigit: 0
+        requireSpecialCharacter: 0
+        expireSecretInMonths: 0
+        global:
+          minLength: 0
+          maxLength: 255
+          requireUpperCaseCharacter: 0
+          requireLowerCaseCharacter: 0
+          requireDigit: 0
+          requireSpecialCharacter: 0
+          expireSecretInMonths: 0
+  user:
+    authorities:
+      - openid
+      - scim.me
+      - cloud_controller.read
+      - cloud_controller.write
+      - cloud_controller_service_permissions.read
+      - password.write
+      - uaa.user
+      - approvals.me
+      - oauth.approvals
+      - notification_preferences.read
+      - notification_preferences.write
+      - profile
+      - roles
+      - user_attributes
+      - uaa.offline_token
+  authentication:
+    enableUriEncodingCompatibilityMode: false
+    policy:
+      lockoutAfterFailures: 5
+      countFailuresWithinSeconds: 1200
+      lockoutPeriodSeconds: 300
+      global:
+        lockoutAfterFailures: 5
+        countFailuresWithinSeconds: 3600
+        lockoutPeriodSeconds: 300
+  password:
+    policy:
+      minLength: 0
+      maxLength: 255
+      requireUpperCaseCharacter: 0
+      requireLowerCaseCharacter: 0
+      requireDigit: 0
+      requireSpecialCharacter: 0
+      expirePasswordInMonths: 0
+      global:
+        minLength: 0
+        maxLength: 255
+        requireUpperCaseCharacter: 0
+        requireLowerCaseCharacter: 0
+        requireDigit: 0
+        requireSpecialCharacter: 0
+        expirePasswordInMonths: 0
+  jwt:
+    revocable: false
+    queryString:
+      enabled: true
+    policy:
+      accessTokenValiditySeconds: 43200
+      refreshTokenValiditySeconds: 2592000
+      global:
+        accessTokenValiditySeconds: 43200
+        refreshTokenValiditySeconds: 2592000
+      activeKeyId: ~
+      keys: ~
+    signingKey: ~
+    verificationKey: ~
+    claims:
+      exclude: ~
+    refresh:
+      format: jwt
+      restrictGrant: false
+      unique: false
+      rotate: false
+  cors:
+    enforceSystemZonePolicyInAllZones: true
+    default:
+      allowed:
+        headers: ~
+        origin: ~
+        uris: ~
+        methods: ~
+        credentials: ~
+      maxAge: ~
+    xhr:
+      allowed:
+        headers: ~
+        origin: ~
+        uris: ~
+        methods: ~
+        credentials: ~
+      maxAge: ~
+  scim:
+    useridsEnabled: true
+    user:
+      override: true
+    users: ~
+    groups: ~
+    externalGroups: ~
+  database:
+    maxConnections: 100
+    maxIdleConnections: 10
+    minIdleConnections: 0
+    removeAbandoned: false
+    abandonedTimeout: 300
+    logAbandoned: true
+    testWhileIdle: false
+    caseInsensitive: ~
+  ldap:
+    enabled: false
+    override: true
+    profileType: search-and-bind
+    url: ~
+    userDNPattern: ~
+    userDNPatternDelimiter: ";"
+    userDN: ~
+    userPassword: ~
+    searchBase: ""
+    searchFilter: "cn={0}"
+    passwordAttributeName: "userPassword"
+    localPasswordCompare: "true"
+    passwordEncoder: "org.cloudfoundry.identity.uaa.ldap.DynamicPasswordComparator"
+    sslCertificate: ~
+    ssl:
+      skipverification: false
+      tls: none
+    mailAttributeName: mail
+    mailSubstitute: ''
+    mailSubstituteOverridesLdap: false
+    referral: follow
+    groups:
+      profileType: "no-groups"
+      searchBase: ""
+      groupRoleAttribute: spring.security.ldap.dn
+      groupSearchFilter: "member={0}"
+      searchSubtree: "true"
+      maxSearchDepth: "1"
+    emailDomain: ~
+    attributeMappings: ~
+    storeCustomAttributes: true
+    externalGroupsWhitelist: ~
+    addShadowUserOnLogin: true
+  global:
+    jwk: ~
+  servlet:
+    sessionStore: memory
+    idleTimeout: 1800
+    sessionCookie:
+      maxAge: -1
+      encodeBase64: true
+  rest:
+    template:
+      timeout: 10000
+      maxTotal: 20
+      maxPerRoute: 5
+      maxKeepAlive: 0
+      validateAfterInactivity: 2000
+      retryCount: 0
+  rateLimiter:
+    config:
+      loggingOption: ~
+      credentialID: ~
+      limiterMappings: ~
+  delete: ~
+
+login:
+  protocol: https
+  url: ~
+  selfServiceLinksEnabled: true
+  assetBaseUrl: /resources/oss
+  idpDiscoveryEnabled: false
+  accountChooserEnabled: false
+  aliasEntitiesEnabled: false
+  checkOriginEnabled: false
+  allowOriginLoop: true
+  defaultIdentityProvider: ~
+  prompt:
+    username:
+      text: Email
+    password:
+      text: Password
+  logout:
+    redirect:
+      url: /login
+      parameter:
+        whitelist: ~
+  links:
+    global:
+      passwd: "/forgot_password"
+      signup: "/create_account"
+      homeRedirect: "/"
+    passwd: "/forgot_password"
+    signup: "/create_account"
+    homeRedirect: "/"
+  homeRedirect: ~
+  branding:
+    companyName: ~
+    productLogo: ~
+    squareLogo: ~
+    footerLegalText: ~
+    footerLinks: ~
+    banner:
+      logo: ~
+      text: ~
+      textColor: ~
+      backgroundColor: ~
+      link: ~
+    consent:
+      text: ~
+      link: ~
+  notifications:
+    url: ~
+  smtp:
+    host: ~
+    port: 2525
+    user: ~
+    password: ~
+    from_address: ~
+    auth: false
+    starttls: false
+    sslprotocols: TLSv1.2
+  oauth:
+    externalGroupsFromMappedAuthorities: false
+    providers: ~
+  saml:
+    entityid: ~
+    entityBaseUrl: ~
+    activeKeyId: ~
+    keys: ~
+    serviceProviderKey: ~
+    serviceProviderKeyPassword: ""
+    serviceProviderCertificate: ~
+    providers: ~
+    socket:
+      connectionManagerTimeout: 10000
+      soTimeout: 10000
+    signMetaData: true
+    signRequest: true
+    wantAssertionSigned: true
+    disableInResponseToCheck: false
+    signatureAlgorithm: ~
