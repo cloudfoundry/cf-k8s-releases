@@ -13,9 +13,9 @@ data:
       ],
       "nats_mtls_config": {
         "enabled": true,
-        "cert_path": "/etc/ssl/certs/uaa/tls.crt",
-        "key_path": "/etc/ssl/certs/uaa/tls.key",
-        "ca_path": "/etc/ssl/certs/uaa/ca.crt"
+        "cert_path": "/etc/ssl/certs/route-registrar/tls.crt",
+        "key_path": "/etc/ssl/certs/route-registrar/tls.key",
+        "ca_path": "/etc/ssl/certs/route-registrar/ca.crt"
       },
       "host": "",
       "routes": [

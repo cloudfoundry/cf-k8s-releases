@@ -1,0 +1,41 @@
+spring.ssl.bundle.pem:
+  uaa-ssl:
+    reload-on-update: true
+    keystore:
+      certificate: file:/ssl/tls.crt
+      private-key: file:/ssl/tls.key
+server:
+  http:
+    port: {{ .Values.uaa.localhostHttpPort }}
+    address: "127.0.0.1"
+    connection-timeout: 20000
+    keep-alive-timeout: {{ .Values.uaa.keepaliveTimeout | int }}
+    bind-on-init: true
+  port: {{ .Values.uaa.ssl.port }}
+  max-http-request-header-size: 14336
+  tomcat:
+    connection-timeout: 20000
+    keep-alive-timeout: {{ .Values.uaa.keepaliveTimeout | int }}
+    remoteip:
+      remote-ip-header: "x-forwarded-for"
+      protocol-header: "{{ .Values.uaa.ssl.protocolHeader }}"
+      {{- $proxies := list }}
+      {{- range .Values.uaa.proxy.servers }}{{ $proxies = append $proxies (regexQuoteMeta .) }}{{- end }}
+      {{- $proxies = append $proxies .Values.uaa.proxyIpsRegex }}
+      internal-proxies: {{ $proxies | join "|" }}
+      port-header: "{{ .Values.uaa.ssl.portHeader }}"
+    accesslog:
+      enabled: true
+      directory: /dev
+      prefix: stdout
+      suffix:
+      file-date-format:
+      buffered: false
+      rotate: false
+      pattern: "%h %l %u %t &quot;%m %U %H&quot; %s %{Content-Length}i %b &quot;X-Vcap-Request-Id: %{X-Vcap-Request-Id}i&quot; %I"
+  ssl:
+    enabled: true
+    bundle: uaa-ssl
+    enabled-protocols: "{{ .Values.uaa.ssl.enabledProtocols }}"
+    ciphers: "{{ .Values.uaa.ssl.ciphers }}"
+    protocol: TLS

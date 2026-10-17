@@ -1,110 +1,37 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "type": "object",
   "properties": {
-    "ccAdminPassword": {
-      "type": "string"
-    },
-    "certificateSecret": {
-      "type": "string"
-    },
     "systemDomain": {
       "type": "string"
     },
-    "uaadb": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "user": {
-          "type": "string"
-        },
-        "password": {
-          "type": ["string", "null"]
-        },
-        "address": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer"
-        },
-        "caCertificateSecret": {
-          "type": "string"
-        },
-        "skipSSLVerify": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "global": {
-      "type": "object"
-    },
-    "uaaConfigOverrides": {
-      "type": ["object", "null"]
+    "replicas": {
+      "type": "integer"
     },
     "image": {
       "additionalProperties": false,
+      "type": "object",
       "properties": {
-        "imagePullPolicy": {
-          "type": "string"
-        },
         "repository": {
           "type": "string"
         },
         "tag": {
           "type": "string"
+        },
+        "imagePullPolicy": {
+          "type": "string"
         }
-      },
-      "type": "object"
+      }
     },
     "nodeSelector": {
       "type": ["object", "null"]
-    },
-    "resources": {
-      "type": ["object", "null"]
-    },
-    "oauthClientsSecret": {
-      "type": "string"
-    },
-    "routeRegistrar": {
-      "additionalProperties": false,
-      "properties": {
-        "nats": {
-          "additionalProperties": false,
-          "type": "object",
-          "properties": {
-            "address": {
-              "type": "string"
-            }
-          }
-        },
-        "image": {
-          "additionalProperties": false,
-          "properties": {
-            "imagePullPolicy": {
-              "type": "string"
-            },
-            "repository": {
-              "type": "string"
-            },
-            "tag": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "resources": {
-          "type": ["object", "null"]
-        }
-      },
-      "type": "object"
     },
     "tolerations": {
       "type": ["array", "null"],
       "items": {
         "additionalProperties": false,
+        "type": "object",
         "properties": {
           "effect": {
             "type": "string"
@@ -124,65 +51,126 @@
           "key",
           "operator",
           "value"
-        ],
-        "type": "object"
+        ]
       }
     },
-    "uaaAdminSecret": {
-      "type": ["string", "null"]
+    "resources": {
+      "type": ["object", "null"]
     },
-    "scim": {
+    "certificateSecrets": {
       "additionalProperties": false,
+      "type": "object",
       "properties": {
-        "users": {
-          "type": "array",
+        "serverTLS": {
+          "type": "string"
+        }
+      }
+    },
+    "routeRegistrar": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "certificateSecret": {
+          "type": "string"
+        },
+        "nats": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
+        },
+        "image": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "imagePullPolicy": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
+        },
+        "resources": {
+          "type": ["object", "null"]
+        }
+      }
+    },
+    "uaadb": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "dbScheme": {
+          "type": "string",
+          "enum": ["postgresql", "postgres", "mysql"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "user": {
+          "type": "string"
+        },
+        "password": {
+          "type": ["string", "null"]
+        },
+        "tls": {
+          "type": "string",
+          "enum": ["enabled", "enabled_skip_hostname_validation", "enabled_skip_all_validation", "disabled"]
+        },
+        "caCertificateSecret": {
+          "type": "string"
+        },
+        "tlsProtocols": {
+          "type": ["string", "null"]
+        },
+        "additionalParameters": {
+          "type": ["object", "null"]
+        }
+      }
+    },
+    "encryption": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "activeKeyLabel": {
+          "type": ["string", "null"]
+        },
+        "encryptionKeys": {
+          "type": ["array", "null"],
           "items": {
             "additionalProperties": false,
+            "type": "object",
             "properties": {
-              "name": {
+              "label": {
                 "type": "string"
               },
-              "password": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "firstName": {
-                "type": "string"
-              },
-              "lastName": {
-                "type": "string"
-              },
-              "groups": {
-                "type": "string"
-              },
-              "origin": {
-                "type": "string"
+              "passphrase": {
+                "type": "string",
+                "minLength": 8
               }
             },
-            "required": [
-              "name",
-              "password",
-              "email",
-              "groups",
-              "origin"
-            ],
-            "type": "object"
+            "required": ["label", "passphrase"]
           }
         }
-      },
+      }
+    },
+    "uaa": {
       "type": "object"
     },
-    "oauth": {
-      "additionalProperties": false,
-      "properties": {
-        "clients": {
-          "type": "object"
-        }
-      },
+    "login": {
       "type": "object"
     }
-  },
-  "type": "object"
+  }
 }
