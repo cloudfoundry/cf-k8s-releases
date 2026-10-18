@@ -13,15 +13,15 @@ data:
       ],
       "nats_mtls_config": {
         "enabled": true,
-        "cert_path": "/etc/ssl/certs/log-cache-api/tls.crt",
-        "key_path": "/etc/ssl/certs/log-cache-api/tls.key",
-        "ca_path": "/etc/ssl/certs/log-cache-api/ca.crt"
+        "cert_path": "/etc/ssl/certs/route-registrar/tls.crt",
+        "key_path": "/etc/ssl/certs/route-registrar/tls.key",
+        "ca_path": "/etc/ssl/certs/route-registrar/ca.crt"
       },
       "host": "",
       "routes": [
         {
           "name": "log-cache-api",
-          "tls_port": 8083,
+          "tls_port": {{ .Values.logCacheApi.cfAuthProxy.proxyPort }},
           "registration_interval": "10s",
           "server_cert_domain_san": "log-cache.{{ .Values.logCacheBackend.systemDomain }}",
           "tags": {
