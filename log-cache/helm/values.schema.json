@@ -8,26 +8,32 @@
     "logCacheApi": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
+        "replicas": {
+          "type": "integer"
         },
-        "cfAuthProxy": {
+        "certificateSecrets": {
           "additionalProperties": false,
           "properties": {
-            "image": {
-              "additionalProperties": false,
-              "properties": {
-                "imagePullPolicy": {
-                  "type": "string"
-                },
-                "repository": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
+            "logcacheTLS": {
+              "type": "string"
+            },
+            "gatewayProxy": {
+              "type": "string"
+            },
+            "external": {
+              "type": "string"
+            },
+            "proxyCA": {
+              "type": "string"
+            },
+            "ccCA": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "metrics": {
+              "type": "string"
             }
           },
           "type": "object"
@@ -49,56 +55,44 @@
                 }
               },
               "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "nodeSelector": {
-          "type": ["object", "null"]
-        },
-        "resources": {
-          "type": ["object", "null"]
-        },
-        "tolerations": {
-          "type": ["array", "null"],
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "effect": {
-                "type": "string"
-              },
-              "key": {
-                "type": "string"
-              },
-              "operator": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
             },
-            "required": [
-              "effect",
-              "key",
-              "operator",
-              "value"
-            ],
-            "type": "object"
-          }
-        }
-      },
-      "type": "object"
-    },
-    "logCacheBackend": {
-      "additionalProperties": false,
-      "properties": {
-        "certificateSecret": {
-          "type": "string"
+            "gatewayAddr": {
+              "type": "string"
+            },
+            "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
         },
-        "systemDomain": {
-          "type": "string"
-        },
-        "logCache": {
+        "cfAuthProxy": {
           "additionalProperties": false,
           "properties": {
             "image": {
@@ -112,6 +106,81 @@
                 },
                 "tag": {
                   "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "proxyPort": {
+              "type": "integer"
+            },
+            "skipCertVerify": {
+              "type": "boolean"
+            },
+            "securityEventLog": {
+              "type": ["string", "null"]
+            },
+            "tokenPruningInterval": {
+              "type": "string"
+            },
+            "cacheExpirationInterval": {
+              "type": "string"
+            },
+            "cc": {
+              "additionalProperties": false,
+              "properties": {
+                "internalServiceHostname": {
+                  "type": "string"
+                },
+                "overrideAddress": {
+                  "type": ["string", "null"]
+                },
+                "commonName": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "uaa": {
+              "additionalProperties": false,
+              "properties": {
+                "internalAddr": {
+                  "type": "string"
+                },
+                "clientId": {
+                  "type": "string"
+                },
+                "clientSecret": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -124,27 +193,6 @@
         },
         "resources": {
           "type": ["object", "null"]
-        },
-        "syslogServer": {
-          "additionalProperties": false,
-          "properties": {
-            "image": {
-              "additionalProperties": false,
-              "properties": {
-                "imagePullPolicy": {
-                  "type": "string"
-                },
-                "repository": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
         },
         "tolerations": {
           "type": ["array", "null"],
@@ -179,6 +227,9 @@
     "routeRegistrar": {
       "additionalProperties": false,
       "properties": {
+        "certificateSecret": {
+          "type": "string"
+        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -205,6 +256,222 @@
         },
         "resources": {
           "type": ["object", "null"]
+        }
+      },
+      "type": "object"
+    },
+    "logCacheBackend": {
+      "additionalProperties": false,
+      "properties": {
+        "replicas": {
+          "type": "integer"
+        },
+        "systemDomain": {
+          "type": "string"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "logcacheTLS": {
+              "type": "string"
+            },
+            "metrics": {
+              "type": "string"
+            },
+            "syslog": {
+              "type": "string"
+            },
+            "syslogClientCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "logCache": {
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "additionalProperties": false,
+              "properties": {
+                "imagePullPolicy": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "memoryLimitPercent": {
+              "type": "integer"
+            },
+            "memoryLimitBytes": {
+              "type": ["integer", "null"]
+            },
+            "maxPerSource": {
+              "type": "integer"
+            },
+            "ingressBufferSize": {
+              "type": "integer"
+            },
+            "ingressBufferReadBatchSize": {
+              "type": "integer"
+            },
+            "ingressBufferReadBatchInterval": {
+              "type": "integer"
+            },
+            "truncationInterval": {
+              "type": "string"
+            },
+            "prunesPerGC": {
+              "type": "integer"
+            },
+            "promql": {
+              "additionalProperties": false,
+              "properties": {
+                "queryTimeout": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "syslogServer": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "image": {
+              "additionalProperties": false,
+              "properties": {
+                "imagePullPolicy": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "syslogPort": {
+              "type": "integer"
+            },
+            "syslogIdleTimeout": {
+              "type": "string"
+            },
+            "syslogTrimMessageWhitespace": {
+              "type": "boolean"
+            },
+            "syslogNonTransparentFraming": {
+              "type": "boolean"
+            },
+            "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": ["object", "null"]
+        },
+        "resources": {
+          "type": ["object", "null"]
+        },
+        "tolerations": {
+          "type": ["array", "null"],
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "effect": {
+                "type": "string"
+              },
+              "key": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "effect",
+              "key",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          }
         }
       },
       "type": "object"

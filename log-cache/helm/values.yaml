@@ -1,20 +1,57 @@
 logCacheApi:
-  certificateSecret: ""
-  cfAuthProxy:
-    image:
-      repository: ghcr.io/cloudfoundry/k8s/cf-auth-proxy
-      tag: ""
-      imagePullPolicy: IfNotPresent
+  replicas: 1
+  certificateSecrets:
+    logcacheTLS: ""
+    gatewayProxy: ""
+    external: ""
+    proxyCA: ""
+    ccCA: ""
+    uaaCA: ""
+    metrics: ""
   gateway:
     image:
       repository: ghcr.io/cloudfoundry/k8s/gateway
       tag: ""
       imagePullPolicy: IfNotPresent
+    gatewayAddr: "localhost:8081"
+    metrics:
+      port: 6063
+      debug: false
+      pprofPort: 0
+    logging:
+      format:
+        timestamp: deprecated
+  cfAuthProxy:
+    image:
+      repository: ghcr.io/cloudfoundry/k8s/cf-auth-proxy
+      tag: ""
+      imagePullPolicy: IfNotPresent
+    proxyPort: 8083
+    skipCertVerify: false
+    securityEventLog: ~
+    tokenPruningInterval: "60s"
+    cacheExpirationInterval: "60s"
+    cc:
+      internalServiceHostname: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+      overrideAddress: ~
+      commonName: ""
+    uaa:
+      internalAddr: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
+      clientId: ""
+      clientSecret: ""
+    metrics:
+      port: 6065
+      debug: false
+      pprofPort: 0
+    logging:
+      format:
+        timestamp: deprecated
   nodeSelector: ~
   tolerations: ~
   resources: ~
 
 routeRegistrar:
+  certificateSecret: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-registrar
     # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
@@ -25,18 +62,54 @@ routeRegistrar:
   resources: ~
 
 logCacheBackend:
+  replicas: 1
   systemDomain: "cf.127-0-0-1.nip.io"
-  certificateSecret: ""
-  syslogServer:
-    image:
-      repository: ghcr.io/cloudfoundry/k8s/syslog-server
-      tag: ""
-      imagePullPolicy: IfNotPresent
+  certificateSecrets:
+    logcacheTLS: ""
+    metrics: ""
+    syslog: ""
+    syslogClientCA: ""
   logCache:
     image:
       repository: ghcr.io/cloudfoundry/k8s/log-cache
       tag: ""
       imagePullPolicy: IfNotPresent
+    port: 8080
+    memoryLimitPercent: 50
+    memoryLimitBytes: ~
+    maxPerSource: 100000
+    ingressBufferSize: 10000
+    ingressBufferReadBatchSize: 100
+    ingressBufferReadBatchInterval: 250
+    truncationInterval: "1s"
+    prunesPerGC: 3
+    promql:
+      queryTimeout: "10s"
+    metrics:
+      port: 6060
+      debug: false
+      pprofPort: 0
+    logging:
+      format:
+        timestamp: deprecated
+  syslogServer:
+    enabled: true
+    image:
+      repository: ghcr.io/cloudfoundry/k8s/syslog-server
+      tag: ""
+      imagePullPolicy: IfNotPresent
+    # BOSH default is 6067; the k8s charts use 8082 (loggregator-agent targets this port).
+    syslogPort: 8082
+    syslogIdleTimeout: "2m"
+    syslogTrimMessageWhitespace: true
+    syslogNonTransparentFraming: false
+    metrics:
+      port: 6066
+      debug: false
+      pprofPort: 0
+    logging:
+      format:
+        timestamp: deprecated
   nodeSelector: ~
   tolerations: ~
   resources: ~

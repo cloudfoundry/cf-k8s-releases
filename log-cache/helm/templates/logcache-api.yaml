@@ -1,3 +1,6 @@
+{{- $api := .Values.logCacheApi }}
+{{- $gw := $api.gateway }}
+{{- $proxy := $api.cfAuthProxy }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -6,7 +9,7 @@ metadata:
   labels:
     app: log-cache-api
 spec:
-  replicas: 1
+  replicas: {{ $api.replicas }}
   selector:
     matchLabels:
       app: log-cache-api
@@ -19,67 +22,126 @@ spec:
     spec:
       containers:
         - name: cf-auth-proxy
-          image: {{ .Values.logCacheApi.cfAuthProxy.image.repository }}:{{ default .Chart.AppVersion .Values.logCacheApi.cfAuthProxy.image.tag }}
-          imagePullPolicy: {{ .Values.logCacheApi.cfAuthProxy.image.imagePullPolicy }}
+          image: {{ $proxy.image.repository }}:{{ default $.Chart.AppVersion $proxy.image.tag }}
+          imagePullPolicy: {{ $proxy.image.imagePullPolicy }}
           ports:
-            - containerPort: 8083
+            - containerPort: {{ $proxy.proxyPort }}
           readinessProbe:
-            httpGet:
-              path: /metrics
-              port: 6065
+            tcpSocket:
+              port: {{ $proxy.proxyPort }}
             failureThreshold: 1
             periodSeconds: 10
           env:
             - name: LOG_CACHE_GATEWAY_ADDR
-              value: http://localhost:8081
-            - name: CAPI_ADDR
-              value: "https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9024"
-            - name: CAPI_CA_PATH
-              value: /etc/ssl/certs/log-cache-api/ca.crt
-            - name: UAA_ADDR
-              value: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
-            - name: UAA_CA_PATH
-              value: /etc/ssl/certs/log-cache-api/ca.crt
-            - name: PROMQL_UNIMPLEMENTED
-              value: "true"
-            - name: "ADDR"
-              value: "0.0.0.0:8083"
+              value: "https://{{ $gw.gatewayAddr }}"
+            - name: ADDR
+              value: ":{{ $proxy.proxyPort }}"
             - name: EXTERNAL_CERT
-              value: /etc/ssl/certs/log-cache-api/tls.crt
+              value: /etc/ssl/certs/external/tls.crt
             - name: EXTERNAL_KEY
-              value: /etc/ssl/certs/log-cache-api/tls.key
-          {{- if .Values.logCacheApi.resources }}
-          resources:
-            {{- toYaml .Values.logCacheApi.resources | nindent 12 }}
-          {{- end }}
+              value: /etc/ssl/certs/external/tls.key
+            - name: PROXY_CA_PATH
+              value: /etc/ssl/certs/proxy-ca/ca.crt
+            {{- if $proxy.securityEventLog }}
+            - name: SECURITY_EVENT_LOG
+              value: {{ $proxy.securityEventLog }}
+            {{- end }}
+            - name: TOKEN_PRUNING_INTERVAL
+              value: "{{ $proxy.tokenPruningInterval }}"
+            - name: CACHE_EXPIRATION_INTERVAL
+              value: "{{ $proxy.cacheExpirationInterval }}"
+            - name: CAPI_ADDR
+              value: "https://{{ $proxy.cc.overrideAddress | default (tpl $proxy.cc.internalServiceHostname $) }}:9024"
+            - name: CAPI_CA_PATH
+              value: /etc/ssl/certs/cc/ca.crt
+            - name: CAPI_COMMON_NAME
+              value: "{{ $proxy.cc.commonName }}"
+            - name: UAA_ADDR
+              value: "{{ tpl $proxy.uaa.internalAddr $ }}"
+            - name: UAA_CA_PATH
+              value: /etc/ssl/certs/uaa/ca.crt
+            - name: UAA_CLIENT_ID
+              value: "{{ $proxy.uaa.clientId }}"
+            - name: UAA_CLIENT_SECRET
+              value: "{{ $proxy.uaa.clientSecret }}"
+            - name: SKIP_CERT_VERIFY
+              value: "{{ $proxy.skipCertVerify }}"
+            - name: METRICS_PORT
+              value: "{{ $proxy.metrics.port }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/metrics/tls.key
+            - name: DEBUG_METRICS
+              value: "{{ $proxy.metrics.debug }}"
+            - name: PPROF_PORT
+              value: "{{ $proxy.metrics.pprofPort }}"
+            - name: USE_RFC339
+              value: "{{ eq $proxy.logging.format.timestamp "rfc3339" }}"
           volumeMounts:
-            - name: log-cache-api
-              mountPath: /etc/ssl/certs/log-cache-api
+            - name: external
+              mountPath: /etc/ssl/certs/external
               readOnly: true
+            - name: proxy-ca
+              mountPath: /etc/ssl/certs/proxy-ca
+              readOnly: true
+            - name: cc
+              mountPath: /etc/ssl/certs/cc
+              readOnly: true
+            - name: uaa
+              mountPath: /etc/ssl/certs/uaa
+              readOnly: true
+            {{- include "logcache.metricsCertMount" . | nindent 12 }}
+          {{- if $api.resources }}
+          resources:
+            {{- toYaml $api.resources | nindent 12 }}
+          {{- end }}
         - name: gateway
-          image: {{ .Values.logCacheApi.gateway.image.repository }}:{{ default .Chart.AppVersion .Values.logCacheApi.gateway.image.tag }}
-          imagePullPolicy: {{ .Values.logCacheApi.gateway.image.imagePullPolicy }}
+          image: {{ $gw.image.repository }}:{{ default $.Chart.AppVersion $gw.image.tag }}
+          imagePullPolicy: {{ $gw.image.imagePullPolicy }}
           ports:
             - containerPort: 8081
           env:
             - name: LOG_CACHE_ADDR
-              value: log-cache:8080
-            - name: "ADDR"
-              value: "0.0.0.0:8081"
+              value: log-cache:{{ .Values.logCacheBackend.logCache.port }}
+            - name: ADDR
+              value: "{{ $gw.gatewayAddr }}"
             - name: CA_PATH
-              value: /etc/ssl/certs/log-cache-api/ca.crt
+              value: /etc/ssl/certs/logcache/ca.crt
             - name: CERT_PATH
-              value: /etc/ssl/certs/log-cache-api/tls.crt
+              value: /etc/ssl/certs/logcache/tls.crt
             - name: KEY_PATH
-              value: /etc/ssl/certs/log-cache-api/tls.key
-          {{- if .Values.logCacheApi.resources }}
-          resources:
-            {{- toYaml .Values.logCacheApi.resources | nindent 12 }}
-          {{- end }}
+              value: /etc/ssl/certs/logcache/tls.key
+            - name: PROXY_CERT_PATH
+              value: /etc/ssl/certs/gateway-proxy/tls.crt
+            - name: PROXY_KEY_PATH
+              value: /etc/ssl/certs/gateway-proxy/tls.key
+            - name: METRICS_PORT
+              value: "{{ $gw.metrics.port }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/metrics/tls.key
+            - name: DEBUG_METRICS
+              value: "{{ $gw.metrics.debug }}"
+            - name: PPROF_PORT
+              value: "{{ $gw.metrics.pprofPort }}"
+            - name: USE_RFC339
+              value: "{{ eq $gw.logging.format.timestamp "rfc3339" }}"
           volumeMounts:
-          - name: log-cache-api
-            mountPath: /etc/ssl/certs/log-cache-api
-            readOnly: true
+            {{- include "logcache.logcacheCertMount" . | nindent 12 }}
+            - name: gateway-proxy
+              mountPath: /etc/ssl/certs/gateway-proxy
+              readOnly: true
+            {{- include "logcache.metricsCertMount" . | nindent 12 }}
+          {{- if $api.resources }}
+          resources:
+            {{- toYaml $api.resources | nindent 12 }}
+          {{- end }}
         - name: route-registrar
           image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
           imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
@@ -93,24 +155,46 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: log-cache-api
-              mountPath: /etc/ssl/certs/log-cache-api
+            - name: route-registrar
+              mountPath: /etc/ssl/certs/route-registrar
+              readOnly: true
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
             - name: tmpdir
               mountPath: /tmp
-      {{- if .Values.logCacheApi.nodeSelector }}
+      {{- if $api.nodeSelector }}
       nodeSelector:
-        {{- toYaml .Values.logCacheApi.nodeSelector | nindent 8 }}
+        {{- toYaml $api.nodeSelector | nindent 8 }}
       {{- end }}
-      {{- if .Values.logCacheApi.tolerations }}
+      {{- if $api.tolerations }}
       tolerations:
-        {{- toYaml .Values.logCacheApi.tolerations | nindent 8 }}
+        {{- toYaml $api.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-      - name: log-cache-api
+      - name: logcache
         secret:
-          secretName: {{ required "logCacheApi.certificateSecret is required" .Values.logCacheApi.certificateSecret }}
+          secretName: {{ required "logCacheApi.certificateSecrets.logcacheTLS is required" $api.certificateSecrets.logcacheTLS }}
+      - name: gateway-proxy
+        secret:
+          secretName: {{ required "logCacheApi.certificateSecrets.gatewayProxy is required" $api.certificateSecrets.gatewayProxy }}
+      - name: external
+        secret:
+          secretName: {{ required "logCacheApi.certificateSecrets.external is required" $api.certificateSecrets.external }}
+      - name: proxy-ca
+        secret:
+          secretName: {{ required "logCacheApi.certificateSecrets.proxyCA is required" $api.certificateSecrets.proxyCA }}
+      - name: cc
+        secret:
+          secretName: {{ required "logCacheApi.certificateSecrets.ccCA is required" $api.certificateSecrets.ccCA }}
+      - name: uaa
+        secret:
+          secretName: {{ required "logCacheApi.certificateSecrets.uaaCA is required" $api.certificateSecrets.uaaCA }}
+      - name: metrics
+        secret:
+          secretName: {{ required "logCacheApi.certificateSecrets.metrics is required" $api.certificateSecrets.metrics }}
+      - name: route-registrar
+        secret:
+          secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
       - name: etc-route-registrar
         configMap:
           name: logcache-route-registrar-config
