@@ -7,7 +7,7 @@ metadata:
   labels:
     app: policy-server
 spec:
-  replicas: 1
+  replicas: {{ .Values.policyServer.replicas }}
   selector:
     matchLabels:
       app: policy-server
@@ -19,6 +19,24 @@ spec:
         checksum/policy-server-config: {{ include (print $.Template.BasePath "/policy-server-config.yaml") . | sha256sum }}
         checksum/policy-server-route-registrar-config: {{ include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: render-asg-syncer-config
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - sed "s|\${POD_NAME}|${POD_NAME}|g" /policy-server/policy-server-asg-syncer.json > /asg-syncer-config/policy-server-asg-syncer.json
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: policy-server-config
+              mountPath: /policy-server
+            - name: asg-syncer-config
+              mountPath: /asg-syncer-config
       containers:
         - name: policy-server
           image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.AppVersion .Values.policyServer.image.tag }}
@@ -33,9 +51,15 @@ spec:
             - name: policy-server
               mountPath: /etc/ssl/certs/policy-server
               readOnly: true
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            - name: policy-server-uaa
+              mountPath: /etc/ssl/certs/policy-server-uaa
+              readOnly: true
+            - name: policy-server-cc
+              mountPath: /etc/ssl/certs/policy-server-cc
+              readOnly: true
+            {{- if .Values.policyServer.database.requireSSL }}
+            - name: database-ca
+              mountPath: /etc/ssl/certs/database
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -49,15 +73,22 @@ spec:
           args:
           - -config-file
           - /policy-server/policy-server-internal.json
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.policyServer.internal.healthCheckPort }}
+            timeoutSeconds: {{ .Values.policyServer.internal.healthCheckTimeoutSeconds }}
+            periodSeconds: 10
+            failureThreshold: 6
           volumeMounts:
             - name: policy-server-config
               mountPath: /policy-server
-            - name: policy-server
-              mountPath: /etc/ssl/certs/policy-server
+            - name: policy-server-internal
+              mountPath: /etc/ssl/certs/policy-server-internal
               readOnly: true
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            {{- if .Values.policyServer.database.requireSSL }}
+            - name: database-ca
+              mountPath: /etc/ssl/certs/database
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -70,16 +101,25 @@ spec:
           command: [ "/usr/local/bin/policy-server-asg-syncer" ]
           args:
           - -config-file
-          - /policy-server/policy-server-asg-syncer.json
+          - /asg-syncer-config/policy-server-asg-syncer.json
           volumeMounts:
-            - name: policy-server-config
-              mountPath: /policy-server
-            - name: policy-server
-              mountPath: /etc/ssl/certs/policy-server
+            - name: asg-syncer-config
+              mountPath: /asg-syncer-config
+            - name: policy-server-uaa
+              mountPath: /etc/ssl/certs/policy-server-uaa
               readOnly: true
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: postgres-ca
-              mountPath: /etc/ssl/certs/postgres
+            - name: policy-server-cc
+              mountPath: /etc/ssl/certs/policy-server-cc
+              readOnly: true
+            - name: policy-server-cc-internal
+              mountPath: /etc/ssl/certs/policy-server-cc-internal
+              readOnly: true
+            - name: policy-server-locket
+              mountPath: /etc/ssl/certs/policy-server-locket
+              readOnly: true
+            {{- if .Values.policyServer.database.requireSSL }}
+            - name: database-ca
+              mountPath: /etc/ssl/certs/database
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -99,12 +139,39 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: policy-server
-              mountPath: /etc/ssl/certs/policy-server
+            - name: route-registrar-nats
+              mountPath: /etc/ssl/certs/route-registrar-nats
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
             - name: tmpdir
               mountPath: /tmp
+        - name: udp-forwarder
+          image: {{ .Values.udpForwarder.image.repository }}:{{ .Values.udpForwarder.image.tag }}
+          imagePullPolicy: {{ .Values.udpForwarder.image.imagePullPolicy }}
+          {{- if .Values.udpForwarder.resources }}
+          resources:
+            {{- toYaml .Values.udpForwarder.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: UDP_PORT
+              value: {{ .Values.policyServer.metronPort | quote }}
+            - name: LOGGREGATOR_AGENT_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/udp-forwarder/tls.key
+          volumeMounts:
+            - name: udp-forwarder
+              mountPath: /etc/ssl/certs/udp-forwarder
       {{- if .Values.policyServer.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.policyServer.nodeSelector | nindent 8 }}
@@ -119,17 +186,40 @@ spec:
             secretName: policy-server-config
         - name: policy-server
           secret:
-            secretName: {{ required "policyServer.certificateSecret is required" .Values.policyServer.certificateSecret }}
-        {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-        - name: postgres-ca
+            secretName: {{ required "policyServer.certificateSecrets.serverTLS is required" .Values.policyServer.certificateSecrets.serverTLS }}
+        - name: policy-server-uaa
           secret:
-            secretName: {{ required "policyServer.networkpolicydb.caCertificateSecret is required when policyServer.networkpolicydb.skipSSLVerify is false" .Values.policyServer.networkpolicydb.caCertificateSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.uaaCA is required" .Values.policyServer.certificateSecrets.uaaCA }}
+        - name: policy-server-cc
+          secret:
+            secretName: {{ required "policyServer.certificateSecrets.ccCA is required" .Values.policyServer.certificateSecrets.ccCA }}
+        - name: policy-server-internal
+          secret:
+            secretName: {{ required "policyServer.certificateSecrets.internalTLS is required" .Values.policyServer.certificateSecrets.internalTLS }}
+        - name: policy-server-cc-internal
+          secret:
+            secretName: {{ required "policyServer.certificateSecrets.ccInternalTLS is required" .Values.policyServer.certificateSecrets.ccInternalTLS }}
+        - name: policy-server-locket
+          secret:
+            secretName: {{ required "policyServer.certificateSecrets.locketTLS is required" .Values.policyServer.certificateSecrets.locketTLS }}
+        {{- if .Values.policyServer.database.requireSSL }}
+        - name: database-ca
+          secret:
+            secretName: {{ required "policyServer.certificateSecrets.databaseCA is required when policyServer.database.requireSSL is true" .Values.policyServer.certificateSecrets.databaseCA }}
         {{- end }}
         - name: etc-route-registrar
           configMap:
             name: policy-server-route-registrar-config
+        - name: route-registrar-nats
+          secret:
+            secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
+        - name: asg-syncer-config
+          emptyDir: {}
         - name: tmpdir
           emptyDir: {}
+        - name: udp-forwarder
+          secret:
+            secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
 ---
 kind: Service
 apiVersion: v1
@@ -139,9 +229,9 @@ metadata:
     app: policy-server
 spec:
   ports:
-  - port: 4003
+  - port: {{ .Values.policyServer.internal.listenPort }}
     name: https
-    targetPort: 4003
+    targetPort: {{ .Values.policyServer.internal.listenPort }}
     appProtocol: kubernetes.io/h2c
   selector:
     app: policy-server

@@ -14,16 +14,16 @@ data:
       ],
       "nats_mtls_config": {
         "enabled": true,
-        "cert_path": "/etc/ssl/certs/policy-server/tls.crt",
-        "key_path": "/etc/ssl/certs/policy-server/tls.key",
-        "ca_path": "/etc/ssl/certs/policy-server/ca.crt"
+        "cert_path": "/etc/ssl/certs/route-registrar-nats/tls.crt",
+        "key_path": "/etc/ssl/certs/route-registrar-nats/tls.key",
+        "ca_path": "/etc/ssl/certs/route-registrar-nats/ca.crt"
       },
       "host": "",
       "routes": [
         {
           "name": "policy-server",
-          "tls_port": 4002,
-          "registration_interval": "10s",
+          "tls_port": {{ .Values.policyServer.listenPort }},
+          "registration_interval": "20s",
           "server_cert_domain_san": "api.{{ .Values.policyServer.systemDomain }}",
           "uris": [
             "api.{{ .Values.policyServer.systemDomain }}/networking"
