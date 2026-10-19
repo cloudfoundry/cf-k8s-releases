@@ -62,7 +62,6 @@ jobs:
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
         with:
-          ref: cf-networking-chart-alignment
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           install-optional-components: "true"
           load-images: "${{ steps.imgs.outputs.list }}"
