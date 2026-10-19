@@ -73,13 +73,6 @@ spec:
           args:
           - -config-file
           - /policy-server/policy-server-internal.json
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: {{ .Values.policyServer.internal.healthCheckPort }}
-            timeoutSeconds: {{ .Values.policyServer.internal.healthCheckTimeoutSeconds }}
-            periodSeconds: 10
-            failureThreshold: 6
           volumeMounts:
             - name: policy-server-config
               mountPath: /policy-server
