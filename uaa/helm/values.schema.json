@@ -3,6 +3,9 @@
   "additionalProperties": false,
   "type": "object",
   "properties": {
+     "global": {
+      "type": "object"
+    },
     "systemDomain": {
       "type": "string"
     },
