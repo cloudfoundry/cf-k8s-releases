@@ -7,7 +7,7 @@ metadata:
   labels:
     app: bosh-dns
 spec:
-  replicas: 1
+  replicas: {{ .Values.boshDns.replicas }}
   selector:
     matchLabels:
       app: bosh-dns
@@ -27,16 +27,9 @@ spec:
             {{- toYaml .Values.boshDnsAdapter.resources | nindent 12 }}
           {{- end }}
           livenessProbe:
-            exec:
-              command:
-                - /usr/local/bin/busybox
-                - wget
-                - -q
-                - -T
-                - "5"
-                - -O
-                - /dev/null
-                - {{ printf "http://127.0.0.1:%v/health" .Values.boshDnsAdapter.port | quote }}
+            httpGet:
+              path: /health
+              port: {{ .Values.boshDnsAdapter.port }}
             initialDelaySeconds: 45
             periodSeconds: 10
             timeoutSeconds: 5
@@ -113,10 +106,10 @@ spec:
       volumes:
         - name: bosh-dns-adapter
           secret:
-            secretName: {{ required "boshDnsAdapter.certificateSecret is required" .Values.boshDnsAdapter.certificateSecret }}
+            secretName: {{ required "boshDnsAdapter.certificateSecrets.clientTLS is required" .Values.boshDnsAdapter.certificateSecrets.clientTLS }}
         - name: bosh-dns-adapter-server-ca
           secret:
-            secretName: {{ required "boshDnsAdapter.serverCaSecret is required" .Values.boshDnsAdapter.serverCaSecret }}
+            secretName: {{ required "boshDnsAdapter.certificateSecrets.serverCA is required" .Values.boshDnsAdapter.certificateSecrets.serverCA }}
         - name: bosh-dns
           secret:
             secretName: {{ required "boshDns.certificateSecret is required" .Values.boshDns.certificateSecret }}

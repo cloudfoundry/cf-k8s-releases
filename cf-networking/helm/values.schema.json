@@ -5,6 +5,10 @@
     "boshDns": {
       "additionalProperties": false,
       "properties": {
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
         "certificateSecret": {
           "type": "string"
         },
@@ -83,11 +87,17 @@
           "minimum": 1,
           "maximum": 65535
         },
-        "certificateSecret": {
-          "type": "string"
-        },
-        "serverCaSecret": {
-          "type": "string"
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "clientTLS": {
+              "type": "string"
+            },
+            "serverCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "enabled": {
           "type": "boolean"
@@ -158,21 +168,40 @@
     "policyServer": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
         },
-        "uaaCaSecret": {
-          "type": "string"
-        },
-        "ccCaCertSecret": {
-          "type": "string"
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "serverTLS": {
+              "type": "string"
+            },
+            "internalTLS": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "ccCA": {
+              "type": "string"
+            },
+            "ccInternalTLS": {
+              "type": "string"
+            },
+            "locketTLS": {
+              "type": "string"
+            },
+            "databaseCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "internal": {
           "additionalProperties": false,
           "properties": {
-            "certificateSecret": {
-              "type": "string"
-            },
             "debugPort": {
               "type": "integer",
               "minimum": 1,
@@ -182,6 +211,15 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 65535
+            },
+            "healthCheckPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "healthCheckTimeoutSeconds": {
+              "type": "integer",
+              "minimum": 1
             }
           },
           "type": "object"
@@ -189,16 +227,24 @@
         "asgSyncer": {
           "additionalProperties": false,
           "properties": {
-            "ccInternalClientSecret": {
-              "type": "string"
-            },
-            "locketSecret": {
+            "locketAddress": {
               "type": "string"
             }
           },
           "type": "object"
         },
-        "networkpolicydb": {
+        "maxOpenConnections": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxIdleConnections": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "connectionsMaxLifetimeSeconds": {
+          "type": "integer"
+        },
+        "database": {
           "additionalProperties": false,
           "properties": {
             "type": {
@@ -208,41 +254,27 @@
             "name": {
               "type": "string"
             },
-            "user": {
+            "username": {
               "type": "string"
             },
             "password": {
               "type": ["string", "null"]
             },
-            "address": {
+            "host": {
               "type": "string"
             },
             "port": {
               "type": "integer"
             },
-            "caCertificateSecret": {
-              "type": "string"
-            },
-            "skipSSLVerify": {
+            "requireSSL": {
               "type": "boolean"
             },
-            "skipHostnameVerify": {
+            "skipHostnameValidation": {
               "type": "boolean"
             },
             "connectTimeoutSeconds": {
               "type": "integer",
               "minimum": 1
-            },
-            "maxOpenConnections": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "maxIdleConnections": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "connectionsMaxLifetimeSeconds": {
-              "type": "integer"
             }
           },
           "type": "object"
@@ -271,7 +303,13 @@
         "nodeSelector": {
           "type": ["object", "null"]
         },
-        "oauthClientsSecret": {
+        "uaaClientSecret": {
+          "type": "string"
+        },
+        "uaaHostname": {
+          "type": "string"
+        },
+        "ccHostname": {
           "type": "string"
         },
         "logLevel": {
@@ -380,6 +418,9 @@
         "resources": {
           "type": ["object", "null"]
         },
+        "certificateSecret": {
+          "type": "string"
+        },
         "nats": {
           "additionalProperties": false,
           "properties": {
@@ -410,6 +451,25 @@
     "serviceDiscoveryController": {
       "additionalProperties": false,
       "properties": {
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "serverTLS": {
+              "type": "string"
+            },
+            "clientCA": {
+              "type": "string"
+            },
+            "natsTLS": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "address": {
           "type": "string"
         },
@@ -437,12 +497,6 @@
           "minimum": 1,
           "maximum": 65535
         },
-        "certificateSecret": {
-          "type": "string"
-        },
-        "clientCaSecret": {
-          "type": "string"
-        },
         "enabled": {
           "type": "boolean"
         },
@@ -467,11 +521,11 @@
         "nats": {
           "additionalProperties": false,
           "properties": {
-            "certificateSecret": {
-              "type": "string"
-            },
-            "host": {
-              "type": "string"
+            "machines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "port": {
               "type": "integer",

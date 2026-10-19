@@ -1,29 +1,37 @@
 policyServer:
   enabled: false
+  replicas: 1
   resources: ~
-  certificateSecret: ""
-  uaaCaSecret: ""
-  ccCaCertSecret: ""
+  certificateSecrets:
+    serverTLS: ""
+    internalTLS: ""
+    uaaCA: ""
+    ccCA: ""
+    ccInternalTLS: ""
+    locketTLS: ""
+    databaseCA: ""
   internal:
-    certificateSecret: ""
     debugPort: 31945
     listenPort: 4003
+    healthCheckPort: 31946
+    healthCheckTimeoutSeconds: 5
   asgSyncer:
-    ccInternalClientSecret: ""
-    locketSecret: ""
+    locketAddress: locket.{{ .Release.Namespace }}.svc.cluster.local:8891
   systemDomain: cf.127-0-0-1.nip.io
   image:
     repository: ghcr.io/cloudfoundry/k8s/policy-server
     tag: ""
     imagePullPolicy: IfNotPresent
-  oauthClientsSecret: ""
+  uaaClientSecret: ""
   logLevel: info
   listenIp: "0.0.0.0"
   listenPort: 4002
   debugPort: 31821
   metronPort: 3457
   uaaClient: network-policy
+  uaaHostname: uaa.{{ .Release.Namespace }}.svc.cluster.local
   uaaPort: 8443
+  ccHostname: cloud-controller.{{ .Release.Namespace }}.svc.cluster.local
   skipSSLValidation: false
   enableSpaceDeveloperSelfService: true
   enableTls: true
@@ -33,27 +41,29 @@ policyServer:
   allowedCorsDomains: []
   asgPollIntervalSeconds: 60
   retryDeadlineSeconds: 300
-  networkpolicydb:
+  maxOpenConnections: 200
+  maxIdleConnections: 10
+  connectionsMaxLifetimeSeconds: 3600
+  database:
     type: postgres
     name: network_policy
     password: ~
-    user: postgres
+    username: postgres
     port: 5432
-    address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
-    caCertificateSecret: ""
-    skipSSLVerify: true
-    skipHostnameVerify: false
+    host: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+    requireSSL: false
+    skipHostnameValidation: false
     connectTimeoutSeconds: 120
-    maxOpenConnections: 200
-    maxIdleConnections: 10
-    connectionsMaxLifetimeSeconds: 3600
   nodeSelector: ~
   tolerations: ~
 serviceDiscoveryController:
   enabled: false
+  replicas: 1
   resources: ~
-  certificateSecret: ""
-  clientCaSecret: ""
+  certificateSecrets:
+    serverTLS: ""
+    clientCA: ""
+    natsTLS: ""
   hostname: service-discovery-controller.{{ .Release.Namespace }}.svc.cluster.local
   address: "0.0.0.0"
   port: 8054
@@ -68,32 +78,34 @@ serviceDiscoveryController:
     tag: ""
     imagePullPolicy: IfNotPresent
   nats:
-    host: nats.{{ .Release.Namespace }}.svc.cluster.local
+    machines:
+      - nats.{{ .Release.Namespace }}.svc.cluster.local
     port: 4222
     user: ""
     password: ""
-    tlsEnabled: true
-    certificateSecret: ""
+    tlsEnabled: false
   nodeSelector: ~
   tolerations: ~
 boshDnsAdapter:
   enabled: false
-  address: "127.0.0.1"
+  # BOSH binds loopback; 0.0.0.0 lets the kubelet reach /health for the liveness probe
+  address: "0.0.0.0"
   port: 8053
   metronPort: 3457
   logLevelAddress: "127.0.0.1"
   logLevelPort: 8066
   resources: ~
-  certificateSecret: ""
-  serverCaSecret: ""
-  internalDomains:
-    - apps.internal.
+  certificateSecrets:
+    clientTLS: ""
+    serverCA: ""
+  internalDomains: []
   internalServiceMeshDomains: []
   image:
     repository: ghcr.io/cloudfoundry/k8s/bosh-dns-adapter
     tag: ""
     imagePullPolicy: IfNotPresent
 boshDns:
+  replicas: 1
   resources: ~
   certificateSecret: ""
   image:
@@ -113,6 +125,7 @@ udpForwarder:
   resources: ~
 routeRegistrar:
   resources: ~
+  certificateSecret: ""
   nats:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   image:

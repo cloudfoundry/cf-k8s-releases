@@ -7,7 +7,7 @@ metadata:
   labels:
     app: policy-server
 spec:
-  replicas: 1
+  replicas: {{ .Values.policyServer.replicas }}
   selector:
     matchLabels:
       app: policy-server
@@ -19,6 +19,24 @@ spec:
         checksum/policy-server-config: {{ include (print $.Template.BasePath "/policy-server-config.yaml") . | sha256sum }}
         checksum/policy-server-route-registrar-config: {{ include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: render-asg-syncer-config
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - sed "s|\${POD_NAME}|${POD_NAME}|g" /policy-server/policy-server-asg-syncer.json > /asg-syncer-config/policy-server-asg-syncer.json
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: policy-server-config
+              mountPath: /policy-server
+            - name: asg-syncer-config
+              mountPath: /asg-syncer-config
       containers:
         - name: policy-server
           image: {{ .Values.policyServer.image.repository }}:{{ default .Chart.AppVersion .Values.policyServer.image.tag }}
@@ -39,9 +57,9 @@ spec:
             - name: policy-server-cc
               mountPath: /etc/ssl/certs/policy-server-cc
               readOnly: true
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: networkpolicydb-ca
-              mountPath: /etc/ssl/certs/networkpolicydb
+            {{- if .Values.policyServer.database.requireSSL }}
+            - name: database-ca
+              mountPath: /etc/ssl/certs/database
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -58,8 +76,8 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 31946
-            timeoutSeconds: 10
+              port: {{ .Values.policyServer.internal.healthCheckPort }}
+            timeoutSeconds: {{ .Values.policyServer.internal.healthCheckTimeoutSeconds }}
             periodSeconds: 10
             failureThreshold: 6
           volumeMounts:
@@ -68,9 +86,9 @@ spec:
             - name: policy-server-internal
               mountPath: /etc/ssl/certs/policy-server-internal
               readOnly: true
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: networkpolicydb-ca
-              mountPath: /etc/ssl/certs/networkpolicydb
+            {{- if .Values.policyServer.database.requireSSL }}
+            - name: database-ca
+              mountPath: /etc/ssl/certs/database
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -83,10 +101,10 @@ spec:
           command: [ "/usr/local/bin/policy-server-asg-syncer" ]
           args:
           - -config-file
-          - /policy-server/policy-server-asg-syncer.json
+          - /asg-syncer-config/policy-server-asg-syncer.json
           volumeMounts:
-            - name: policy-server-config
-              mountPath: /policy-server
+            - name: asg-syncer-config
+              mountPath: /asg-syncer-config
             - name: policy-server-uaa
               mountPath: /etc/ssl/certs/policy-server-uaa
               readOnly: true
@@ -99,9 +117,9 @@ spec:
             - name: policy-server-locket
               mountPath: /etc/ssl/certs/policy-server-locket
               readOnly: true
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            - name: networkpolicydb-ca
-              mountPath: /etc/ssl/certs/networkpolicydb
+            {{- if .Values.policyServer.database.requireSSL }}
+            - name: database-ca
+              mountPath: /etc/ssl/certs/database
               readOnly: true
             {{- end }}
           {{- if .Values.policyServer.resources }}
@@ -121,8 +139,8 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: policy-server
-              mountPath: /etc/ssl/certs/policy-server
+            - name: route-registrar-nats
+              mountPath: /etc/ssl/certs/route-registrar-nats
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
             - name: tmpdir
@@ -168,30 +186,35 @@ spec:
             secretName: policy-server-config
         - name: policy-server
           secret:
-            secretName: {{ required "policyServer.certificateSecret is required" .Values.policyServer.certificateSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.serverTLS is required" .Values.policyServer.certificateSecrets.serverTLS }}
         - name: policy-server-uaa
           secret:
-            secretName: {{ required "policyServer.uaaCaSecret is required" .Values.policyServer.uaaCaSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.uaaCA is required" .Values.policyServer.certificateSecrets.uaaCA }}
         - name: policy-server-cc
           secret:
-            secretName: {{ required "policyServer.ccCaCertSecret is required" .Values.policyServer.ccCaCertSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.ccCA is required" .Values.policyServer.certificateSecrets.ccCA }}
         - name: policy-server-internal
           secret:
-            secretName: {{ required "policyServer.internal.certificateSecret is required" .Values.policyServer.internal.certificateSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.internalTLS is required" .Values.policyServer.certificateSecrets.internalTLS }}
         - name: policy-server-cc-internal
           secret:
-            secretName: {{ required "policyServer.asgSyncer.ccInternalClientSecret is required" .Values.policyServer.asgSyncer.ccInternalClientSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.ccInternalTLS is required" .Values.policyServer.certificateSecrets.ccInternalTLS }}
         - name: policy-server-locket
           secret:
-            secretName: {{ required "policyServer.asgSyncer.locketSecret is required" .Values.policyServer.asgSyncer.locketSecret }}
-        {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-        - name: networkpolicydb-ca
+            secretName: {{ required "policyServer.certificateSecrets.locketTLS is required" .Values.policyServer.certificateSecrets.locketTLS }}
+        {{- if .Values.policyServer.database.requireSSL }}
+        - name: database-ca
           secret:
-            secretName: {{ required "policyServer.networkpolicydb.caCertificateSecret is required when policyServer.networkpolicydb.skipSSLVerify is false" .Values.policyServer.networkpolicydb.caCertificateSecret }}
+            secretName: {{ required "policyServer.certificateSecrets.databaseCA is required when policyServer.database.requireSSL is true" .Values.policyServer.certificateSecrets.databaseCA }}
         {{- end }}
         - name: etc-route-registrar
           configMap:
             name: policy-server-route-registrar-config
+        - name: route-registrar-nats
+          secret:
+            secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
+        - name: asg-syncer-config
+          emptyDir: {}
         - name: tmpdir
           emptyDir: {}
         - name: udp-forwarder

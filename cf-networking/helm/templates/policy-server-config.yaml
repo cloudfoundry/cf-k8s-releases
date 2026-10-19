@@ -1,5 +1,5 @@
 {{- if .Values.policyServer.enabled }}
-{{ $_ := required ".Values.policyServer.networkpolicydb.password must be provided" .Values.policyServer.networkpolicydb.password }}
+{{ $_ := required ".Values.policyServer.database.password must be provided" .Values.policyServer.database.password }}
 ---
 apiVersion: v1
 kind: Secret
@@ -18,30 +18,30 @@ stringData:
       "server_key_file": "/etc/ssl/certs/policy-server/tls.key",
       "debug_server_port": {{ .Values.policyServer.debugPort }},
       "uaa_client": "{{ .Values.policyServer.uaaClient }}",
-      "uaa_client_secret": {{ .Values.policyServer.oauthClientsSecret | quote }},
-      "uaa_url": "https://uaa.{{ .Release.Namespace }}.svc.cluster.local",
+      "uaa_client_secret": {{ .Values.policyServer.uaaClientSecret | quote }},
+      "uaa_url": "https://{{ tpl .Values.policyServer.uaaHostname . }}",
       "uaa_port": {{ .Values.policyServer.uaaPort }},
-      "cc_url": "https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9024",
+      "cc_url": "https://{{ tpl .Values.policyServer.ccHostname . }}:9024",
       "cc_ca_cert": "/etc/ssl/certs/policy-server-cc/ca.crt",
       "skip_ssl_validation": {{ .Values.policyServer.skipSSLValidation }},
       "database": {
-        "type": "{{ .Values.policyServer.networkpolicydb.type }}",
-        "user": {{ .Values.policyServer.networkpolicydb.user | quote }},
-        "password": {{ .Values.policyServer.networkpolicydb.password | quote }},
-        "host": "{{ tpl .Values.policyServer.networkpolicydb.address . }}",
-        "port": {{ .Values.policyServer.networkpolicydb.port }},
-        "timeout": {{ .Values.policyServer.networkpolicydb.connectTimeoutSeconds }},
-        "database_name": "{{ .Values.policyServer.networkpolicydb.name }}",
-        "require_ssl": {{ not .Values.policyServer.networkpolicydb.skipSSLVerify }},
-        {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-        "ca_cert": "/etc/ssl/certs/networkpolicydb/ca.crt",
+        "type": "{{ .Values.policyServer.database.type }}",
+        "user": {{ .Values.policyServer.database.username | quote }},
+        "password": {{ .Values.policyServer.database.password | quote }},
+        "host": "{{ tpl .Values.policyServer.database.host . }}",
+        "port": {{ .Values.policyServer.database.port }},
+        "timeout": {{ .Values.policyServer.database.connectTimeoutSeconds }},
+        "database_name": "{{ .Values.policyServer.database.name }}",
+        "require_ssl": {{ .Values.policyServer.database.requireSSL }},
+        {{- if .Values.policyServer.database.requireSSL }}
+        "ca_cert": "/etc/ssl/certs/database/ca.crt",
         {{- end }}
-        "skip_hostname_validation": {{ .Values.policyServer.networkpolicydb.skipHostnameVerify }}
+        "skip_hostname_validation": {{ .Values.policyServer.database.skipHostnameValidation }}
       },
       "database_migration_timeout": 600,
-      "max_idle_connections": {{ .Values.policyServer.networkpolicydb.maxIdleConnections }},
-      "max_open_connections": {{ .Values.policyServer.networkpolicydb.maxOpenConnections }},
-      "connections_max_lifetime_seconds": {{ .Values.policyServer.networkpolicydb.connectionsMaxLifetimeSeconds }},
+      "max_idle_connections": {{ .Values.policyServer.maxIdleConnections }},
+      "max_open_connections": {{ .Values.policyServer.maxOpenConnections }},
+      "connections_max_lifetime_seconds": {{ .Values.policyServer.connectionsMaxLifetimeSeconds }},
       "tag_length": {{ .Values.policyServer.tagLength }},
       "metron_address": "127.0.0.1:{{ .Values.policyServer.metronPort }}",
       "log_level": "{{ .Values.policyServer.logLevel }}",
@@ -58,25 +58,25 @@ stringData:
       "log_prefix": "cfnetworking",
       "debug_server_host": "127.0.0.1",
       "debug_server_port": {{ .Values.policyServer.internal.debugPort }},
-      "health_check_port": 31946,
+      "health_check_port": {{ .Values.policyServer.internal.healthCheckPort }},
       "internal_listen_port": {{ .Values.policyServer.internal.listenPort }},
       "database": {
-        "type": "{{ .Values.policyServer.networkpolicydb.type }}",
-        "user": {{ .Values.policyServer.networkpolicydb.user | quote }},
-        "password": {{ .Values.policyServer.networkpolicydb.password | quote }},
-        "host": "{{ tpl .Values.policyServer.networkpolicydb.address . }}",
-        "port": {{ .Values.policyServer.networkpolicydb.port }},
-        "timeout": {{ .Values.policyServer.networkpolicydb.connectTimeoutSeconds }},
-        "database_name": "{{ .Values.policyServer.networkpolicydb.name }}",
-        "require_ssl": {{ not .Values.policyServer.networkpolicydb.skipSSLVerify }},
-        {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-        "ca_cert": "/etc/ssl/certs/networkpolicydb/ca.crt",
+        "type": "{{ .Values.policyServer.database.type }}",
+        "user": {{ .Values.policyServer.database.username | quote }},
+        "password": {{ .Values.policyServer.database.password | quote }},
+        "host": "{{ tpl .Values.policyServer.database.host . }}",
+        "port": {{ .Values.policyServer.database.port }},
+        "timeout": {{ .Values.policyServer.database.connectTimeoutSeconds }},
+        "database_name": "{{ .Values.policyServer.database.name }}",
+        "require_ssl": {{ .Values.policyServer.database.requireSSL }},
+        {{- if .Values.policyServer.database.requireSSL }}
+        "ca_cert": "/etc/ssl/certs/database/ca.crt",
         {{- end }}
-        "skip_hostname_validation": {{ .Values.policyServer.networkpolicydb.skipHostnameVerify }}
+        "skip_hostname_validation": {{ .Values.policyServer.database.skipHostnameValidation }}
       },
-      "max_idle_connections": {{ .Values.policyServer.networkpolicydb.maxIdleConnections }},
-      "max_open_connections": {{ .Values.policyServer.networkpolicydb.maxOpenConnections }},
-      "connections_max_lifetime_seconds": {{ .Values.policyServer.networkpolicydb.connectionsMaxLifetimeSeconds }},
+      "max_idle_connections": {{ .Values.policyServer.maxIdleConnections }},
+      "max_open_connections": {{ .Values.policyServer.maxOpenConnections }},
+      "connections_max_lifetime_seconds": {{ .Values.policyServer.connectionsMaxLifetimeSeconds }},
       "tag_length": {{ .Values.policyServer.tagLength }},
       "metron_address": "127.0.0.1:{{ .Values.policyServer.metronPort }}",
       "log_level": "{{ .Values.policyServer.logLevel }}",
@@ -87,29 +87,29 @@ stringData:
       }
   policy-server-asg-syncer.json: |-
     {
-      "uuid": "07c65e06-b676-4f4a-a37f-96df62d387d7",
+      "uuid": "${POD_NAME}",
       "database": {
-          "type": "{{ .Values.policyServer.networkpolicydb.type }}",
-          "user": {{ .Values.policyServer.networkpolicydb.user | quote }},
-          "password": {{ .Values.policyServer.networkpolicydb.password | quote }},
-          "host": "{{ tpl .Values.policyServer.networkpolicydb.address . }}",
-          "port": {{ .Values.policyServer.networkpolicydb.port }},
-          "timeout": {{ .Values.policyServer.networkpolicydb.connectTimeoutSeconds }},
-          "database_name": "{{ .Values.policyServer.networkpolicydb.name }}",
-          "require_ssl": {{ not .Values.policyServer.networkpolicydb.skipSSLVerify }},
-            {{- if not .Values.policyServer.networkpolicydb.skipSSLVerify }}
-            "ca_cert": "/etc/ssl/certs/networkpolicydb/ca.crt",
+          "type": "{{ .Values.policyServer.database.type }}",
+          "user": {{ .Values.policyServer.database.username | quote }},
+          "password": {{ .Values.policyServer.database.password | quote }},
+          "host": "{{ tpl .Values.policyServer.database.host . }}",
+          "port": {{ .Values.policyServer.database.port }},
+          "timeout": {{ .Values.policyServer.database.connectTimeoutSeconds }},
+          "database_name": "{{ .Values.policyServer.database.name }}",
+          "require_ssl": {{ .Values.policyServer.database.requireSSL }},
+            {{- if .Values.policyServer.database.requireSSL }}
+            "ca_cert": "/etc/ssl/certs/database/ca.crt",
             {{- end }}
-          "skip_hostname_validation": {{ .Values.policyServer.networkpolicydb.skipHostnameVerify }}
+          "skip_hostname_validation": {{ .Values.policyServer.database.skipHostnameValidation }}
       },
       "uaa_client": "{{ .Values.policyServer.uaaClient }}",
-      "uaa_client_secret": {{ .Values.policyServer.oauthClientsSecret | quote }},
-      "uaa_url": "https://uaa.{{ .Release.Namespace }}.svc.cluster.local",
+      "uaa_client_secret": {{ .Values.policyServer.uaaClientSecret | quote }},
+      "uaa_url": "https://{{ tpl .Values.policyServer.uaaHostname . }}",
       "uaa_port": {{ .Values.policyServer.uaaPort }},
       "uaa_ca": "/etc/ssl/certs/policy-server-uaa/ca.crt",
-      "cc_url": "https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9024",
+      "cc_url": "https://{{ tpl .Values.policyServer.ccHostname . }}:9024",
       "cc_ca_cert": "/etc/ssl/certs/policy-server-cc/ca.crt",
-      "cc_internal_url": "https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9023",
+      "cc_internal_url": "https://{{ tpl .Values.policyServer.ccHostname . }}:9023",
       "cc_internal_ca_cert": "/etc/ssl/certs/policy-server-cc-internal/ca.crt",
       "cc_internal_client_cert": "/etc/ssl/certs/policy-server-cc-internal/tls.crt",
       "cc_internal_client_key": "/etc/ssl/certs/policy-server-cc-internal/tls.key",
@@ -119,7 +119,7 @@ stringData:
       "skip_ssl_validation": {{ .Values.policyServer.skipSSLValidation }},
       "asg_poll_interval_seconds": {{ .Values.policyServer.asgPollIntervalSeconds }},
       "retry_deadline_seconds": {{ .Values.policyServer.retryDeadlineSeconds }},
-      "locket_address": "locket.{{ .Release.Namespace }}.svc.cluster.local:8891",
+      "locket_address": "{{ tpl .Values.policyServer.asgSyncer.locketAddress . }}",
       "locket_ca_cert_file": "/etc/ssl/certs/policy-server-locket/ca.crt",
       "locket_client_cert_file": "/etc/ssl/certs/policy-server-locket/tls.crt",
       "locket_client_key_file": "/etc/ssl/certs/policy-server-locket/tls.key"

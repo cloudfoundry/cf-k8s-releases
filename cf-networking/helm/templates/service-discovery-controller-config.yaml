@@ -29,18 +29,18 @@ stringData:
       "nats": {
         "user": {{ .Values.serviceDiscoveryController.nats.user | quote }},
         "pass": {{ .Values.serviceDiscoveryController.nats.password | quote }},
-        "tls_enabled": {{ .Values.serviceDiscoveryController.nats.tlsEnabled }},
         {{- if .Values.serviceDiscoveryController.nats.tlsEnabled }}
+        "tls_enabled": true,
         "ca_certs": "/etc/ssl/certs/service-discovery-controller-nats/ca.crt",
         "cert_chain": "/etc/ssl/certs/service-discovery-controller-nats/tls.crt",
         "private_key": "/etc/ssl/certs/service-discovery-controller-nats/tls.key",
         {{- end }}
-        "hosts": [
-          {
-            "hostname": "{{ tpl .Values.serviceDiscoveryController.nats.host . }}",
-            "port": {{ .Values.serviceDiscoveryController.nats.port }}
-          }
-        ]
+        {{- $natsPort := .Values.serviceDiscoveryController.nats.port }}
+        {{- $hosts := list }}
+        {{- range .Values.serviceDiscoveryController.nats.machines }}
+        {{- $hosts = append $hosts (dict "hostname" (tpl . $) "port" $natsPort) }}
+        {{- end }}
+        "hosts": {{ $hosts | toJson }}
       }
     }
 {{- end }}

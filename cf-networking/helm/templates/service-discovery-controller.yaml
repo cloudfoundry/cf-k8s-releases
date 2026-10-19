@@ -7,7 +7,7 @@ metadata:
   labels:
     app: service-discovery-controller
 spec:
-  replicas: 1
+  replicas: {{ .Values.serviceDiscoveryController.replicas }}
   selector:
     matchLabels:
       app: service-discovery-controller
@@ -75,14 +75,14 @@ spec:
       volumes:
         - name: service-discovery-controller
           secret:
-            secretName: {{ required "serviceDiscoveryController.certificateSecret is required" .Values.serviceDiscoveryController.certificateSecret }}
+            secretName: {{ required "serviceDiscoveryController.certificateSecrets.serverTLS is required" .Values.serviceDiscoveryController.certificateSecrets.serverTLS }}
         - name: client-ca
           secret:
-            secretName: {{ required "serviceDiscoveryController.clientCaSecret is required" .Values.serviceDiscoveryController.clientCaSecret | quote }}
+            secretName: {{ required "serviceDiscoveryController.certificateSecrets.clientCA is required" .Values.serviceDiscoveryController.certificateSecrets.clientCA | quote }}
         {{- if .Values.serviceDiscoveryController.nats.tlsEnabled }}
         - name: nats-certificate
           secret:
-            secretName: {{ required "serviceDiscoveryController.nats.certificateSecret is required when serviceDiscoveryController.nats.tlsEnabled is true" .Values.serviceDiscoveryController.nats.certificateSecret | quote }}
+            secretName: {{ required "serviceDiscoveryController.certificateSecrets.natsTLS is required when serviceDiscoveryController.nats.tlsEnabled is true" .Values.serviceDiscoveryController.certificateSecrets.natsTLS | quote }}
         {{- end }}
         - name: service-discovery-controller-config
           secret:
