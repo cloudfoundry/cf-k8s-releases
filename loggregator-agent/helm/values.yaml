@@ -18,7 +18,8 @@ otelCollector:
     imagePullPolicy: IfNotPresent
   resources: ~
   certificateSecret: ""
-  config: {}
+  exporter:
+    endpoint: ""
 
 loggregatorAgent:
   doppler:
