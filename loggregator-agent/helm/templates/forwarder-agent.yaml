@@ -1,13 +1,16 @@
 {{- if .Values.forwarderAgent.enabled }}
 ---
-kind: Deployment
+kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: forwarder-agent
   labels:
     app: forwarder-agent
+  {{- if .Values.otelCollector.enabled }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
+  {{- end }}
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: forwarder-agent
@@ -15,6 +18,10 @@ spec:
     metadata:
       labels:
         app: forwarder-agent
+      {{- if .Values.otelCollector.enabled }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
+      {{- end }}
     spec:
       containers:
         - name: forwarder-agent
@@ -43,15 +50,22 @@ spec:
               value: /etc/ssl/certs/forwarder-agent/tls.crt
             - name: METRICS_KEY_FILE_PATH
               value: /etc/ssl/certs/forwarder-agent/tls.key
-            {{- range $k, $v := .Values.forwarderAgent.env }}
-            - name: {{ $k }}
-              value: {{ $v | quote }}
+            {{- if .Values.otelCollector.enabled }}
+            - name: EMIT_OTEL_LOGS
+              value: "true"
+            - name: EMIT_OTEL_METRICS
+              value: "true"
+            - name: EMIT_OTEL_TRACES
+              value: "true"
             {{- end }}
           volumeMounts:
             - name: forwarder-agent
               mountPath: /etc/ssl/certs/forwarder-agent
-            {{- with .Values.forwarderAgent.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
+            {{- if .Values.otelCollector.enabled }}
+            - name: forwarder-agent-otel-downstream
+              mountPath: /ingress-globs/otel-collector.yml
+              subPath: otel-collector.yml
+              readOnly: true
             {{- end }}
         - name: loggregator-agent
           image: {{ .Values.loggregatorAgent.image.repository }}:{{ default .Chart.AppVersion .Values.loggregatorAgent.image.tag }}
@@ -127,19 +141,22 @@ spec:
               mountPath: /etc/ssl/certs/syslog-agent
         {{- if .Values.otelCollector.enabled }}
         - name: otel-collector
-          image: {{ .Values.otelCollector.image }}:{{ .Values.otelCollector.imageTag }}
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
+          imagePullPolicy: {{ .Values.otelCollector.image.imagePullPolicy }}
+          {{- if .Values.otelCollector.resources }}
+          resources:
+            {{- toYaml .Values.otelCollector.resources | nindent 12 }}
+          {{- end }}
           args:
             - --config=/etc/otel/config/config.yaml
           volumeMounts:
             - name: otel-collector-config
-              mountPath: /etc/otel/config
+              mountPath: /etc/otel/config/config.yaml
+              subPath: config.yaml
               readOnly: true
-            {{- if .Values.otelCollector.certificateSecret }}
             - name: otel-collector-tls
               mountPath: /etc/otel/certs
               readOnly: true
-            {{- end }}
         {{- end }}
       {{- if .Values.forwarderAgent.nodeSelector }}
       nodeSelector:
@@ -161,18 +178,16 @@ spec:
         - name: loggregator-agent
           secret:
             secretName: {{ required "loggregatorAgent.certificateSecret is required" .Values.loggregatorAgent.certificateSecret }}
-        {{- with .Values.forwarderAgent.extraVolumes }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- if .Values.otelCollector.enabled }}
+        - name: forwarder-agent-otel-downstream
+          configMap:
+            name: forwarder-agent-otel-downstream
         - name: otel-collector-config
           configMap:
             name: otel-collector-config
-        {{- if .Values.otelCollector.certificateSecret }}
         - name: otel-collector-tls
           secret:
-            secretName: {{ .Values.otelCollector.certificateSecret }}
-        {{- end }}
+            secretName: {{ required "otelCollector.certificateSecret is required when otelCollector is enabled" .Values.otelCollector.certificateSecret }}
         {{- end }}
 ---
 kind: Service
@@ -182,6 +197,7 @@ metadata:
   labels:
     app: forwarder-agent
 spec:
+  trafficDistribution: PreferSameNode
   ports:
     - port: 3458
       targetPort: 3458
@@ -193,9 +209,12 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: otel-collector-config
+  name: forwarder-agent-otel-downstream
+  labels:
+    app: forwarder-agent
 data:
-  config.yaml: |
-{{ .Values.otelCollector.config | toYaml | indent 4 }}
+  otel-collector.yml: |
+    ingress: 4317
+    protocol: otelcol
 {{- end }}
 {{- end }}

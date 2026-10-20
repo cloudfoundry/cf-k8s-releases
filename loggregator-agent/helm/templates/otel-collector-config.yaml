@@ -1,0 +1,10 @@
+{{- if and .Values.forwarderAgent.enabled .Values.otelCollector.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+data:
+  config.yaml: |
+{{ .Values.otelCollector.config | toYaml | indent 4 }}
+{{- end }}

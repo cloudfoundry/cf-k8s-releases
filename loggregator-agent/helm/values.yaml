@@ -9,14 +9,14 @@ forwarderAgent:
     imagePullPolicy: IfNotPresent
   nodeSelector: ~
   tolerations: ~
-  env: {}
-  extraVolumeMounts: []
-  extraVolumes: []
 
 otelCollector:
   enabled: false
-  image: otel/opentelemetry-collector-contrib
-  imageTag: ""
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: latest
+    imagePullPolicy: IfNotPresent
+  resources: ~
   certificateSecret: ""
   config: {}
 
