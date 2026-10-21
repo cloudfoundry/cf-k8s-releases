@@ -68,6 +68,69 @@
     "global": {
       "type": "object"
     },
+    "otelCollector": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "properties": {
+              "certificateSecret": {
+                "minLength": 1
+              }
+            },
+            "required": [
+              "certificateSecret"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "imagePullPolicy": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "certificateSecret": {
+          "type": "string"
+        },
+        "exporter": {
+          "additionalProperties": false,
+          "properties": {
+            "endpoint": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "resources": {
+          "type": ["object", "null"]
+        }
+      },
+      "type": "object"
+    },
     "loggregatorAgent": {
       "additionalProperties": false,
       "properties": {

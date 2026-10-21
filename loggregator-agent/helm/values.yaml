@@ -10,6 +10,17 @@ forwarderAgent:
   nodeSelector: ~
   tolerations: ~
 
+otelCollector:
+  enabled: false
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: latest
+    imagePullPolicy: IfNotPresent
+  resources: ~
+  certificateSecret: ""
+  exporter:
+    endpoint: ""
+
 loggregatorAgent:
   doppler:
     address: "doppler.{{ .Release.Namespace }}.svc.cluster.local:8082"
