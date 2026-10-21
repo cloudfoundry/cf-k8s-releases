@@ -5,14 +5,113 @@
     "auctioneer": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
-        },
         "enabled": {
           "type": "boolean"
         },
-        "hostname": {
+        "replicas": {
+          "type": "integer"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string"
+            },
+            "bbs": {
+              "type": "string"
+            },
+            "rep": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "debugAddr": {
           "type": "string"
+        },
+        "listenAddr": {
+          "type": "string"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "cellStateTimeout": {
+          "type": "string"
+        },
+        "binPackFirstFitWeight": {
+          "type": "number"
+        },
+        "startingContainerWeight": {
+          "type": "number"
+        },
+        "startingContainerCountMaximum": {
+          "type": "integer"
+        },
+        "bbs": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "clientSessionCacheSize": {
+              "type": ["integer", "null"]
+            },
+            "maxIdleConnsPerHost": {
+              "type": ["integer", "null"]
+            }
+          },
+          "type": "object"
+        },
+        "rep": {
+          "additionalProperties": false,
+          "properties": {
+            "clientSessionCacheSize": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "locket": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "clientKeepaliveTime": {
+              "type": "integer"
+            },
+            "clientKeepaliveTimeout": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "enableBBSHealthCheck": {
+          "type": "boolean"
+        },
+        "bbsHealthCheckInterval": {
+          "type": "string"
+        },
+        "bbsHealthCheckTimeout": {
+          "type": "string"
+        },
+        "bbsHealthCheckFailureThreshold": {
+          "type": "integer"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
+            "apiHost": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -68,20 +167,245 @@
     "bbs": {
       "additionalProperties": false,
       "properties": {
-        "activeKeyLabel": {
-          "type": "string"
-        },
-        "certificateSecret": {
-          "type": "string"
-        },
         "enabled": {
           "type": "boolean"
+        },
+        "replicas": {
+          "type": "integer"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string"
+            },
+            "auctioneer": {
+              "type": "string"
+            },
+            "rep": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            },
+            "databaseCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "activeKeyLabel": {
+          "type": ["string", "null"]
         },
         "encryptionKeys": {
           "type": "object"
         },
-        "hostname": {
+        "db": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "user": {
+              "type": "string"
+            },
+            "password": {
+              "type": ["string", "null"]
+            },
+            "port": {
+              "type": "integer"
+            },
+            "address": {
+              "type": "string"
+            },
+            "driver": {
+              "type": "string"
+            },
+            "requireSSL": {
+              "type": "boolean"
+            },
+            "enableIdentityVerification": {
+              "type": "boolean"
+            },
+            "maxOpenConnections": {
+              "type": "integer"
+            },
+            "maxIdleConnections": {
+              "type": "integer"
+            },
+            "maxConnectionLifetime": {
+              "type": "integer"
+            },
+            "dbConnectionTimeout": {
+              "type": "integer"
+            },
+            "dbReadTimeout": {
+              "type": "integer"
+            },
+            "dbWriteTimeout": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "listenAddr": {
           "type": "string"
+        },
+        "healthAddr": {
+          "type": "string"
+        },
+        "debugAddr": {
+          "type": "string"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "debugLrpStartHeartbeats": {
+          "type": "boolean"
+        },
+        "enableAccessLog": {
+          "type": "boolean"
+        },
+        "advertiseUrl": {
+          "type": "string"
+        },
+        "enableDBHealthCheck": {
+          "type": "boolean"
+        },
+        "healthCheckTimeout": {
+          "type": "integer"
+        },
+        "healthCheckInterval": {
+          "type": "integer"
+        },
+        "healthCheckFailureThreshold": {
+          "type": "integer"
+        },
+        "tasks": {
+          "additionalProperties": false,
+          "properties": {
+            "maxRetries": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "cellRegistrations": {
+          "additionalProperties": false,
+          "properties": {
+            "locket": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "maxDataStringLength": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "auctioneer": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "requireTls": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "rep": {
+          "additionalProperties": false,
+          "properties": {
+            "clientSessionCacheSize": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "locket": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "clientKeepaliveTime": {
+              "type": "integer"
+            },
+            "clientKeepaliveTimeout": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "convergence": {
+          "additionalProperties": false,
+          "properties": {
+            "repeatIntervalInSeconds": {
+              "type": "integer"
+            },
+            "kickTaskDurationInSeconds": {
+              "type": "integer"
+            },
+            "expireCompletedTaskDurationInSeconds": {
+              "type": "integer"
+            },
+            "expirePendingTaskDurationInSeconds": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "properties": {
+            "advancedMetrics": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "routeConfig": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "requestCount": {
+                      "type": "array"
+                    },
+                    "requestLatency": {
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
+            "apiHost": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -130,36 +454,6 @@
             ],
             "type": "object"
           }
-        }
-      },
-      "type": "object"
-    },
-    "diegodb": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "user": {
-          "type": "string"
-        },
-        "password": {
-          "type": ["string", "null"]
-        },
-        "address": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer"
-        },
-        "caCertificateSecret": {
-          "type": "string"
-        },
-        "skipSSLVerify": {
-          "type": "boolean"
-        },
-        "skipHostnameVerify": {
-          "type": "boolean"
         }
       },
       "type": "object"
@@ -185,32 +479,305 @@
           },
           "type": "object"
         },
-        "instanceIdentityCASecret": {
-          "type": "string"
-        },
-        "caCertificate": {
-          "type": ["string", "null"]
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "instanceIdentity": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            },
+            "locket": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "advertiseDomain": {
           "type": "string"
         },
-        "bbsAddress": {
+        "debugAddr": {
           "type": "string"
         },
-        "containerProxyVerifySubjectAltName": {
-          "type": ["array", "null"],
+        "listenAddrAdmin": {
+          "type": "string"
+        },
+        "listenAddrSecurable": {
+          "type": "string"
+        },
+        "healthCheckListenAddr": {
+          "type": "string"
+        },
+        "advertisePreferenceForInstanceAddress": {
+          "type": "boolean"
+        },
+        "logContainerNetworkInfo": {
+          "type": "boolean"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "pollingIntervalInSeconds": {
+          "type": "integer"
+        },
+        "evacuationPollingIntervalInSeconds": {
+          "type": "integer"
+        },
+        "evacuationTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "extraRootFsDir": {
+          "type": "string"
+        },
+        "sidecarRootfs": {
+          "type": "string"
+        },
+        "rootfsProviders": {
+          "type": "array",
           "items": {
             "type": "string"
           }
         },
+        "cellAnnotations": {
+          "type": "object"
+        },
+        "ssl": {
+          "additionalProperties": false,
+          "properties": {
+            "skipCertVerify": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "bbs": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "requestTimeout": {
+              "type": "string"
+            },
+            "clientSessionCacheSize": {
+              "type": ["integer", "null"]
+            },
+            "maxIdleConnsPerHost": {
+              "type": ["integer", "null"]
+            }
+          },
+          "type": "object"
+        },
         "locket": {
           "additionalProperties": false,
           "properties": {
-            "address": {
+            "apiLocation": {
               "type": "string"
             },
-            "certificateSecret": {
+            "lockTtl": {
+              "type": "integer"
+            },
+            "clientKeepaliveTime": {
+              "type": "integer"
+            },
+            "clientKeepaliveTimeout": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "diskHealthCheckPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diskHealthCheckInterval": {
+          "type": "string"
+        },
+        "diskHealthCheckFailureThreshold": {
+          "type": "integer"
+        },
+        "executor": {
+          "additionalProperties": false,
+          "properties": {
+            "autoDiskCapacityOverheadMb": {
+              "type": "integer"
+            },
+            "memoryCapacityMb": {
+              "type": ["string", "integer"]
+            },
+            "diskCapacityMb": {
+              "type": ["string", "integer"]
+            },
+            "maxConcurrentDownloads": {
+              "type": "integer"
+            },
+            "containerMaxCpuShares": {
+              "type": "integer"
+            },
+            "containerInodeLimit": {
+              "type": "integer"
+            },
+            "containerMetricsReportInterval": {
               "type": "string"
+            },
+            "maxCacheSizeInBytes": {
+              "type": "integer"
+            },
+            "minCachePartitionFreeBytes": {
+              "type": "integer"
+            },
+            "useSchedulableDiskSize": {
+              "type": "boolean"
+            },
+            "proxyHealthcheckInterval": {
+              "type": "string"
+            },
+            "enableContainerProxyHealthcheck": {
+              "type": "boolean"
+            },
+            "healthyMonitoringIntervalInSeconds": {
+              "type": "integer"
+            },
+            "unhealthyMonitoringIntervalInSeconds": {
+              "type": "integer"
+            },
+            "createWorkPoolSize": {
+              "type": "integer"
+            },
+            "deleteWorkPoolSize": {
+              "type": "integer"
+            },
+            "readWorkPoolSize": {
+              "type": "integer"
+            },
+            "metricsWorkPoolSize": {
+              "type": "integer"
+            },
+            "healthcheckWorkPoolSize": {
+              "type": "integer"
+            },
+            "maxLogLinesPerSecond": {
+              "type": "integer"
+            },
+            "declarativeHealthcheckDefaultTimeout": {
+              "type": "string"
+            },
+            "injectWorkloadIdentity": {
+              "type": "boolean"
+            },
+            "instanceIdentityValidityPeriodInHours": {
+              "type": "integer"
+            },
+            "postSetupHook": {
+              "type": ["string", "null"]
+            },
+            "postSetupUser": {
+              "type": ["string", "null"]
+            },
+            "garden": {
+              "additionalProperties": false,
+              "properties": {
+                "address": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "volman": {
+              "additionalProperties": false,
+              "properties": {
+                "driverPaths": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "containers": {
+          "additionalProperties": false,
+          "properties": {
+            "gracefulShutdownIntervalInSeconds": {
+              "type": "integer"
+            },
+            "setCpuWeight": {
+              "type": "boolean"
+            },
+            "layeringMode": {
+              "type": "string"
+            },
+            "trustedCaCertificates": {
+              "type": ["string", "null"]
+            },
+            "proxy": {
+              "additionalProperties": false,
+              "properties": {
+                "additionalMemoryAllocationMb": {
+                  "type": "integer"
+                },
+                "enableHttp2": {
+                  "type": "boolean"
+                },
+                "requireAndVerifyClientCertificates": {
+                  "type": "boolean"
+                },
+                "trustedCaCertificates": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "verifySubjectAltName": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "enableUnproxiedPortMappings": {
+                  "type": "boolean"
+                },
+                "adsAddresses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "configurationReloadDuration": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "enableHealthcheckMetrics": {
+          "type": "boolean"
+        },
+        "cellRegistrations": {
+          "additionalProperties": false,
+          "properties": {
+            "locket": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "maxDataStringLength": {
+              "type": "integer"
             }
           },
           "type": "object"
@@ -218,28 +785,19 @@
         "loggregator": {
           "additionalProperties": false,
           "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
             "apiHost": {
               "type": "string"
             },
-            "apiPort": {
-              "type": "integer"
-            },
-            "certificateSecret": {
-              "type": "string"
+            "appMetricExclusionFilter": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
-          "type": "object"
-        },
-        "fileServer": {
-          "additionalProperties": false,
-          "properties": {
-            "address": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "address"
-          ],
           "type": "object"
         },
         "stacks": {
@@ -248,16 +806,15 @@
         "workloadsNamespace": {
           "type": "string"
         },
-        "pauseImage": {
-          "type": "string"
-        },
         "resources": {
           "type": ["object", "null"]
         },
         "watcher": {
           "additionalProperties": false,
           "properties": {
-            "resources": { "type": ["object", "null"] }
+            "resources": {
+              "type": ["object", "null"]
+            }
           },
           "type": "object"
         },
@@ -294,50 +851,29 @@
       },
       "type": "object"
     },
-    "locketdb": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "user": {
-          "type": "string"
-        },
-        "password": {
-          "type": ["string", "null"]
-        },
-        "address": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer"
-        },
-        "caCertificateSecret": {
-          "type": "string"
-        },
-        "skipSSLVerify": {
-          "type": "boolean"
-        },
-        "skipHostnameVerify": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "diegoSSHCredentials": {
-      "type": ["string", "null"]
-    },
     "fileserver": {
       "additionalProperties": false,
       "properties": {
         "enabled": {
           "type": "boolean"
         },
-        "useSSL": {
+        "replicas": {
+          "type": "integer"
+        },
+        "httpsServerEnabled": {
           "type": "boolean"
         },
-        "certificateSecret": {
+        "logLevel": {
           "type": "string"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -390,29 +926,113 @@
       },
       "type": "object"
     },
-    "gatewayObjects": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-   },
     "global": {
       "type": "object"
     },
     "locket": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
-        },
         "enabled": {
           "type": "boolean"
         },
+        "replicas": {
+          "type": "integer"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            },
+            "databaseCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "hostname": {
           "type": "string"
+        },
+        "listenAddr": {
+          "type": "string"
+        },
+        "debugAddr": {
+          "type": "string"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "enableDBHealthCheck": {
+          "type": "boolean"
+        },
+        "healthCheckFailureThreshold": {
+          "type": "integer"
+        },
+        "healthCheckTimeout": {
+          "type": "integer"
+        },
+        "healthCheckInterval": {
+          "type": "integer"
+        },
+        "db": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "user": {
+              "type": "string"
+            },
+            "password": {
+              "type": ["string", "null"]
+            },
+            "port": {
+              "type": "integer"
+            },
+            "address": {
+              "type": "string"
+            },
+            "driver": {
+              "type": "string"
+            },
+            "requireSSL": {
+              "type": "boolean"
+            },
+            "enableIdentityVerification": {
+              "type": "boolean"
+            },
+            "maxOpenConnections": {
+              "type": "integer"
+            },
+            "dbConnectionTimeout": {
+              "type": "integer"
+            },
+            "dbReadTimeout": {
+              "type": "integer"
+            },
+            "dbWriteTimeout": {
+              "type": "integer"
+            },
+            "dbOperationTimeout": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
+            "apiHost": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -468,38 +1088,173 @@
     "routeEmitter": {
       "additionalProperties": false,
       "properties": {
-        "bbsAddress": {
-          "type": "string"
-        },
-        "certificateSecret": {
-          "type": "string"
-        },
-        "bbsCertificateSecret": {
-          "type": "string"
-        },
-        "locketCertificateSecret": {
-          "type": "string"
-        },
-        "natsCertificateSecret": {
-          "type": "string"
-        },
-        "loggregatorCertificateSecret": {
-          "type": "string"
-        },
-        "uaaCertificateSecret": {
-          "type": "string"
-        },
         "enabled": {
           "type": "boolean"
         },
-        "enableInternalEmitter": {
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "bbs": {
+              "type": "string"
+            },
+            "nats": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "routingAPI": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "registerDirectInstanceRoutes": {
           "type": "boolean"
         },
-        "enableTcpEmitter": {
+        "localMode": {
           "type": "boolean"
         },
-        "oauthClientsSecret": {
+        "nats": {
+          "additionalProperties": false,
+          "properties": {
+            "user": {
+              "type": ["string", "null"]
+            },
+            "password": {
+              "type": ["string", "null"]
+            },
+            "address": {
+              "type": "string"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "debugAddr": {
           "type": "string"
+        },
+        "healthcheckAddress": {
+          "type": "string"
+        },
+        "syncIntervalInSeconds": {
+          "type": "integer"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "jitterFactor": {
+          "type": "number"
+        },
+        "bbs": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "clientSessionCacheSize": {
+              "type": ["integer", "null"]
+            },
+            "maxIdleConnsPerHost": {
+              "type": ["integer", "null"]
+            }
+          },
+          "type": "object"
+        },
+        "locket": {
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "internalRoutes": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "tcp": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "enableTls": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "routingApi": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "url": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "mtlsPort": {
+              "type": "integer"
+            },
+            "authEnabled": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "uaa": {
+          "additionalProperties": false,
+          "properties": {
+            "hostname": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "clientName": {
+              "type": "string"
+            },
+            "clientSecret": {
+              "type": ["string", "null"]
+            },
+            "skipCertVerify": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
+            "apiHost": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -516,44 +1271,11 @@
           },
           "type": "object"
         },
-        "locketAddress": {
-          "type": "string"
-        },
-        "natsAddress": {
-          "type": "string"
-        },
-        "uaaAddress": {
-          "type": "string"
-        },
-        "routingApi": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "address": {
-              "type": "string"
-            },
-            "certificateSecret": {
-              "type": "string"
-            },
-            "enabled": {
-              "type": "boolean"
-            },
-            "port": {
-              "type": "integer"
-            }
-          }
-        },
         "resources": {
           "type": ["object", "null"]
         },
         "nodeSelector": {
-          "additionalProperties": false,
-          "properties": {
-            "cloudfoundry.org/cell": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "type": ["object", "null"]
         },
         "tolerations": {
           "type": ["array", "null"],
@@ -588,14 +1310,170 @@
     "sshProxy": {
       "additionalProperties": false,
       "properties": {
-        "certificateSecret": {
-          "type": "string"
-        },
         "enabled": {
           "type": "boolean"
         },
-        "oauthClientsSecret": {
+        "replicas": {
+          "type": "integer"
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "bbs": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            },
+            "backendsTLS": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "ccCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "hostKey": {
+          "type": ["string", "null"]
+        },
+        "diegoCredentials": {
+          "type": ["string", "null"]
+        },
+        "uaaSecret": {
+          "type": ["string", "null"]
+        },
+        "listenAddr": {
           "type": "string"
+        },
+        "healthcheckListenAddr": {
+          "type": "string"
+        },
+        "disableHealthcheckServer": {
+          "type": "boolean"
+        },
+        "debugAddr": {
+          "type": "string"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "enableCfAuth": {
+          "type": "boolean"
+        },
+        "enableDiegoAuth": {
+          "type": "boolean"
+        },
+        "idleConnectionTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "maxConnectionDurationInSeconds": {
+          "type": "integer"
+        },
+        "connectToInstanceAddress": {
+          "type": "boolean"
+        },
+        "allowedCiphers": {
+          "type": "string"
+        },
+        "allowedMacs": {
+          "type": "string"
+        },
+        "allowedKeyexchanges": {
+          "type": "string"
+        },
+        "allowedHostKeyAlgorithms": {
+          "type": "string"
+        },
+        "ssl": {
+          "additionalProperties": false,
+          "properties": {
+            "skipCertVerify": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "backends": {
+          "additionalProperties": false,
+          "properties": {
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "bbs": {
+          "additionalProperties": false,
+          "properties": {
+            "apiLocation": {
+              "type": "string"
+            },
+            "clientSessionCacheSize": {
+              "type": ["integer", "null"]
+            },
+            "maxIdleConnsPerHost": {
+              "type": ["integer", "null"]
+            }
+          },
+          "type": "object"
+        },
+        "uaa": {
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "cc": {
+          "additionalProperties": false,
+          "properties": {
+            "internalServiceHostname": {
+              "type": "string"
+            },
+            "externalPort": {
+              "type": "integer"
+            },
+            "publicTlsPort": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
+            "apiHost": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "gateway": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -647,9 +1525,6 @@
         }
       },
       "type": "object"
-    },
-    "sshProxyHostKey": {
-      "type": ["string", "null"]
     }
   },
   "type": "object"

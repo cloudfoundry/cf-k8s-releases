@@ -1,4 +1,5 @@
 {{- if .Values.sshProxy.enabled }}
+{{- $s := .Values.sshProxy }}
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -7,7 +8,7 @@ metadata:
   labels:
     app: ssh-proxy
 spec:
-  replicas: 1
+  replicas: {{ .Values.sshProxy.replicas }}
   selector:
     matchLabels:
       app: ssh-proxy
@@ -32,8 +33,27 @@ spec:
             {{- toYaml .Values.sshProxy.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: ssh-proxy
-              mountPath: /etc/ssl/certs/ssh-proxy
+            - name: cert-bbs
+              mountPath: /etc/ssl/certs/bbs
+              readOnly: true
+            - name: cert-loggregator
+              mountPath: /etc/ssl/certs/loggregator
+              readOnly: true
+            {{- if $s.backends.tls.enabled }}
+            - name: cert-backends-tls
+              mountPath: /etc/ssl/certs/backends-tls
+              readOnly: true
+            {{- end }}
+            {{- if $s.certificateSecrets.uaaCA }}
+            - name: cert-uaa-ca
+              mountPath: /etc/ssl/certs/uaa-ca
+              readOnly: true
+            {{- end }}
+            {{- if $s.certificateSecrets.ccCA }}
+            - name: cert-cc-ca
+              mountPath: /etc/ssl/certs/cc-ca
+              readOnly: true
+            {{- end }}
             - name: ssh-proxy-config
               mountPath: /ssh-proxy
       {{- if .Values.sshProxy.nodeSelector }}
@@ -45,9 +65,27 @@ spec:
         {{- toYaml .Values.sshProxy.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: ssh-proxy
+        - name: cert-bbs
           secret:
-            secretName: {{ required "sshProxy.certificateSecret is required" .Values.sshProxy.certificateSecret }}
+            secretName: {{ required "sshProxy.certificateSecrets.bbs is required" $s.certificateSecrets.bbs }}
+        - name: cert-loggregator
+          secret:
+            secretName: {{ required "sshProxy.certificateSecrets.loggregator is required" $s.certificateSecrets.loggregator }}
+        {{- if $s.backends.tls.enabled }}
+        - name: cert-backends-tls
+          secret:
+            secretName: {{ required "sshProxy.certificateSecrets.backendsTLS is required when backends.tls.enabled" $s.certificateSecrets.backendsTLS }}
+        {{- end }}
+        {{- if $s.certificateSecrets.uaaCA }}
+        - name: cert-uaa-ca
+          secret:
+            secretName: {{ $s.certificateSecrets.uaaCA }}
+        {{- end }}
+        {{- if $s.certificateSecrets.ccCA }}
+        - name: cert-cc-ca
+          secret:
+            secretName: {{ $s.certificateSecrets.ccCA }}
+        {{- end }}
         - name: ssh-proxy-config
           secret:
             secretName: ssh-proxy-config
@@ -65,7 +103,7 @@ spec:
       protocol: TCP
   selector:
     app: ssh-proxy
-{{- if .Values.gatewayObjects.enabled }}
+{{- if .Values.sshProxy.gateway.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute

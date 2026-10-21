@@ -7,7 +7,7 @@ metadata:
   labels:
     app: locket
 spec:
-  replicas: 1
+  replicas: {{ .Values.locket.replicas }}
   selector:
     matchLabels:
       app: locket
@@ -32,11 +32,15 @@ spec:
             {{- toYaml .Values.locket.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: locket
-              mountPath: /etc/ssl/certs/locket
-            {{- if not .Values.locketdb.skipSSLVerify }}
-            - name: postgres-tls
-              mountPath: /etc/ssl/certs/postgres
+            - name: cert-server
+              mountPath: /etc/ssl/certs/server
+              readOnly: true
+            - name: cert-loggregator
+              mountPath: /etc/ssl/certs/loggregator
+              readOnly: true
+            {{- if .Values.locket.db.requireSSL }}
+            - name: cert-database-ca
+              mountPath: /etc/ssl/certs/database-ca
               readOnly: true
             {{- end }}
             - name: locket-config
@@ -50,13 +54,16 @@ spec:
         {{- toYaml .Values.locket.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: locket
+        - name: cert-server
           secret:
-            secretName: {{ required "locket.certificateSecret is required" .Values.locket.certificateSecret }}
-        {{- if not .Values.locketdb.skipSSLVerify }}
-        - name: postgres-tls
+            secretName: {{ required "locket.certificateSecrets.server is required" .Values.locket.certificateSecrets.server }}
+        - name: cert-loggregator
           secret:
-            secretName: {{ required "locketdb.caCertificateSecret is required when locketdb.skipSSLVerify is false" .Values.locketdb.caCertificateSecret }}
+            secretName: {{ required "locket.certificateSecrets.loggregator is required" .Values.locket.certificateSecrets.loggregator }}
+        {{- if .Values.locket.db.requireSSL }}
+        - name: cert-database-ca
+          secret:
+            secretName: {{ required "locket.certificateSecrets.databaseCA is required when db.requireSSL" .Values.locket.certificateSecrets.databaseCA }}
         {{- end }}
         - name: locket-config
           secret:

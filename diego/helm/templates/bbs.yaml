@@ -7,7 +7,7 @@ metadata:
   labels:
     app: bbs
 spec:
-  replicas: 1
+  replicas: {{ .Values.bbs.replicas }}
   selector:
     matchLabels:
       app: bbs
@@ -18,13 +18,33 @@ spec:
       annotations:
         checksum/bbs-config: {{ include (print $.Template.BasePath "/bbs-config.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: bbs-init
+          image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              cat /bbs/bbs.json | envsubst > /tmp/bbs.json
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: bbs-config
+              mountPath: /bbs
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: bbs
           image: {{ .Values.bbs.image.repository }}:{{ default .Chart.AppVersion .Values.bbs.image.tag }}
           imagePullPolicy: {{ .Values.bbs.image.imagePullPolicy }}
           args:
             - "-config"
-            - "/bbs/bbs.json"
+            - "/tmp/bbs.json"
           ports:
             - containerPort: 8889
           {{- if .Values.bbs.resources }}
@@ -32,15 +52,27 @@ spec:
             {{- toYaml .Values.bbs.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: bbs
-              mountPath: /etc/ssl/certs/bbs
-            {{- if not .Values.diegodb.skipSSLVerify }}
-            - name: postgres-tls
-              mountPath: /etc/ssl/certs/postgres
+            - name: cert-server
+              mountPath: /etc/ssl/certs/server
+              readOnly: true
+            - name: cert-auctioneer
+              mountPath: /etc/ssl/certs/auctioneer
+              readOnly: true
+            - name: cert-rep
+              mountPath: /etc/ssl/certs/rep
+              readOnly: true
+            - name: cert-loggregator
+              mountPath: /etc/ssl/certs/loggregator
+              readOnly: true
+            {{- if .Values.bbs.db.requireSSL }}
+            - name: cert-database-ca
+              mountPath: /etc/ssl/certs/database-ca
               readOnly: true
             {{- end }}
             - name: bbs-config
               mountPath: /bbs
+            - name: tmp
+              mountPath: /tmp
       {{- if .Values.bbs.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.bbs.nodeSelector | nindent 8 }}
@@ -50,14 +82,25 @@ spec:
         {{- toYaml .Values.bbs.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: bbs
+        - name: cert-server
           secret:
-            secretName: {{ required "bbs.certificateSecret is required" .Values.bbs.certificateSecret }}
-        {{- if not .Values.diegodb.skipSSLVerify }}
-        - name: postgres-tls
+            secretName: {{ required "bbs.certificateSecrets.server is required" .Values.bbs.certificateSecrets.server }}
+        - name: cert-auctioneer
           secret:
-            secretName: {{ required "diegodb.caCertificateSecret is required when diegodb.skipSSLVerify is false" .Values.diegodb.caCertificateSecret }}
+            secretName: {{ required "bbs.certificateSecrets.auctioneer is required" .Values.bbs.certificateSecrets.auctioneer }}
+        - name: cert-rep
+          secret:
+            secretName: {{ required "bbs.certificateSecrets.rep is required" .Values.bbs.certificateSecrets.rep }}
+        - name: cert-loggregator
+          secret:
+            secretName: {{ required "bbs.certificateSecrets.loggregator is required" .Values.bbs.certificateSecrets.loggregator }}
+        {{- if .Values.bbs.db.requireSSL }}
+        - name: cert-database-ca
+          secret:
+            secretName: {{ required "bbs.certificateSecrets.databaseCA is required when db.requireSSL" .Values.bbs.certificateSecrets.databaseCA }}
         {{- end }}
+        - name: tmp
+          emptyDir: {}
         - name: bbs-config
           secret:
             secretName: bbs-config

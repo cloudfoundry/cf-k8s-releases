@@ -1,7 +1,35 @@
 auctioneer:
   enabled: false
-  certificateSecret: ""
-  hostname: "auctioneer.{{ .Release.Namespace }}.svc.cluster.local"
+  replicas: 1
+  certificateSecrets:
+    server: ""
+    bbs: ""
+    rep: ""
+    loggregator: ""
+  debugAddr: "127.0.0.1:17001"
+  listenAddr: "0.0.0.0:9016"
+  logLevel: info
+  cellStateTimeout: "10s"
+  binPackFirstFitWeight: 0.0
+  startingContainerWeight: 0.25
+  startingContainerCountMaximum: 0
+  bbs:
+    apiLocation: "bbs.{{ .Release.Namespace }}.svc.cluster.local:8889"
+    clientSessionCacheSize: ~
+    maxIdleConnsPerHost: ~
+  rep:
+    clientSessionCacheSize: 4096
+  locket:
+    apiLocation: "locket.{{ .Release.Namespace }}.svc.cluster.local:8891"
+    clientKeepaliveTime: 10
+    clientKeepaliveTimeout: 22
+  enableBBSHealthCheck: false
+  bbsHealthCheckInterval: "10s"
+  bbsHealthCheckTimeout: "5s"
+  bbsHealthCheckFailureThreshold: 3
+  loggregator:
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/auctioneer
     tag: ""
@@ -12,11 +40,71 @@ auctioneer:
 
 bbs:
   enabled: false
-  certificateSecret: ""
-  activeKeyLabel: "key-2016-06"
-  encryptionKeys:
-    key-2016-06: "MZvOZLfI9lLjUqPVZfJ7khVm1M4lq6"
-  hostname: "bbs.{{ .Release.Namespace }}.svc.cluster.local"
+  replicas: 1
+  certificateSecrets:
+    server: ""
+    auctioneer: ""
+    rep: ""
+    loggregator: ""
+    databaseCA: ""
+  activeKeyLabel: ~
+  encryptionKeys: {}
+  db:
+    name: diego
+    user: postgres
+    password: ~
+    port: 5432
+    address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+    driver: postgres
+    requireSSL: false
+    enableIdentityVerification: true
+    maxOpenConnections: 200
+    maxIdleConnections: 200
+    maxConnectionLifetime: 90
+    dbConnectionTimeout: 30
+    dbReadTimeout: 60
+    dbWriteTimeout: 60
+  listenAddr: "0.0.0.0:8889"
+  healthAddr: "127.0.0.1:8890"
+  debugAddr: "127.0.0.1:17017"
+  logLevel: info
+  debugLrpStartHeartbeats: false
+  enableAccessLog: false
+  advertiseUrl: "https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889"
+  enableDBHealthCheck: false
+  healthCheckTimeout: 5
+  healthCheckInterval: 10
+  healthCheckFailureThreshold: 3
+  tasks:
+    maxRetries: 3
+  cellRegistrations:
+    locket:
+      enabled: true
+  logging:
+    maxDataStringLength: 640
+  auctioneer:
+    apiLocation: "auctioneer.{{ .Release.Namespace }}.svc.cluster.local:9016"
+    requireTls: false
+  rep:
+    clientSessionCacheSize: 0
+  locket:
+    apiLocation: "locket.{{ .Release.Namespace }}.svc.cluster.local:8891"
+    clientKeepaliveTime: 10
+    clientKeepaliveTimeout: 22
+  convergence:
+    repeatIntervalInSeconds: 30
+    kickTaskDurationInSeconds: 30
+    expireCompletedTaskDurationInSeconds: 120
+    expirePendingTaskDurationInSeconds: 1800
+  metrics:
+    advancedMetrics:
+      enabled: false
+      routeConfig:
+        requestCount: []
+        requestLatency: []
+  loggregator:
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/bbs
     tag: ""
@@ -27,8 +115,11 @@ bbs:
 
 fileserver:
   enabled: false
-  useSSL: false
-  certificateSecret: ""
+  replicas: 1
+  httpsServerEnabled: false
+  logLevel: info
+  certificateSecrets:
+    server: ""
   image:
     repository: ghcr.io/cloudfoundry/k8s/fileserver
     tag: ""
@@ -39,8 +130,36 @@ fileserver:
 
 locket:
   enabled: false
-  certificateSecret: ""
+  replicas: 1
+  certificateSecrets:
+    server: ""
+    loggregator: ""
+    databaseCA: ""
   hostname: "locket.{{ .Release.Namespace }}.svc.cluster.local"
+  listenAddr: "0.0.0.0:8891"
+  debugAddr: "127.0.0.1:17018"
+  logLevel: info
+  enableDBHealthCheck: false
+  healthCheckFailureThreshold: 3
+  healthCheckTimeout: 5
+  healthCheckInterval: 10
+  db:
+    name: locket
+    user: postgres
+    password: ~
+    port: 5432
+    address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+    driver: postgres
+    requireSSL: false
+    enableIdentityVerification: true
+    maxOpenConnections: 200
+    dbConnectionTimeout: 30
+    dbReadTimeout: 60
+    dbWriteTimeout: 60
+    dbOperationTimeout: 10
+  loggregator:
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/locket
     tag: ""
@@ -51,8 +170,51 @@ locket:
 
 sshProxy:
   enabled: false
-  certificateSecret: ""
-  oauthClientsSecret: ""
+  replicas: 1
+  certificateSecrets:
+    bbs: ""
+    loggregator: ""
+    backendsTLS: ""
+    uaaCA: ""
+    ccCA: ""
+  hostKey: ~
+  diegoCredentials: ~
+  uaaSecret: ~
+  listenAddr: "0.0.0.0:2222"
+  healthcheckListenAddr: "0.0.0.0:2223"
+  disableHealthcheckServer: false
+  debugAddr: "127.0.0.1:17016"
+  logLevel: info
+  enableCfAuth: false
+  enableDiegoAuth: false
+  idleConnectionTimeoutInSeconds: 300
+  maxConnectionDurationInSeconds: 0
+  connectToInstanceAddress: false
+  allowedCiphers: ""
+  allowedMacs: ""
+  allowedKeyexchanges: ""
+  allowedHostKeyAlgorithms: ""
+  ssl:
+    skipCertVerify: false
+  backends:
+    tls:
+      enabled: false
+  bbs:
+    apiLocation: "bbs.{{ .Release.Namespace }}.svc.cluster.local:8889"
+    clientSessionCacheSize: ~
+    maxIdleConnsPerHost: ~
+  uaa:
+    url: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local"
+    port: 8443
+  cc:
+    internalServiceHostname: "cloud-controller-ng.{{ .Release.Namespace }}.svc.cluster.local"
+    externalPort: 9022
+    publicTlsPort: 9024
+  loggregator:
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+  gateway:
+    enabled: true
   image:
     repository: ghcr.io/cloudfoundry/k8s/ssh-proxy
     tag: ""
@@ -63,24 +225,51 @@ sshProxy:
 
 routeEmitter:
   enabled: false
-  certificateSecret: ""
-  natsCertificateSecret: ""
-  loggregatorCertificateSecret: ""
-  bbsCertificateSecret: ""
-  locketCertificateSecret: ""
-  uaaCertificateSecret: ""
-  oauthClientsSecret: ""
-  natsAddress: "nats.{{ .Release.Namespace }}.svc.cluster.local:4222"
-  locketAddress: "locket.{{ .Release.Namespace }}.svc.cluster.local:8891"
-  bbsAddress: "https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889"
+  certificateSecrets:
+    bbs: ""
+    nats: ""
+    loggregator: ""
+    uaaCA: ""
+    routingAPI: ""
+  registerDirectInstanceRoutes: false
+  localMode: false
+  nats:
+    user: ~
+    password: ~
+    address: "nats.{{ .Release.Namespace }}.svc.cluster.local:4222"
+    tls:
+      enabled: false
+  debugAddr: "127.0.0.1:17009"
+  healthcheckAddress: "127.0.0.1:17011"
+  syncIntervalInSeconds: 60
+  logLevel: info
+  jitterFactor: 0.2
+  bbs:
+    apiLocation: "bbs.{{ .Release.Namespace }}.svc.cluster.local:8889"
+    clientSessionCacheSize: ~
+    maxIdleConnsPerHost: ~
+  locket:
+    address: "locket.{{ .Release.Namespace }}.svc.cluster.local:8891"
+  internalRoutes:
+    enabled: false
+  tcp:
+    enabled: false
+    enableTls: false
   routingApi:
     enabled: false
-    certificateSecret: ""
-    address: "https://routing-api.{{ .Release.Namespace }}.svc.cluster.local"
-    port: 3001
-  uaaAddress: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"
-  enableInternalEmitter: true
-  enableTcpEmitter: true
+    url: "http://routing-api.{{ .Release.Namespace }}.svc.cluster.local"
+    port: 3000
+    mtlsPort: 3001
+    authEnabled: true
+  uaa:
+    hostname: "uaa.{{ .Release.Namespace }}.svc.cluster.local"
+    port: 8443
+    clientName: tcp_emitter
+    clientSecret: ~
+    skipCertVerify: false
+  loggregator:
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/route-emitter
     tag: ""
@@ -100,26 +289,98 @@ rep:
     repository: ghcr.io/cloudfoundry/k8s/rep
     tag: ""
     imagePullPolicy: IfNotPresent
-  instanceIdentityCASecret: instance-identity
-  caCertificate: ~
+  certificateSecrets:
+    instanceIdentity: instance-identity
+    loggregator: ""
+    locket: ""
   advertiseDomain: "{{ .Release.Namespace }}.pod.cluster.local"
-  bbsAddress: https://bbs.{{ .Release.Namespace }}.svc.cluster.local:8889
-  containerProxyVerifySubjectAltName:
-    - "gorouter"
-    - "ssh-proxy"
+  debugAddr: "127.0.0.1:17008"
+  listenAddrAdmin: "127.0.0.1:1800"
+  listenAddrSecurable: "0.0.0.0:1801"
+  healthCheckListenAddr: ""
+  advertisePreferenceForInstanceAddress: false
+  logContainerNetworkInfo: false
+  logLevel: info
+  pollingIntervalInSeconds: 30
+  evacuationPollingIntervalInSeconds: 10
+  evacuationTimeoutInSeconds: 600
+  extraRootFsDir: ""
+  sidecarRootfs: ""
+  rootfsProviders:
+    - docker
+  cellAnnotations: {}
+  ssl:
+    skipCertVerify: false
+  bbs:
+    apiLocation: "bbs.{{ .Release.Namespace }}.svc.cluster.local:8889"
+    requestTimeout: "10s"
+    clientSessionCacheSize: ~
+    maxIdleConnsPerHost: ~
   locket:
-    address: locket.{{ .Release.Namespace }}.svc.cluster.local:8891
-    certificateSecret: ""
+    apiLocation: "locket.{{ .Release.Namespace }}.svc.cluster.local:8891"
+    lockTtl: 15
+    clientKeepaliveTime: 10
+    clientKeepaliveTimeout: 22
+  diskHealthCheckPaths: []
+  diskHealthCheckInterval: "15s"
+  diskHealthCheckFailureThreshold: 3
+  stacks: {}
+  executor:
+    autoDiskCapacityOverheadMb: 0
+    memoryCapacityMb: auto
+    diskCapacityMb: auto
+    maxConcurrentDownloads: 5
+    containerMaxCpuShares: 1024
+    containerInodeLimit: 200000
+    containerMetricsReportInterval: "15s"
+    maxCacheSizeInBytes: 10000000000
+    minCachePartitionFreeBytes: 5368709120
+    useSchedulableDiskSize: false
+    proxyHealthcheckInterval: "30s"
+    enableContainerProxyHealthcheck: false
+    healthyMonitoringIntervalInSeconds: 30
+    unhealthyMonitoringIntervalInSeconds: 2
+    createWorkPoolSize: 32
+    deleteWorkPoolSize: 32
+    readWorkPoolSize: 64
+    metricsWorkPoolSize: 8
+    healthcheckWorkPoolSize: 64
+    maxLogLinesPerSecond: 0
+    declarativeHealthcheckDefaultTimeout: "1s"
+    injectWorkloadIdentity: false
+    instanceIdentityValidityPeriodInHours: 24
+    postSetupHook: ~
+    postSetupUser: ~
+    garden:
+      address: "/run/containerd/containerd.sock"
+    volman:
+      driverPaths: "/var/lib/rep/voldrivers"
+  containers:
+    gracefulShutdownIntervalInSeconds: 10
+    setCpuWeight: false
+    layeringMode: single-layer
+    trustedCaCertificates: ~
+    proxy:
+      additionalMemoryAllocationMb: 32
+      enableHttp2: true
+      requireAndVerifyClientCertificates: false
+      trustedCaCertificates: []
+      verifySubjectAltName: []
+      enableUnproxiedPortMappings: true
+      adsAddresses: []
+      configurationReloadDuration: "5s"
+  enableHealthcheckMetrics: false
+  cellRegistrations:
+    locket:
+      enabled: true
+  logging:
+    maxDataStringLength: 640
   loggregator:
-    apiHost: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
-    apiPort: 3458
-    certificateSecret: ""
-  fileServer:
-    address: http://fileserver.{{ .Release.Namespace }}.svc.cluster.local:8080
-  stacks:
-    cflinuxfs4: ghcr.io/cloudfoundry/k8s/cflinuxfs4:1.304.0
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+    appMetricExclusionFilter:
+      - cpu_entitlement
   workloadsNamespace: cf-workloads
-  pauseImage: registry.k8s.io/pause:3.10.2
   resources: ~
   watcher:
     resources:
@@ -135,29 +396,3 @@ rep:
       operator: Equal
       value: "true"
       effect: NoSchedule
-
-diegodb:
-  name: diego
-  password: ~
-  user: postgres
-  port: 5432
-  address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
-  caCertificateSecret: ""
-  skipSSLVerify: true
-  skipHostnameVerify: false
-
-locketdb:
-  name: locket
-  password: ~
-  user: postgres
-  port: 5432
-  address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
-  caCertificateSecret: ""
-  skipSSLVerify: true
-  skipHostnameVerify: false
-
-sshProxyHostKey: ~
-diegoSSHCredentials: ~
-
-gatewayObjects:
-  enabled: true

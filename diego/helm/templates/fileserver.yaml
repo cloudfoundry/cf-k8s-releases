@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: fileserver
 spec:
   ports:
-{{- if .Values.fileserver.useSSL }}
+{{- if .Values.fileserver.httpsServerEnabled }}
     - port: 8443
       name: https
       targetPort: 8443
@@ -27,10 +27,7 @@ metadata:
   labels:
     app.kubernetes.io/name: fileserver
 spec:
-  # This is a singleton.
-  replicas: 1
-  strategy:
-    type: Recreate
+  replicas: {{ .Values.fileserver.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: fileserver
@@ -46,7 +43,7 @@ spec:
           image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.AppVersion .Values.fileserver.image.tag }}
           imagePullPolicy: {{ .Values.fileserver.image.imagePullPolicy }}
           ports:
-{{- if .Values.fileserver.useSSL }}
+{{- if .Values.fileserver.httpsServerEnabled }}
             - name: https
               containerPort: 8443
               protocol: TCP
@@ -59,11 +56,11 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-          {{- if .Values.fileserver.useSSL }}
-            - name: fileserver-tls
-              mountPath: /etc/fileserver/tls
+            {{- if .Values.fileserver.httpsServerEnabled }}
+            - name: cert-server
+              mountPath: /etc/ssl/certs/server
               readOnly: true
-          {{- end }}
+            {{- end }}
           {{- if .Values.fileserver.resources }}
           resources:
             {{- toYaml .Values.fileserver.resources | nindent 12 }}
@@ -80,9 +77,9 @@ spec:
         - name: nginx-config
           configMap:
             name: fileserver-config
-      {{- if .Values.fileserver.useSSL }}
-        - name: fileserver-tls
+        {{- if .Values.fileserver.httpsServerEnabled }}
+        - name: cert-server
           secret:
-            secretName: {{ required "fileserver.certificateSecret is required" .Values.fileserver.certificateSecret }}
-      {{- end}}
+            secretName: {{ required "fileserver.certificateSecrets.server is required when httpsServerEnabled" .Values.fileserver.certificateSecrets.server }}
+        {{- end }}
 {{- end }}

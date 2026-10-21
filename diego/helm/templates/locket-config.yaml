@@ -1,5 +1,7 @@
 {{- if .Values.locket.enabled }}
-{{ $_ := required ".Values.locketdb.password must be provided" .Values.locketdb.password }}
+{{- $l := .Values.locket }}
+{{- $db := .Values.locket.db }}
+{{- $_ := required "locket.db.password must be provided" $db.password }}
 ---
 apiVersion: v1
 kind: Secret
@@ -9,35 +11,29 @@ stringData:
   locket.json: |-
     {
       "report_interval": "1m",
-      "ca_file": "/etc/ssl/certs/locket/ca.crt",
-      "cert_file": "/etc/ssl/certs/locket/tls.crt",
-      "key_file": "/etc/ssl/certs/locket/tls.key",
-      "debug_address": "127.0.0.1:17018",
-      "listen_address": "0.0.0.0:8891",
-      "log_level": "info",
-      "max_open_database_connections": 200,
+      "ca_file": "/etc/ssl/certs/server/ca.crt",
+      "cert_file": "/etc/ssl/certs/server/tls.crt",
+      "key_file": "/etc/ssl/certs/server/tls.key",
+      "debug_address": "{{ $l.debugAddr }}",
+      "listen_address": "{{ $l.listenAddr }}",
+      "log_level": "{{ $l.logLevel }}",
+      "max_open_database_connections": {{ $db.maxOpenConnections }},
       "max_database_connection_lifetime": "1h",
-      "database_connection_string": "postgres://{{ .Values.locketdb.user }}:{{ .Values.locketdb.password }}@{{ tpl .Values.locketdb.address . }}:{{ .Values.locketdb.port }}/{{ .Values.locketdb.name }}",
-      "database_driver": "postgres",
-      "sql_enable_identity_verification": {{ not .Values.locketdb.skipHostnameVerify }},
-      {{- if not .Values.locketdb.skipSSLVerify }}
-      "sql_ca_cert_file": "/etc/ssl/certs/postgres/ca.crt",
+      "health_check_failure_threshold": {{ $l.healthCheckFailureThreshold }},
+      "enable_db_health_check": {{ $l.enableDBHealthCheck }},
+      "database_connection_string": "{{ include "diego.sqlConnectionString" (dict "db" $db "root" $) }}",
+      "database_driver": "{{ $db.driver }}",
+      {{- if $db.requireSSL }}
+      "sql_ca_cert_file": "/etc/ssl/certs/database-ca/ca.crt",
+      "sql_enable_identity_verification": {{ $db.enableIdentityVerification }},
       {{- end }}
-      "db_connection_timeout": "30s",
-      "db_read_timeout": "600s",
-      "db_write_timeout": "600s",
+      "db_connection_timeout": "{{ $db.dbConnectionTimeout }}s",
+      "db_read_timeout": "{{ $db.dbReadTimeout }}s",
+      "db_write_timeout": "{{ $db.dbWriteTimeout }}s",
+      "db_operation_timeout": "{{ $db.dbOperationTimeout }}s",
+      "health_check_timeout": "{{ $l.healthCheckTimeout }}s",
+      "health_check_interval": "{{ $l.healthCheckInterval }}s",
       "time_format": "rfc3339",
-      "loggregator": {
-        "loggregator_use_v2_api": true,
-        "loggregator_api_port": 3458,
-        "loggregator_api_host": "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local",
-        "loggregator_ca_path": "/etc/ssl/certs/locket/ca.crt",
-        "loggregator_cert_path": "/etc/ssl/certs/locket/tls.crt",
-        "loggregator_key_path": "/etc/ssl/certs/locket/tls.key",
-        "loggregator_job_deployment": "cf",
-        "loggregator_job_name": "locket",
-        "loggregator_job_origin": "locket",
-        "loggregator_source_id": "locket"
-      }
+      {{- include "diego.loggregatorConfig" (dict "cfg" $l.loggregator "jobName" "locket" "origin" "locket" "sourceId" "locket" "root" $) | nindent 6 }}
     }
 {{- end }}

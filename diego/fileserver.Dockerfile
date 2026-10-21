@@ -15,7 +15,6 @@ RUN <<-EOF
     mkdir -p /tmp/cnb_app_lifecycle
     mkdir -p /tmp/buildpack_app_lifecycle
     mkdir -p /tmp/docker_app_lifecycle
-    mkdir -p /tmp/final/cf-assets
     mkdir -p /tmp/final/v1/static/cnb_app_lifecycle
     mkdir -p /tmp/final/v1/static/buildpack_app_lifecycle
     mkdir -p /tmp/final/v1/static/docker_app_lifecycle
@@ -29,7 +28,6 @@ RUN <<-EOF
 
     # healthcheck
     CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=amd64 go build -o /tmp/healthcheck -a -installsuffix static code.cloudfoundry.org/healthcheck/cmd/healthcheck
-    tar -czf /tmp/final/cf-assets/healthcheck.tgz -C /tmp healthcheck
 
     cp /tmp/healthcheck /tmp/cnb_app_lifecycle
     cp /tmp/healthcheck /tmp/buildpack_app_lifecycle
@@ -54,12 +52,6 @@ RUN <<-EOF
     cp /tmp/cf-pcap /tmp/cnb_app_lifecycle
     cp /tmp/cf-pcap /tmp/buildpack_app_lifecycle
     cp /tmp/cf-pcap /tmp/docker_app_lifecycle
-    
-    # envoy proxy
-    ENVOY_VERSION=$(sed -nE 's#^proxy/envoy-.*-([0-9]+\.[0-9]+\.[0-9]+)\.tgz:$#\1#p' /diego/config/blobs.yml)
-    wget -O /tmp/envoy https://github.com/envoyproxy/envoy/releases/download/v${ENVOY_VERSION}/envoy-${ENVOY_VERSION}-linux-x86_64
-    chmod +x /tmp/envoy
-    tar -czf /tmp/final/cf-assets/proxy.tgz -C /tmp envoy
 
     # lifecycles
     ## cnbapplifecycle
