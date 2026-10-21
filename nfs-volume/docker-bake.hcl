@@ -7,13 +7,18 @@ variable "NFS_VOLUME_RELEASE_VERSION" {
   default = "7.74.0"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
+  default = "7.74.0"
+}
+
 group "default" {
   targets = ["nfs-volume"]
 }
 
 target "nfs-volume" {
   dockerfile = "${component}.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${NFS_VOLUME_RELEASE_VERSION}" ]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}" ]
   name = component
 
   matrix = {

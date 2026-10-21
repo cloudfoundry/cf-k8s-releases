@@ -1,9 +1,9 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 group "default" {
-    targets = [ "cf-networking" ]
+  targets = [ "cf-networking" ]
 }
 
 variable "CF_NETWORKING_RELEASE_VERSION" {
@@ -11,9 +11,14 @@ variable "CF_NETWORKING_RELEASE_VERSION" {
   default = "3.128.0"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/cf-networking-release
+  default = "3.128.0"
+}
+
 target "cf-networking" {
   dockerfile = "${component}.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${CF_NETWORKING_RELEASE_VERSION}"]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}"]
   name = component
 
   matrix = {

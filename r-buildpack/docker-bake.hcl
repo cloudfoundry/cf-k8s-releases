@@ -1,26 +1,31 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "BUILDPACK_VERSION" {
-    # renovate: dataSource=github-releases depName=cloudfoundry/r-buildpack
-    default = "1.2.28"
+  # renovate: dataSource=github-releases depName=cloudfoundry/r-buildpack
+  default = "1.2.28"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/r-buildpack
+  default = "1.2.28"
 }
 
 group "default" {
-    targets = [ "r-buildpack" ]
+  targets = [ "r-buildpack" ]
 }
 
 target "r-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}r-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}r-buildpack:latest" ]
-    dockerfile = "../buildpacks.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}r-buildpack:${IMAGE_VERSION}", "${REGISTRY_PREFIX}r-buildpack:latest" ]
+  dockerfile = "../buildpacks.Dockerfile"
 
-    args = {
-        BUILDPACK_VERSION = BUILDPACK_VERSION
-    }
+  args = {
+    BUILDPACK_VERSION = BUILDPACK_VERSION
+  }
 
-    contexts = {
-      "src" = "https://github.com/cloudfoundry/r-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/r-buildpack.git#v${BUILDPACK_VERSION}"
+    "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
+  }
 }

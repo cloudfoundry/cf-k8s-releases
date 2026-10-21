@@ -1,26 +1,31 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "BUILDPACK_VERSION" {
-    # renovate: dataSource=github-releases depName=cloudfoundry/php-buildpack
-    default = "5.1.2"
+  # renovate: dataSource=github-releases depName=cloudfoundry/php-buildpack
+  default = "5.1.2"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/php-buildpack
+  default = "5.1.2"
 }
 
 group "default" {
-    targets = [ "php-buildpack" ]
+  targets = [ "php-buildpack" ]
 }
 
 target "php-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}php-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}php-buildpack:latest" ]
-    dockerfile = "../buildpacks.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}php-buildpack:${IMAGE_VERSION}", "${REGISTRY_PREFIX}php-buildpack:latest" ]
+  dockerfile = "../buildpacks.Dockerfile"
 
-    args = {
-        BUILDPACK_VERSION = BUILDPACK_VERSION
-    }
+  args = {
+    BUILDPACK_VERSION = BUILDPACK_VERSION
+  }
 
-    contexts = {
-      "src" = "https://github.com/cloudfoundry/php-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/php-buildpack.git#v${BUILDPACK_VERSION}"
+    "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
+  }
 }

@@ -6,15 +6,18 @@ on:
     branches:
       - main
     paths:
-      - 'loggregator-agent/helm/Chart.yaml'
+      - loggregator-agent/helm/Chart.yaml
       
 env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
   HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
 
-
 jobs:
-  loggregator-agent-release:
+  loggregator-agent-image-release:
+    uses: ./.github/workflows/reusable-matrix-image-build.yaml
+    with:
+      dir: loggregator-agent
+      target: default
+  loggregator-agent-helm-release:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -22,26 +25,16 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v7
-      - uses: ./.github/actions/init
+      - uses: docker/login-action@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: loggregator-agent
-        run: |
-          echo "CHART_VERSION=$(yq e '.version' helm/Chart.yaml)" >> $GITHUB_ENV
-          echo "APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)" >> $GITHUB_ENV
-      - name: Release Images
-        working-directory: loggregator-agent
-        run: |
-          # Check if image available
-          if docker pull ${REGISTRY_PREFIX}loggregator-agent:$APP_VERSION > /dev/null 2>&1; then
-             echo "loggregator-agent image already exists in version $APP_VERSION."
-          else
-            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
-          fi
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Helm Chart
         working-directory: loggregator-agent
         run: |
+          CHART_VERSION=$(yq e '.version' helm/Chart.yaml)
+
           # Check if chart available
           if helm show chart oci://${HELM_REGISTRY_PREFIX}loggregator-agent --version $CHART_VERSION > /dev/null 2>&1; then
              echo "Helm chart already exists in version $CHART_VERSION."

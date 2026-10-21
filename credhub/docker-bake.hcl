@@ -7,13 +7,18 @@ variable "CREDHUB_RELEASE_VERSION" {
   default = "2.15.27"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=pivotal/credhub-release
+  default = "2.15.27"
+}
+
 group "default" {
   targets = ["credhub"]
 }
 
 target "credhub" {
   dockerfile = "credhub.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}credhub:latest", "${REGISTRY_PREFIX}credhub:${CREDHUB_RELEASE_VERSION}" ]
+  tags = [ "${REGISTRY_PREFIX}credhub:latest", "${REGISTRY_PREFIX}credhub:${IMAGE_VERSION}" ]
 
   contexts = {
     "src" = "https://github.com/pivotal/credhub-release.git#${CREDHUB_RELEASE_VERSION}:src/credhub"

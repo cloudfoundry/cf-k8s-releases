@@ -1,26 +1,31 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "BUILDPACK_VERSION" {
-    # renovate: dataSource=github-releases depName=cloudfoundry/nginx-buildpack
-    default = "1.2.40"
+  # renovate: dataSource=github-releases depName=cloudfoundry/nginx-buildpack
+  default = "1.2.40"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/nginx-buildpack
+  default = "1.2.40"
 }
 
 group "default" {
-    targets = [ "nginx-buildpack" ]
+  targets = [ "nginx-buildpack" ]
 }
 
 target "nginx-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}nginx-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}nginx-buildpack:latest" ]
-    dockerfile = "../buildpacks.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}nginx-buildpack:${IMAGE_VERSION}", "${REGISTRY_PREFIX}nginx-buildpack:latest" ]
+  dockerfile = "../buildpacks.Dockerfile"
 
-    args = {
-        BUILDPACK_VERSION = BUILDPACK_VERSION
-    }
+  args = {
+    BUILDPACK_VERSION = BUILDPACK_VERSION
+  }
 
-    contexts = {
-      "src" = "https://github.com/cloudfoundry/nginx-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/nginx-buildpack.git#v${BUILDPACK_VERSION}"
+    "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
+  }
 }
