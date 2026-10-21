@@ -860,16 +860,46 @@
         "replicas": {
           "type": "integer"
         },
+        "listenAddr": {
+          "type": "string"
+        },
         "httpsServerEnabled": {
           "type": "boolean"
         },
+        "httpsListenAddr": {
+          "type": "string"
+        },
+        "debugAddr": {
+          "type": "string"
+        },
         "logLevel": {
+          "type": "string"
+        },
+        "staticDirectory": {
           "type": "string"
         },
         "certificateSecrets": {
           "additionalProperties": false,
           "properties": {
             "server": {
+              "type": "string"
+            },
+            "loggregator": {
+              "type": "string"
+            },
+            "clientCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "v2ApiPort": {
+              "type": "integer"
+            },
+            "apiHost": {
               "type": "string"
             }
           },

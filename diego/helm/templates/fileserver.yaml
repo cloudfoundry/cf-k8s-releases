@@ -12,11 +12,10 @@ spec:
     - port: 8443
       name: https
       targetPort: 8443
-{{- else }}
+{{- end }}
     - port: 8080
       name: http
       targetPort: 8080
-{{- end }}
   selector:
     app.kubernetes.io/name: fileserver
 ---
@@ -39,27 +38,35 @@ spec:
         checksum/fileserver-config: {{ include (print $.Template.BasePath "/fileserver-config.yaml") . | sha256sum }}
     spec:
       containers:
-        - name: nginx
+        - name: fileserver
           image: {{ .Values.fileserver.image.repository }}:{{ default .Chart.AppVersion .Values.fileserver.image.tag }}
           imagePullPolicy: {{ .Values.fileserver.image.imagePullPolicy }}
+          args: ["-config", "/etc/fileserver/fileserver.conf"]
           ports:
-{{- if .Values.fileserver.httpsServerEnabled }}
+          {{- if .Values.fileserver.httpsServerEnabled }}
             - name: https
               containerPort: 8443
               protocol: TCP
-{{- else }}
+          {{- end }}
             - name: http
               containerPort: 8080
               protocol: TCP
-{{- end }}
           volumeMounts:
-            - name: nginx-config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+            - name: fileserver-config
+              mountPath: /etc/fileserver/fileserver.conf
+              subPath: fileserver.conf
+            - name: cert-loggregator
+              mountPath: /etc/ssl/certs/loggregator
+              readOnly: true
             {{- if .Values.fileserver.httpsServerEnabled }}
             - name: cert-server
               mountPath: /etc/ssl/certs/server
               readOnly: true
+            {{- if .Values.fileserver.certificateSecrets.clientCA }}
+            - name: cert-client-ca
+              mountPath: /etc/ssl/certs/client-ca
+              readOnly: true
+            {{- end }}
             {{- end }}
           {{- if .Values.fileserver.resources }}
           resources:
@@ -74,12 +81,20 @@ spec:
         {{- toYaml .Values.fileserver.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: nginx-config
+        - name: fileserver-config
           configMap:
             name: fileserver-config
+        - name: cert-loggregator
+          secret:
+            secretName: {{ required "fileserver.certificateSecrets.loggregator is required" .Values.fileserver.certificateSecrets.loggregator }}
         {{- if .Values.fileserver.httpsServerEnabled }}
         - name: cert-server
           secret:
             secretName: {{ required "fileserver.certificateSecrets.server is required when httpsServerEnabled" .Values.fileserver.certificateSecrets.server }}
+        {{- if .Values.fileserver.certificateSecrets.clientCA }}
+        - name: cert-client-ca
+          secret:
+            secretName: {{ .Values.fileserver.certificateSecrets.clientCA }}
+        {{- end }}
         {{- end }}
 {{- end }}

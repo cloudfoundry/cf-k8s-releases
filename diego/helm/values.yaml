@@ -116,10 +116,19 @@ bbs:
 fileserver:
   enabled: false
   replicas: 1
+  listenAddr: "0.0.0.0:8080"
   httpsServerEnabled: false
+  httpsListenAddr: "0.0.0.0:8443"
+  debugAddr: ""
   logLevel: info
+  staticDirectory: "/static"
   certificateSecrets:
     server: ""
+    loggregator: ""
+    clientCA: ""
+  loggregator:
+    v2ApiPort: 3458
+    apiHost: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
   image:
     repository: ghcr.io/cloudfoundry/k8s/fileserver
     tag: ""

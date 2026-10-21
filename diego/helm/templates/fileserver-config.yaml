@@ -1,10 +1,28 @@
 {{- if .Values.fileserver.enabled }}
+{{- $f := .Values.fileserver }}
+{{- if and $f.httpsServerEnabled (not $f.certificateSecrets.server) }}{{- fail "fileserver.certificateSecrets.server is required when httpsServerEnabled" }}{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: fileserver-config
 data:
-  nginx.conf: |-
-    {{- tpl (.Files.Get "fileserver/nginx.conf") . | nindent 4 }}
+  fileserver.conf: |-
+    {
+      "server_address": "{{ $f.listenAddr }}",
+      "debug_address": "{{ $f.debugAddr }}",
+      "static_directory": "{{ $f.staticDirectory }}",
+      "https_server_enabled": {{ $f.httpsServerEnabled }},
+      "https_listen_addr": "{{ $f.httpsListenAddr }}",
+      "log_level": "{{ $f.logLevel }}",
+      {{- if $f.httpsServerEnabled }}
+      "cert_file": "/etc/ssl/certs/server/tls.crt",
+      "key_file": "/etc/ssl/certs/server/tls.key",
+      {{- if $f.certificateSecrets.clientCA }}
+      "client_ca_cert_file": "/etc/ssl/certs/client-ca/ca.crt",
+      {{- end }}
+      {{- end }}
+      "time_format": "rfc3339",
+      {{- include "diego.loggregatorConfig" (dict "cfg" $f.loggregator "jobName" "file_server" "origin" "file_server" "sourceId" "file_server" "root" $) | nindent 6 }}
+    }
 {{- end }}
