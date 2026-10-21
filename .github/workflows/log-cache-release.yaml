@@ -6,15 +6,18 @@ on:
     branches:
       - main
     paths:
-      - 'log-cache/helm/Chart.yaml'
+      - log-cache/helm/Chart.yaml
       
 env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
   HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
 
-
 jobs:
-  log-cache-release:
+  log-cache-image-release:
+    uses: ./.github/workflows/reusable-matrix-image-build.yaml
+    with:
+      dir: log-cache
+      target: default
+  log-cache-helm-release:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -22,26 +25,16 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v7
-      - uses: ./.github/actions/init
+      - uses: docker/login-action@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine Versions
-        working-directory: log-cache
-        run: |
-          echo "CHART_VERSION=$(yq e '.version' helm/Chart.yaml)" >> $GITHUB_ENV
-          echo "APP_VERSION=$(yq e '.appVersion' helm/Chart.yaml)" >> $GITHUB_ENV
-      - name: Release Images
-        working-directory: log-cache
-        run: |
-          # Check if image available
-          if docker pull ${REGISTRY_PREFIX}log-cache:$APP_VERSION > /dev/null 2>&1; then
-             echo "log-cache image already exists in version $APP_VERSION."
-          else
-            docker buildx bake --set '*.platform=linux/amd64,linux/arm64' --push
-          fi
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Helm Chart
         working-directory: log-cache
         run: |
+          CHART_VERSION=$(yq e '.version' helm/Chart.yaml)
+
           # Check if chart available
           if helm show chart oci://${HELM_REGISTRY_PREFIX}log-cache --version $CHART_VERSION > /dev/null 2>&1; then
              echo "Helm chart already exists in version $CHART_VERSION."

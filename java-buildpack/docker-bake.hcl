@@ -1,26 +1,31 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/java-buildpack
-    default = "5.1.0"
+  default = "5.1.0"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/java-buildpack
+  default = "5.1.0"
 }
 
 group "default" {
-    targets = [ "java-buildpack" ]
+  targets = [ "java-buildpack" ]
 }
 
 target "java-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}java-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}java-buildpack:latest" ]
-    dockerfile = "../buildpacks.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}java-buildpack:${IMAGE_VERSION}", "${REGISTRY_PREFIX}java-buildpack:latest" ]
+  dockerfile = "../buildpacks.Dockerfile"
 
   args = {
     BUILDPACK_VERSION = BUILDPACK_VERSION
   }
 
-    contexts = {
-      "src" = "https://github.com/cloudfoundry/java-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/java-buildpack.git#v${BUILDPACK_VERSION}"
+    "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
+  }
 }

@@ -1,9 +1,9 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 group "default" {
-    targets = [ "bosh-dns" ]
+  targets = [ "bosh-dns" ]
 }
 
 variable "BOSH_DNS_RELEASE_VERSION" {
@@ -11,9 +11,14 @@ variable "BOSH_DNS_RELEASE_VERSION" {
   default = "1.39.34"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/bosh-dns-release
+  default = "1.39.34"
+}
+
 target "bosh-dns" {
   dockerfile = "${component}.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${BOSH_DNS_RELEASE_VERSION}"]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}"]
   name = component
 
   matrix = {

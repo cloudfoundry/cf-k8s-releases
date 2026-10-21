@@ -7,13 +7,18 @@ variable "LOGGREGATOR_AGENT_RELEASE_VERSION" {
   default = "8.3.31"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
+  default = "8.3.31"
+}
+
 group "default" {
   targets = ["loggregator-agent"]
 }
 
 target "loggregator-agent" {
   dockerfile = "${component}.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${LOGGREGATOR_AGENT_RELEASE_VERSION}"]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}"]
   name = component
 
   matrix = {

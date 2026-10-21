@@ -7,13 +7,18 @@ variable "LOG_CACHE_RELEASE_VERSION" {
   default = "3.2.17"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/log-cache-release
+  default = "3.2.17"
+}
+
 group "default" {
   targets = ["log-cache"]
 }
 
 target "log-cache" {
   dockerfile = "log-cache.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${LOG_CACHE_RELEASE_VERSION}"]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}"]
   name = component
 
   matrix = {

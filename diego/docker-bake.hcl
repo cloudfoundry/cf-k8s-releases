@@ -1,60 +1,65 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "DIEGO_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-    default = "2.151.0"
+  default = "2.151.0"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
+  default = "2.151.0"
 }
 
 variable "TAR_VERSION" {
-    default = "1.35"
+  default = "1.35"
 }
 
 group "default" {
-    targets = [ "diego", "fileserver", "rep" ]
+  targets = [ "diego", "fileserver", "rep" ]
 }
 
 function "targetname" {
-    params = [component]
-    result = length(split("/", component)) > 1 ? split("/", component)[1] : component
+  params = [component]
+  result = length(split("/", component)) > 1 ? split("/", component)[1] : component
 }
 
 target "diego" {
-    dockerfile = "Dockerfile"
-    tags = [ "${REGISTRY_PREFIX}${targetname(component)}:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}${targetname(component)}:latest" ]
-    name = targetname(component)
+  dockerfile = "Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}${targetname(component)}:${IMAGE_VERSION}", "${REGISTRY_PREFIX}${targetname(component)}:latest" ]
+  name = targetname(component)
   
-    matrix = {
-        "component" = [ "auctioneer", "bbs", "locket", "route-emitter", "diego-ssh/ssh-proxy" ]
-    }
+  matrix = {
+    "component" = [ "auctioneer", "bbs", "locket", "route-emitter", "diego-ssh/ssh-proxy" ]
+  }
 
-    args = {
-        "COMPONENT" = split("/", component)[0]
-        "CMD_PKG" = targetname(component)
-    }
+  args = {
+    "COMPONENT" = split("/", component)[0]
+    "CMD_PKG" = targetname(component)
+  }
 
-    contexts = {
-        "src" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src"
+  }
 }
 
 target "fileserver" {
-    dockerfile = "fileserver.Dockerfile"
-    tags = [ "${REGISTRY_PREFIX}fileserver:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}fileserver:latest" ]
+  dockerfile = "fileserver.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}fileserver:${IMAGE_VERSION}", "${REGISTRY_PREFIX}fileserver:latest" ]
 
-    contexts = {
-        "src"    = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
-        "config" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:config"
-    }
+  contexts = {
+    "src"  = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
+    "config" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:config"
+  }
 }
 
 target "rep" {
-    dockerfile = "rep.Dockerfile"
-    tags = [ "${REGISTRY_PREFIX}rep:${DIEGO_RELEASE_VERSION}", "${REGISTRY_PREFIX}rep:latest" ]
+  dockerfile = "rep.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}rep:${IMAGE_VERSION}", "${REGISTRY_PREFIX}rep:latest" ]
 
-    contexts = {
-        "src" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
-        "tar" = "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
+    "tar" = "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"
+  }
 }

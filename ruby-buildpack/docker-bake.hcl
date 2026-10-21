@@ -1,26 +1,31 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "BUILDPACK_VERSION" {
-    # renovate: dataSource=github-releases depName=cloudfoundry/ruby-buildpack
-    default = "1.11.2"
+  # renovate: dataSource=github-releases depName=cloudfoundry/ruby-buildpack
+  default = "1.11.2"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/ruby-buildpack
+  default = "1.11.2"
 }
 
 group "default" {
-    targets = [ "ruby-buildpack" ]
+  targets = [ "ruby-buildpack" ]
 }
 
 target "ruby-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}ruby-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}ruby-buildpack:latest" ]
-    dockerfile = "../buildpacks.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}ruby-buildpack:${IMAGE_VERSION}", "${REGISTRY_PREFIX}ruby-buildpack:latest" ]
+  dockerfile = "../buildpacks.Dockerfile"
 
-    args = {
-        BUILDPACK_VERSION = BUILDPACK_VERSION
-    }
+  args = {
+    BUILDPACK_VERSION = BUILDPACK_VERSION
+  }
 
-    contexts = {
-      "src" = "https://github.com/cloudfoundry/ruby-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/ruby-buildpack.git#v${BUILDPACK_VERSION}"
+    "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
+  }
 }

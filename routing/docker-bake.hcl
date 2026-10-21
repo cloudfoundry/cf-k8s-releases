@@ -7,13 +7,18 @@ variable "ROUTING_RELEASE_VERSION" {
   default = "0.397.0"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
+  default = "0.397.0"
+}
+
 group "default" {
   targets = ["routing"]
 }
 
 target "routing" {
   dockerfile = "${component}.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${ROUTING_RELEASE_VERSION}"]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}"]
   name = component
 
   matrix = {

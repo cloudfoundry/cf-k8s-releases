@@ -7,13 +7,18 @@ variable "CFLINUXFS4_VERSION" {
   default = "1.331.0"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/cflinuxfs4-release
+  default = "1.331.0"
+}
+
 group "default" {
   targets = ["cflinuxfs4", "cflinuxfs4-compat"]
 }
 
 target "cflinuxfs4" {
   dockerfile = "../stacks.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}cflinuxfs4:${CFLINUXFS4_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4:latest" ]
+  tags = [ "${REGISTRY_PREFIX}cflinuxfs4:${IMAGE_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4:latest" ]
 
   args = {
     "STACK_VERSION" = CFLINUXFS4_VERSION
@@ -23,7 +28,7 @@ target "cflinuxfs4" {
 
 target "cflinuxfs4-compat" {
   dockerfile = "compat.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}cflinuxfs4-compat:${CFLINUXFS4_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4-compat:latest" ]
+  tags = [ "${REGISTRY_PREFIX}cflinuxfs4-compat:${IMAGE_VERSION}", "${REGISTRY_PREFIX}cflinuxfs4-compat:latest" ]
 
   args = {
     "STACK_VERSION" = CFLINUXFS4_VERSION

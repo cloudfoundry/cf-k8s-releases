@@ -7,13 +7,18 @@ variable "UAA_RELEASE_VERSION" {
   default = "79.9.0"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/uaa-release
+  default = "79.9.0"
+}
+
 group "default" {
   targets = ["uaa"]
 }
 
 target "uaa" {
   dockerfile = "uaa.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}uaa:latest", "${REGISTRY_PREFIX}uaa:${UAA_RELEASE_VERSION}" ]
+  tags = [ "${REGISTRY_PREFIX}uaa:latest", "${REGISTRY_PREFIX}uaa:${IMAGE_VERSION}" ]
   args = {
     "UAA_RELEASE_VERSION" = UAA_RELEASE_VERSION
   }

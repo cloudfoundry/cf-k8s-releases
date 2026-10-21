@@ -1,26 +1,31 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "BUILDPACK_VERSION" {
-    # renovate: dataSource=github-releases depName=cloudfoundry/nodejs-buildpack
-    default = "1.9.5"
+  # renovate: dataSource=github-releases depName=cloudfoundry/nodejs-buildpack
+  default = "1.9.5"
+}
+
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/nodejs-buildpack
+  default = "1.9.5"
 }
 
 group "default" {
-    targets = [ "nodejs-buildpack" ]
+  targets = [ "nodejs-buildpack" ]
 }
 
 target "nodejs-buildpack" {
-    tags = [ "${REGISTRY_PREFIX}nodejs-buildpack:${BUILDPACK_VERSION}", "${REGISTRY_PREFIX}nodejs-buildpack:latest" ]
-    dockerfile = "../buildpacks.Dockerfile"
+  tags = [ "${REGISTRY_PREFIX}nodejs-buildpack:${IMAGE_VERSION}", "${REGISTRY_PREFIX}nodejs-buildpack:latest" ]
+  dockerfile = "../buildpacks.Dockerfile"
 
-    args = {
-        BUILDPACK_VERSION = BUILDPACK_VERSION
-    }
+  args = {
+    BUILDPACK_VERSION = BUILDPACK_VERSION
+  }
 
-    contexts = {
-      "src" = "https://github.com/cloudfoundry/nodejs-buildpack.git#v${BUILDPACK_VERSION}"
-      "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
-    }
+  contexts = {
+    "src" = "https://github.com/cloudfoundry/nodejs-buildpack.git#v${BUILDPACK_VERSION}"
+    "libbuildpack" = "https://github.com/cloudfoundry/libbuildpack.git"
+  }
 }

@@ -1,5 +1,5 @@
 variable "REGISTRY_PREFIX" {
-    default = ""
+  default = ""
 }
 
 variable "CAPI_RELEASE_VERSION" {
@@ -7,13 +7,18 @@ variable "CAPI_RELEASE_VERSION" {
   default = "1.250.0"
 }
 
+variable "IMAGE_VERSION" {
+  # renovate: dataSource=github-releases depName=cloudfoundry/capi-release
+  default = "1.250.0"
+}
+
 group "default" {
-    targets = [ "capi" ]
+  targets = [ "capi" ]
 }
 
 target "capi" {
   dockerfile = "${component}.Dockerfile"
-  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${CAPI_RELEASE_VERSION}"]
+  tags = [ "${REGISTRY_PREFIX}${component}:latest", "${REGISTRY_PREFIX}${component}:${IMAGE_VERSION}"]
   name = component
   
   matrix = {

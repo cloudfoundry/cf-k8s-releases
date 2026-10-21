@@ -6,19 +6,17 @@ on:
     branches:
       - main
     paths:
-      - 'nfs-volume/helm/Chart.yaml'
+      - nfs-volume/helm/Chart.yaml
       
 env:
-  REGISTRY_PREFIX: ghcr.io/cloudfoundry/k8s/
   HELM_REGISTRY_PREFIX: ghcr.io/cloudfoundry/helm/
-
 
 jobs:
   nfs-volume-image-release:
     uses: ./.github/workflows/reusable-matrix-image-build.yaml
     with:
       dir: nfs-volume
-      target: nfs-volume
+      target: default
   nfs-volume-helm-release:
     runs-on: ubuntu-latest
     permissions:
@@ -27,9 +25,11 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v7
-      - uses: ./.github/actions/init
+      - uses: docker/login-action@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Helm Chart
         working-directory: nfs-volume
         run: |
