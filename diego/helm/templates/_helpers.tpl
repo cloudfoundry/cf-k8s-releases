@@ -23,6 +23,9 @@ postgres://{{ $db.user }}:{{ $db.password }}@{{ $host }}:{{ $db.port }}/{{ $db.n
   "loggregator_job_deployment": "cf",
   "loggregator_job_name": "{{ .jobName }}",
   "loggregator_job_origin": "{{ .origin }}",
+  {{- if hasKey .cfg "appMetricExclusionFilter" }}
+  "loggregator_app_metric_exclusion_filter": {{ .cfg.appMetricExclusionFilter | toJson }},
+  {{- end }}
   "loggregator_source_id": "{{ .sourceId }}"
 }
 {{- end -}}

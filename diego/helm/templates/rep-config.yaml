@@ -135,19 +135,7 @@ data:
       "layering_mode": "{{ $r.containers.layeringMode }}",
       "use_kubernetes_garden_client": true,
       "workloads_namespace": "{{ $r.workloadsNamespace }}",
-      "loggregator": {
-        "loggregator_use_v2_api": true,
-        "loggregator_api_port": {{ int $r.loggregator.v2ApiPort }},
-        "loggregator_api_host": "{{ tpl $r.loggregator.apiHost . }}",
-        "loggregator_ca_path": "/etc/ssl/certs/loggregator/ca.crt",
-        "loggregator_cert_path": "/etc/ssl/certs/loggregator/tls.crt",
-        "loggregator_key_path": "/etc/ssl/certs/loggregator/tls.key",
-        "loggregator_job_deployment": "cf",
-        "loggregator_job_name": "rep",
-        "loggregator_job_origin": "rep",
-        "loggregator_source_id": "rep",
-        "loggregator_app_metric_exclusion_filter": {{ $r.loggregator.appMetricExclusionFilter | toJson }}
-      },
-      "kubelet_skip_tls_verify": true
+      "kubelet_skip_tls_verify": true,
+      {{- include "diego.loggregatorConfig" (dict "cfg" $r.loggregator "jobName" "rep" "origin" "rep" "sourceId" "rep" "root" .) | nindent 6 }}
     }
 {{- end }}
