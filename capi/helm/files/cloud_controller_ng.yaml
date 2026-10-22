@@ -28,7 +28,7 @@ development_mode: {{ $c.developmentMode }}
 deployment_updater:
   update_frequency_in_seconds: {{ $c.deploymentUpdater.updateFrequencyInSeconds }}
   lock_key: "cc-deployment-updater"
-  lock_owner: "${POD_NAME}"
+  lock_owner: ""
 internal_service_hostname: {{ tpl $c.internalServiceHostname . }}
 system_domain_organization: {{ $c.systemDomainOrganization }}
 system_domain: {{ $c.systemDomain }}

@@ -20,14 +20,14 @@ spec:
     spec:
       initContainers:
         - name: auctioneer-init
-          image: bitnami/kubectl:latest
+          image: mikefarah/yq:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
             - |
               set -e
-              cat /auctioneer/auctioneer.json | envsubst > /tmp/auctioneer.json
+              yq '.uuid = strenv(POD_NAME)' /auctioneer/auctioneer.json > /tmp/auctioneer.json
           env:
             - name: POD_NAME
               valueFrom:

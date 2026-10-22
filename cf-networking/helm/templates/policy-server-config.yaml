@@ -87,7 +87,7 @@ stringData:
       }
   policy-server-asg-syncer.json: |-
     {
-      "uuid": "${POD_NAME}",
+      "uuid": "",
       "database": {
           "type": "{{ .Values.policyServer.database.type }}",
           "user": {{ .Values.policyServer.database.username | quote }},

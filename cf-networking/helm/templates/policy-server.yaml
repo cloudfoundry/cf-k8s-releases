@@ -21,12 +21,14 @@ spec:
     spec:
       initContainers:
         - name: render-asg-syncer-config
-          image: busybox:latest
+          image: mikefarah/yq:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - sed "s|\${POD_NAME}|${POD_NAME}|g" /policy-server/policy-server-asg-syncer.json > /asg-syncer-config/policy-server-asg-syncer.json
+            - |
+              set -e
+              yq -p=json -o=json '.uuid = strenv(POD_NAME)' /policy-server/policy-server-asg-syncer.json > /asg-syncer-config/policy-server-asg-syncer.json
           env:
             - name: POD_NAME
               valueFrom:
