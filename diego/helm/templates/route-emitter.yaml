@@ -1,4 +1,5 @@
 {{- if .Values.routeEmitter.enabled }}
+{{- $re := .Values.routeEmitter }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -79,20 +80,27 @@ spec:
           - --config
           - /tmp/route-emitter.json
           volumeMounts:
-            - name: route-emitter
-              mountPath: /etc/ssl/certs/route-emitter
-            - name: bbs
+            - name: cert-bbs
               mountPath: /etc/ssl/certs/bbs
-            - name: loggregator
+              readOnly: true
+            - name: cert-loggregator
               mountPath: /etc/ssl/certs/loggregator
-            - name: locket
-              mountPath: /etc/ssl/certs/locket
-            - name: nats
+              readOnly: true
+            {{- if $re.nats.tls.enabled }}
+            - name: cert-nats
               mountPath: /etc/ssl/certs/nats
-            - name: uaa
-              mountPath: /etc/ssl/certs/uaa
-            - name: routing-api
-              mountPath: /etc/ssl/certs/routing_api
+              readOnly: true
+            {{- end }}
+            {{- if $re.routingApi.enabled }}
+            - name: cert-routing-api
+              mountPath: /etc/ssl/certs/routing-api
+              readOnly: true
+            {{- end }}
+            {{- if and $re.tcp.enabled $re.routingApi.authEnabled }}
+            - name: cert-uaa-ca
+              mountPath: /etc/ssl/certs/uaa-ca
+              readOnly: true
+            {{- end }}
             - name: route-emitter-config
               mountPath: /route-emitter
             - name: tmp
@@ -102,33 +110,29 @@ spec:
             {{- toYaml .Values.routeEmitter.resources | nindent 12 }}
           {{- end }}
       volumes:
+        - name: cert-bbs
+          secret:
+            secretName: {{ required "routeEmitter.certificateSecrets.bbs is required" $re.certificateSecrets.bbs }}
+        - name: cert-loggregator
+          secret:
+            secretName: {{ required "routeEmitter.certificateSecrets.loggregator is required" $re.certificateSecrets.loggregator }}
+        {{- if $re.nats.tls.enabled }}
+        - name: cert-nats
+          secret:
+            secretName: {{ required "routeEmitter.certificateSecrets.nats is required when nats.tls.enabled" $re.certificateSecrets.nats }}
+        {{- end }}
+        {{- if $re.routingApi.enabled }}
+        - name: cert-routing-api
+          secret:
+            secretName: {{ required "routeEmitter.certificateSecrets.routingAPI is required when routingApi.enabled" $re.certificateSecrets.routingAPI }}
+        {{- end }}
+        {{- if and $re.tcp.enabled $re.routingApi.authEnabled }}
+        - name: cert-uaa-ca
+          secret:
+            secretName: {{ required "routeEmitter.certificateSecrets.uaaCA is required when tcp.enabled and routingApi.authEnabled" $re.certificateSecrets.uaaCA }}
+        {{- end }}
         - name: tmp
           emptyDir: {}
-        - name: route-emitter
-          secret:
-            secretName: {{ required "routeEmitter.certificateSecret is required" .Values.routeEmitter.certificateSecret }}
-        - name: bbs
-          secret:
-            secretName: {{ required "routeEmitter.bbsCertificateSecret is required" .Values.routeEmitter.bbsCertificateSecret }}
-        - name: locket
-          secret:
-            secretName: {{ required "routeEmitter.locketCertificateSecret is required" .Values.routeEmitter.locketCertificateSecret }}
-        - name: nats
-          secret:
-            secretName: {{ required "routeEmitter.natsCertificateSecret is required" .Values.routeEmitter.natsCertificateSecret }}
-        - name: loggregator
-          secret:
-            secretName: {{ required "routeEmitter.loggregatorCertificateSecret is required" .Values.routeEmitter.loggregatorCertificateSecret }}
-        - name: uaa
-          secret:
-            secretName: {{ required "routeEmitter.uaaCertificateSecret is required" .Values.routeEmitter.uaaCertificateSecret }}
-        - name: routing-api
-{{- if .Values.routeEmitter.routingApi.enabled }}
-          secret:
-            secretName: {{ required "routeEmitter.routingApi.certificateSecret is required" .Values.routeEmitter.routingApi.certificateSecret }}
-{{- else }}
-          emptyDir: {}
-{{- end }}
         - name: route-emitter-config
           secret:
             secretName: route-emitter-config

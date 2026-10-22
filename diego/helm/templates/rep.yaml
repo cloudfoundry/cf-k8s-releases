@@ -64,18 +64,6 @@ spec:
               export OPTIONAL_PLACEMENT_TAGS=$(echo "$node" | jq -c '(.metadata.annotations["cloudfoundry.org/optional-placement-tags"] // "") | if . == "" then [] else split(",") | map(trim) end')
 
               cat /rep/rep.json | envsubst > /tmp/rep.json
-
-              if [ ! -f /var/lib/rep/proxy/envoy ]; then
-                curl -sL --cacert /etc/ssl/certs/rep/ca.crt {{ tpl .Values.rep.fileServer.address . }}/cf-assets/proxy.tgz | tar -xz -C /var/lib/rep/proxy
-              fi
-
-              if [ ! -f /var/lib/rep/healthcheck/healthcheck ]; then
-                curl -sL --cacert /etc/ssl/certs/rep/ca.crt {{ tpl .Values.rep.fileServer.address . }}/cf-assets/healthcheck.tgz | tar -xz -C /var/lib/rep/healthcheck
-              fi
-
-              if [ ! -f /var/lib/rep/bin/init ]; then
-                cp /pause/pause /var/lib/rep/bin/init
-              fi
           volumeMounts:
             - name: rep
               mountPath: /etc/ssl/certs/rep
@@ -85,14 +73,6 @@ spec:
               mountPath: /rep
             - name: tmp
               mountPath: /tmp
-            - name: k8s-pause
-              mountPath: /pause
-            - name: proxy-assets
-              mountPath: /var/lib/rep/proxy
-            - name: healthcheck-assets
-              mountPath: /var/lib/rep/healthcheck
-            - name: bin
-              mountPath: /var/lib/rep/bin
       containers:
         - name: rep
           image: {{ .Values.rep.image.repository }}:{{ default .Chart.AppVersion .Values.rep.image.tag }}
@@ -104,6 +84,9 @@ spec:
             set -e
             cp /bin/untar /var/lib/rep/bin/untar
             cp /bin/tar /var/lib/rep/bin/tar
+            cp /bin/init /var/lib/rep/bin/init
+            cp /bin/envoy /var/lib/rep/proxy/envoy
+            cp /bin/healthcheck /var/lib/rep/healthcheck/healthcheck
 
             exec /bin/rep --config /tmp/rep.json
           ports:
@@ -149,10 +132,8 @@ spec:
               mountPath: /var/lib/rep/proxy_config
             - name: proxy-assets
               mountPath: /var/lib/rep/proxy
-              readOnly: true
             - name: healthcheck-assets
               mountPath: /var/lib/rep/healthcheck
-              readOnly: true
             - name: volume-mounted-files
               mountPath: /var/lib/rep/volume_mounted_files
             - name: container-config
@@ -205,17 +186,13 @@ spec:
             name: rep-configmap
         - name: instance-identity
           secret:
-            secretName: {{ .Values.rep.instanceIdentityCASecret }}
+            secretName: {{ required "rep.certificateSecrets.instanceIdentity is required" .Values.rep.certificateSecrets.instanceIdentity }}
         - name: loggregator-certificate
           secret:
-            secretName: {{ required "rep.loggregator.certificateSecret is a required value" .Values.rep.loggregator.certificateSecret }}
+            secretName: {{ required "rep.certificateSecrets.loggregator is required" .Values.rep.certificateSecrets.loggregator }}
         - name: locket-certificate
           secret:
-            secretName: {{ required "rep.locket.certificateSecret is a required value" .Values.rep.locket.certificateSecret }}
-        - name: k8s-pause
-          image:
-            reference: {{ .Values.rep.pauseImage }}
-            pullPolicy: IfNotPresent
+            secretName: {{ required "rep.certificateSecrets.locket is required" .Values.rep.certificateSecrets.locket }}
         - name: kubelet-pods
           hostPath:
             path: /var/lib/kubelet/pods

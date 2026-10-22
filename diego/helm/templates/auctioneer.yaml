@@ -7,7 +7,7 @@ metadata:
   labels:
     app: auctioneer
 spec:
-  replicas: 1
+  replicas: {{ .Values.auctioneer.replicas }}
   selector:
     matchLabels:
       app: auctioneer
@@ -18,12 +18,32 @@ spec:
       annotations:
         checksum/auctioneer-config: {{ include (print $.Template.BasePath "/auctioneer-config.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: auctioneer-init
+          image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              cat /auctioneer/auctioneer.json | envsubst > /tmp/auctioneer.json
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: auctioneer-config
+              mountPath: /auctioneer
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: auctioneer
           image: {{ .Values.auctioneer.image.repository }}:{{ default .Chart.AppVersion .Values.auctioneer.image.tag }}
           args:
             - "-config"
-            - "/auctioneer/auctioneer.json"
+            - "/tmp/auctioneer.json"
           imagePullPolicy: {{ .Values.auctioneer.image.imagePullPolicy }}
           ports:
             - containerPort: 9016
@@ -32,10 +52,22 @@ spec:
             {{- toYaml .Values.auctioneer.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: auctioneer
-              mountPath: /etc/ssl/certs/auctioneer
+            - name: cert-server
+              mountPath: /etc/ssl/certs/server
+              readOnly: true
+            - name: cert-bbs
+              mountPath: /etc/ssl/certs/bbs
+              readOnly: true
+            - name: cert-rep
+              mountPath: /etc/ssl/certs/rep
+              readOnly: true
+            - name: cert-loggregator
+              mountPath: /etc/ssl/certs/loggregator
+              readOnly: true
             - name: auctioneer-config
               mountPath: /auctioneer
+            - name: tmp
+              mountPath: /tmp
       {{- if .Values.auctioneer.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.auctioneer.nodeSelector | nindent 8 }}
@@ -45,9 +77,20 @@ spec:
         {{- toYaml .Values.auctioneer.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: auctioneer
+        - name: cert-server
           secret:
-            secretName: {{ required "auctioneer.certificateSecret is required" .Values.auctioneer.certificateSecret }}
+            secretName: {{ required "auctioneer.certificateSecrets.server is required" .Values.auctioneer.certificateSecrets.server }}
+        - name: cert-bbs
+          secret:
+            secretName: {{ required "auctioneer.certificateSecrets.bbs is required" .Values.auctioneer.certificateSecrets.bbs }}
+        - name: cert-rep
+          secret:
+            secretName: {{ required "auctioneer.certificateSecrets.rep is required" .Values.auctioneer.certificateSecrets.rep }}
+        - name: cert-loggregator
+          secret:
+            secretName: {{ required "auctioneer.certificateSecrets.loggregator is required" .Values.auctioneer.certificateSecrets.loggregator }}
+        - name: tmp
+          emptyDir: {}
         - name: auctioneer-config
           configMap:
             name: auctioneer-config

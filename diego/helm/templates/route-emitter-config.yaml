@@ -1,4 +1,8 @@
 {{- if .Values.routeEmitter.enabled }}
+{{- $re := .Values.routeEmitter }}
+{{- if or (lt $re.jitterFactor 0.0) (gt $re.jitterFactor 1.0) }}
+{{- fail "routeEmitter.jitterFactor must be a number between 0.0 and 1.0" }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -7,67 +11,73 @@ metadata:
 stringData:
   route-emitter.json: |-
     {
-      "nats_addresses": "{{ tpl .Values.routeEmitter.natsAddress . }}",
-      "nats_tls_enabled": true,
+      "nats_username": {{ $re.nats.user | toJson }},
+      "nats_password": {{ $re.nats.password | toJson }},
+      "nats_addresses": "{{ tpl $re.nats.address $ }}",
+      "nats_tls_enabled": {{ $re.nats.tls.enabled }},
       "nats_ca_cert_file": "/etc/ssl/certs/nats/ca.crt",
       "nats_client_cert_file": "/etc/ssl/certs/nats/tls.crt",
       "nats_client_key_file": "/etc/ssl/certs/nats/tls.key",
       "communication_timeout": "30s",
-      "sync_interval": "60s",
-      "debug_address": "127.0.0.1:17009",
-      "log_level": "info",
+      "sync_interval": "{{ $re.syncIntervalInSeconds }}s",
+      "debug_address": "{{ $re.debugAddr }}",
+      "log_level": "{{ $re.logLevel }}",
       "lock_retry_interval": "5s",
       "lock_ttl": "15s",
-      "healthcheck_address": "127.0.0.1:17011",
-      "register_direct_instance_routes": false,
+      "healthcheck_address": "{{ $re.healthcheckAddress }}",
+      "register_direct_instance_routes": {{ $re.registerDirectInstanceRoutes }},
       "route_emitting_workers": 20,
       "tcp_route_ttl": "2m",
       "unregistration_interval": "30s",
       "unregistration_send_count": 20,
-      "jitter_factor": 0.8,
+      "jitter_factor": {{ $re.jitterFactor }},
       "time_format": "rfc3339",
-      "locket_enabled": true,
       "locket_session_name": "route-emitter",
-      "locket_address": "{{ tpl .Values.routeEmitter.locketAddress . }}",
+      "locket_address": "{{ tpl $re.locket.address $ }}",
       "uuid": "$NODE_UID",
-      "locket_ca_cert_file": "/etc/ssl/certs/locket/ca.crt",
-      "locket_client_cert_file": "/etc/ssl/certs/locket/tls.crt",
-      "locket_client_key_file": "/etc/ssl/certs/locket/tls.key",
+      "locket_ca_cert_file": "/etc/ssl/certs/bbs/ca.crt",
+      "locket_client_cert_file": "/etc/ssl/certs/bbs/tls.crt",
+      "locket_client_key_file": "/etc/ssl/certs/bbs/tls.key",
       "bbs_ca_cert_file": "/etc/ssl/certs/bbs/ca.crt",
       "bbs_client_cert_file": "/etc/ssl/certs/bbs/tls.crt",
       "bbs_client_key_file": "/etc/ssl/certs/bbs/tls.key",
-      "bbs_address": "{{ tpl .Values.routeEmitter.bbsAddress . }}",
+      "bbs_address": "https://{{ tpl $re.bbs.apiLocation $ }}",
+      {{- if not (kindIs "invalid" $re.bbs.clientSessionCacheSize) }}
+      "bbs_client_session_cache_size": {{ $re.bbs.clientSessionCacheSize }},
+      {{- end }}
+      {{- if not (kindIs "invalid" $re.bbs.maxIdleConnsPerHost) }}
+      "bbs_max_idle_conns_per_host": {{ $re.bbs.maxIdleConnsPerHost }},
+      {{- end }}
+      {{- if $re.localMode }}
       "cell_id": "$NODE_UID",
-      "enable_internal_emitter": {{ .Values.routeEmitter.enableInternalEmitter }},
-      "enable_tcp_emitter": {{ .Values.routeEmitter.enableTcpEmitter }},
-      "tcp_enable_tls": true,
+      {{- end }}
+      "enable_internal_emitter": {{ $re.internalRoutes.enabled }},
+      "enable_tcp_emitter": {{ $re.tcp.enabled }},
+      "tcp_enable_tls": {{ $re.tcp.enableTls }},
       "routing_api": {
-        "url": "{{ tpl .Values.routeEmitter.routingApi.address . }}",
-        "port": {{ .Values.routeEmitter.routingApi.port }},
-        "ca_cert_file": "/etc/ssl/certs/routing_api/ca.crt",
-        "client_cert_file": "/etc/ssl/certs/routing_api/tls.crt",
-        "client_key_file": "/etc/ssl/certs/routing_api/tls.key",
-        "auth_enabled": true
+        {{- if $re.routingApi.enabled }}
+        "url": "{{ tpl $re.routingApi.url $ | replace "http://" "https://" }}",
+        "port": {{ $re.routingApi.mtlsPort }},
+        "ca_cert_file": "/etc/ssl/certs/routing-api/ca.crt",
+        "client_cert_file": "/etc/ssl/certs/routing-api/tls.crt",
+        "client_key_file": "/etc/ssl/certs/routing-api/tls.key",
+        "auth_enabled": {{ $re.routingApi.authEnabled }}
+        {{- else }}
+        "url": "{{ tpl $re.routingApi.url $ }}",
+        "port": {{ $re.routingApi.port }},
+        "auth_enabled": {{ $re.routingApi.authEnabled }}
+        {{- end }}
       },
+      {{- if and $re.tcp.enabled $re.routingApi.authEnabled }}
       "oauth": {
-        "uaa_url": "{{ tpl .Values.routeEmitter.uaaAddress . }}",
+        "uaa_url": "https://{{ tpl $re.uaa.hostname $ }}:{{ $re.uaa.port }}",
         "uaa_request_timeout": "10s",
-        "client_name": "tcp_emitter",
-        "client_secret": {{ .Values.routeEmitter.oauthClientsSecret | quote }},
-        "skip_cert_verify": false,
-        "ca_certs": "/etc/ssl/certs/uaa/ca.crt"
+        "client_name": "{{ $re.uaa.clientName }}",
+        "client_secret": {{ required "routeEmitter.uaa.clientSecret must be provided when tcp.enabled and routingApi.authEnabled" $re.uaa.clientSecret | quote }},
+        "skip_cert_verify": {{ $re.uaa.skipCertVerify }},
+        "ca_certs": "/etc/ssl/certs/uaa-ca/ca.crt"
       },
-      "loggregator": {
-        "loggregator_use_v2_api": true,
-        "loggregator_api_port": 3458,
-        "loggregator_api_host": "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local",
-        "loggregator_ca_path": "/etc/ssl/certs/loggregator/ca.crt",
-        "loggregator_cert_path": "/etc/ssl/certs/loggregator/tls.crt",
-        "loggregator_key_path": "/etc/ssl/certs/loggregator/tls.key",
-        "loggregator_job_deployment": "cf",
-        "loggregator_job_name": "route-emitter",
-        "loggregator_job_origin": "route-emitter",
-        "loggregator_source_id": "route-emitter"
-      }
+      {{- end }}
+      {{- include "diego.loggregatorConfig" (dict "cfg" $re.loggregator "jobName" "route_emitter" "origin" "route_emitter" "sourceId" "route_emitter" "root" $) | nindent 6 }}
     }
 {{- end }}

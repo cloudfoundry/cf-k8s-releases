@@ -9,7 +9,7 @@ variable "DIEGO_RELEASE_VERSION" {
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-  default = "2.151.0"
+  default = "2.151.1-1"
 }
 
 variable "TAR_VERSION" {
@@ -61,5 +61,6 @@ target "rep" {
   contexts = {
     "src" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:src",
     "tar" = "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"
+    "config" = "https://github.com/cloudfoundry/diego-release.git#v${DIEGO_RELEASE_VERSION}:config"
   }
 }
