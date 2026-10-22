@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/go-buildpack
-  default = "1.11.1"
+  default = "1.11.2"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/go-buildpack
-  default = "1.11.1"
+  default = "1.11.2"
 }
 
 group "default" {
