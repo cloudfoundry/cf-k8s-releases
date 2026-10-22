@@ -21,12 +21,14 @@ spec:
     spec:
       initContainers:
         - name: set-lock-owner
-          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
-          imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
+          image: mikefarah/yq:latest
+          imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - sed "s|\${POD_NAME}|${POD_NAME}|g" /etc/cloud-controller/config.yaml > /tmp/config.yaml
+            - |
+              set -e
+              yq '.deployment_updater.lock_owner = strenv(POD_NAME)' /etc/cloud-controller/config.yaml > /tmp/config.yaml
           env:
             - name: POD_NAME
               valueFrom:

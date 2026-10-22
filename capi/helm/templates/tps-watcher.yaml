@@ -20,11 +20,14 @@ spec:
     spec:
       initContainers:
         - name: set-instance-id
-          image: busybox:latest
+          image: mikefarah/yq:latest
+          imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - sed "s|\${POD_NAME}|${POD_NAME}|g" /tps-watcher/tps-watcher.json > /tmp/tps-watcher.json
+            - |
+              set -e
+              yq '.instance_id = strenv(POD_NAME)' /tps-watcher/tps-watcher.json > /tmp/tps-watcher.json
           env:
             - name: POD_NAME
               valueFrom:

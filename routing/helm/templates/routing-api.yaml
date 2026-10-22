@@ -22,7 +22,7 @@ spec:
       shareProcessNamespace: true
       initContainers:
         - name: routing-api-init
-          image: bitnami/kubectl:latest
+          image: mikefarah/yq:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh

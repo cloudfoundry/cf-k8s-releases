@@ -20,7 +20,7 @@ spec:
     spec:
       initContainers:
       - name: gorouter-init
-        image: bitnami/kubectl:latest
+        image: mikefarah/yq:latest
         imagePullPolicy: IfNotPresent
         command:
         - sh

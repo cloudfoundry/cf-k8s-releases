@@ -36,7 +36,7 @@ data:
       "server_cert_file": "/etc/ssl/certs/server/tls.crt",
       "server_key_file": "/etc/ssl/certs/server/tls.key",
       "locket_address": "{{ tpl $a.locket.apiLocation $ }}",
-      "uuid": "$POD_NAME",
+      "uuid": "",
       "locket_ca_cert_file": "/etc/ssl/certs/bbs/ca.crt",
       "locket_client_cert_file": "/etc/ssl/certs/bbs/tls.crt",
       "locket_client_key_file": "/etc/ssl/certs/bbs/tls.key",
