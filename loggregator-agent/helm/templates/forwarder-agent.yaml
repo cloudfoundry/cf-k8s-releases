@@ -7,7 +7,7 @@ metadata:
   labels:
     app: forwarder-agent
 spec:
-  replicas: 1
+  replicas: {{ .Values.forwarderAgent.replicas }}
   selector:
     matchLabels:
       app: forwarder-agent
@@ -37,15 +37,45 @@ spec:
               value: /etc/ssl/certs/forwarder-agent/tls.crt
             - name: AGENT_KEY_FILE_PATH
               value: /etc/ssl/certs/forwarder-agent/tls.key
+            - name: AGENT_CIPHER_SUITES
+              value: {{ .Values.forwarderAgent.cipherSuites | replace ":" "," | quote }}
+            {{- if .Values.forwarderAgent.tags }}
+            - name: AGENT_TAGS
+              value: {{ include "loggregatorAgent.tags" .Values.forwarderAgent.tags | quote }}
+            {{- end }}
+            - name: EMIT_OTEL_TRACES
+              value: {{ .Values.forwarderAgent.emitOtelTraces | quote }}
+            - name: EMIT_OTEL_METRICS
+              value: {{ .Values.forwarderAgent.emitOtelMetrics | quote }}
+            - name: EMIT_OTEL_LOGS
+              value: {{ .Values.forwarderAgent.emitOtelLogs | quote }}
+            - name: OTEL_RETRY_MAX_RETRIES
+              value: "{{ .Values.forwarderAgent.otelRetry.maxRetries }}"
+            - name: OTEL_RETRY_QUEUE_SIZE
+              value: "{{ .Values.forwarderAgent.otelRetry.queueSize }}"
+            - name: METRICS_PORT
+              value: "{{ .Values.forwarderAgent.metricsPort }}"
             - name: METRICS_CA_FILE_PATH
-              value: /etc/ssl/certs/forwarder-agent/ca.crt
+              value: /etc/ssl/certs/forwarder-agent-metrics/ca.crt
             - name: METRICS_CERT_FILE_PATH
-              value: /etc/ssl/certs/forwarder-agent/tls.crt
+              value: /etc/ssl/certs/forwarder-agent-metrics/tls.crt
             - name: METRICS_KEY_FILE_PATH
-              value: /etc/ssl/certs/forwarder-agent/tls.key
+              value: /etc/ssl/certs/forwarder-agent-metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.forwarderAgent.debugMetrics | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.forwarderAgent.pprofPort }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.forwarderAgent.loggingFormatTimestamp "rfc3339" | quote }}
+            - name: DOWNSTREAM_INGRESS_PORT_GLOB
+              value: /ingress-globs/*.yml
           volumeMounts:
             - name: forwarder-agent
               mountPath: /etc/ssl/certs/forwarder-agent
+            - name: forwarder-agent-metrics
+              mountPath: /etc/ssl/certs/forwarder-agent-metrics
+            - name: ingress-globs
+              mountPath: /ingress-globs
         - name: loggregator-agent
           image: {{ .Values.loggregatorAgent.image.repository }}:{{ default .Chart.AppVersion .Values.loggregatorAgent.image.tag }}
           imagePullPolicy: {{ .Values.loggregatorAgent.image.imagePullPolicy }}
@@ -62,19 +92,39 @@ spec:
               value: /etc/ssl/certs/loggregator-agent/tls.crt
             - name: AGENT_KEY_FILE
               value: /etc/ssl/certs/loggregator-agent/tls.key
-            - name: METRICS_CA_FILE_PATH
-              value: /etc/ssl/certs/loggregator-agent/ca.crt
-            - name: METRICS_CERT_FILE_PATH
-              value: /etc/ssl/certs/loggregator-agent/tls.crt
-            - name: METRICS_KEY_FILE_PATH
-              value: /etc/ssl/certs/loggregator-agent/tls.key
+            - name: AGENT_CIPHER_SUITES
+              value: {{ .Values.loggregatorAgent.cipherSuites | replace ":" "," | quote }}
+            {{- if .Values.loggregatorAgent.tags }}
+            - name: AGENT_TAGS
+              value: {{ include "loggregatorAgent.tags" .Values.loggregatorAgent.tags | quote }}
+            {{- end }}
             - name: AGENT_DISABLE_UDP
-              value: "true"
+              value: {{ .Values.loggregatorAgent.disableUdp | quote }}
+            - name: LOGS_DISABLED
+              value: {{ .Values.loggregatorAgent.disableLogs | quote }}
+            - name: AGENT_INCOMING_UDP_PORT
+              value: "{{ .Values.loggregatorAgent.listeningPort }}"
             - name: ROUTER_ADDR
               value: "{{ tpl .Values.loggregatorAgent.doppler.address . }}"
+            - name: METRICS_PORT
+              value: "{{ .Values.loggregatorAgent.metricsPort }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/loggregator-agent-metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/loggregator-agent-metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/loggregator-agent-metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.loggregatorAgent.debugMetrics | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.loggregatorAgent.pprofPort }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.loggregatorAgent.loggingFormatTimestamp "rfc3339" | quote }}
           volumeMounts:
             - name: loggregator-agent
               mountPath: /etc/ssl/certs/loggregator-agent
+            - name: loggregator-agent-metrics
+              mountPath: /etc/ssl/certs/loggregator-agent-metrics
         - name: syslog-agent
           image: {{ .Values.syslogAgent.image.repository }}:{{ default .Chart.AppVersion .Values.syslogAgent.image.tag }}
           imagePullPolicy: {{ .Values.syslogAgent.image.imagePullPolicy }}
@@ -91,33 +141,67 @@ spec:
               value: /etc/ssl/certs/syslog-agent/tls.crt
             - name: AGENT_KEY_FILE_PATH
               value: /etc/ssl/certs/syslog-agent/tls.key
-            - name: METRICS_CA_FILE_PATH
-              value: /etc/ssl/certs/syslog-agent/ca.crt
-            - name: METRICS_CERT_FILE_PATH
-              value: /etc/ssl/certs/syslog-agent/tls.crt
-            - name: METRICS_KEY_FILE_PATH
-              value: /etc/ssl/certs/syslog-agent/tls.key
-            - name: CACHE_URL
-              value: "{{ tpl .Values.syslogAgent.syslogBindingCache.address . }}"
-            - name: CACHE_COMMON_NAME
-              value: "{{ .Values.syslogBindingCache.cache.commonName }}"
-            - name: CACHE_CA_FILE_PATH
-              value: /etc/ssl/certs/syslog-agent/ca.crt
-            - name: CACHE_CERT_FILE_PATH
-              value: /etc/ssl/certs/syslog-agent/tls.crt
-            - name: CACHE_KEY_FILE_PATH
-              value: /etc/ssl/certs/syslog-agent/tls.key
+            - name: AGENT_CIPHER_SUITES
+              value: {{ .Values.syslogAgent.cipherSuites | replace ":" "," | quote }}
+            - name: DRAIN_SKIP_CERT_VERIFY
+              value: {{ .Values.syslogAgent.drainSkipCertVerify | quote }}
+            - name: DEFAULT_DRAIN_METADATA
+              value: {{ .Values.syslogAgent.defaultDrainMetadata | quote }}
             - name: DRAIN_TRUSTED_CA_FILE
-              value: /etc/ssl/certs/syslog-agent/ca.crt
-            - name: LOGGREGATOR_AGENT_ADDR
-              value: "localhost:3458"
-            {{- if .Values.forwarderAgent.aggregateDrain }}
-            - name: AGGREGATE_DRAIN_URLS
-              value: "{{ .Values.syslogAgent.logCacheSyslog.address }}?include-metrics-deprecated=true"
+              {{- if .Values.syslogAgent.certificateSecrets.drain }}
+              value: /etc/ssl/certs/syslog-agent-drain/ca.crt
+              {{- else }}
+              value: ""
+              {{- end }}
+            {{- if .Values.syslogAgent.drainCipherSuites }}
+            - name: DRAIN_CIPHER_SUITES
+              value: {{ .Values.syslogAgent.drainCipherSuites | quote }}
             {{- end }}
+            - name: BLACKLISTED_SYSLOG_RANGES
+              value: {{ include "loggregatorAgent.blacklistedRanges" .Values.syslogAgent.blacklistedSyslogRanges | quote }}
+            - name: AGGREGATE_DRAIN_URLS
+              value: {{ .Values.syslogAgent.aggregateDrains | quote }}
+            - name: WARN_ON_INVALID_DRAINS
+              value: {{ .Values.syslogAgent.warnOnInvalidDrains | quote }}
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "localhost:{{ .Values.forwarderAgent.port }}"
+            - name: CACHE_URL
+              value: "{{ tpl .Values.syslogAgent.cache.address . }}"
+            - name: CACHE_COMMON_NAME
+              value: {{ .Values.syslogAgent.cache.commonName | quote }}
+            - name: CACHE_POLLING_INTERVAL
+              value: {{ .Values.syslogAgent.cache.pollingInterval | quote }}
+            - name: CACHE_CA_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-cache/ca.crt
+            - name: CACHE_CERT_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-cache/tls.crt
+            - name: CACHE_KEY_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-cache/tls.key
+            - name: METRICS_PORT
+              value: "{{ .Values.syslogAgent.metricsPort }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.syslogAgent.debugMetrics | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.syslogAgent.pprofPort }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.syslogAgent.loggingFormatTimestamp "rfc3339" | quote }}
           volumeMounts:
             - name: syslog-agent
               mountPath: /etc/ssl/certs/syslog-agent
+            - name: syslog-agent-cache
+              mountPath: /etc/ssl/certs/syslog-agent-cache
+            - name: syslog-agent-metrics
+              mountPath: /etc/ssl/certs/syslog-agent-metrics
+            {{- if .Values.syslogAgent.certificateSecrets.drain }}
+            - name: syslog-agent-drain
+              mountPath: /etc/ssl/certs/syslog-agent-drain
+            {{- end }}
       {{- if .Values.forwarderAgent.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.forwarderAgent.nodeSelector | nindent 8 }}
@@ -127,17 +211,35 @@ spec:
         {{- toYaml .Values.forwarderAgent.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: syslog-agent
-          secret:
-            secretName: {{ required "syslogAgent.certificateSecret is required" .Values.syslogAgent.certificateSecret }}
         - name: forwarder-agent
           secret:
-            secretName: {{ required "forwarderAgent.certificateSecret is required" .Values.forwarderAgent.certificateSecret }}
+            secretName: {{ required "forwarderAgent.certificateSecrets.forwarder is required" .Values.forwarderAgent.certificateSecrets.forwarder }}
+        - name: forwarder-agent-metrics
+          secret:
+            secretName: {{ required "forwarderAgent.certificateSecrets.metrics is required" .Values.forwarderAgent.certificateSecrets.metrics }}
         - name: loggregator-agent
           secret:
-            secretName: {{ required "loggregatorAgent.certificateSecret is required" .Values.loggregatorAgent.certificateSecret }}
+            secretName: {{ required "loggregatorAgent.certificateSecrets.loggregator is required" .Values.loggregatorAgent.certificateSecrets.loggregator }}
+        - name: loggregator-agent-metrics
+          secret:
+            secretName: {{ required "loggregatorAgent.certificateSecrets.metrics is required" .Values.loggregatorAgent.certificateSecrets.metrics }}
+        - name: syslog-agent
+          secret:
+            secretName: {{ required "syslogAgent.certificateSecrets.agent is required" .Values.syslogAgent.certificateSecrets.agent }}
+        - name: syslog-agent-cache
+          secret:
+            secretName: {{ required "syslogAgent.certificateSecrets.cache is required" .Values.syslogAgent.certificateSecrets.cache }}
+        - name: syslog-agent-metrics
+          secret:
+            secretName: {{ required "syslogAgent.certificateSecrets.metrics is required" .Values.syslogAgent.certificateSecrets.metrics }}
+        {{- if .Values.syslogAgent.certificateSecrets.drain }}
+        - name: syslog-agent-drain
+          secret:
+            secretName: {{ .Values.syslogAgent.certificateSecrets.drain }}
+        {{- end }}
+        - name: ingress-globs
+          configMap:
+            name: ingress-ports
 ---
 kind: Service
 apiVersion: v1
@@ -147,8 +249,8 @@ metadata:
     app: forwarder-agent
 spec:
   ports:
-    - port: 3458
-      targetPort: 3458
+    - port: {{ .Values.forwarderAgent.port }}
+      targetPort: {{ .Values.forwarderAgent.port }}
       protocol: TCP
   selector:
     app: forwarder-agent

@@ -1,4 +1,10 @@
 {{- if .Values.syslogBindingCache.enabled }}
+{{- $drains := list }}
+{{- range (splitList "," .Values.syslogBindingCache.aggregateDrains) }}
+{{- if . }}
+{{- $drains = append $drains (dict "url" .) }}
+{{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -9,6 +15,5 @@ metadata:
 type: Opaque
 stringData:
   aggregate_drains.yml: |
-    ---
-    - url: syslog://log-cache-syslog.{{ .Release.Namespace }}.svc.cluster.local:8082?include-metrics-deprecated=true
+    {{ toJson $drains }}
 {{- end }}

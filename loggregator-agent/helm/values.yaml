@@ -1,7 +1,21 @@
 forwarderAgent:
   enabled: false
-  aggregateDrain: false
-  certificateSecret: ""
+  replicas: 1
+  certificateSecrets:
+    forwarder: ""
+    metrics: ""
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  tags: {}
+  emitOtelTraces: true
+  emitOtelMetrics: true
+  emitOtelLogs: true
+  otelRetry:
+    maxRetries: 7
+    queueSize: 1024
+  metricsPort: 14823
+  debugMetrics: false
+  pprofPort: 0
+  loggingFormatTimestamp: deprecated
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/forwarder-agent
@@ -11,9 +25,20 @@ forwarderAgent:
   tolerations: ~
 
 loggregatorAgent:
+  certificateSecrets:
+    loggregator: ""
+    metrics: ""
+  listeningPort: 3457
+  disableUdp: true
+  disableLogs: false
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  tags: {}
   doppler:
     address: "doppler.{{ .Release.Namespace }}.svc.cluster.local:8082"
-  certificateSecret: ""
+  metricsPort: 14824
+  debugMetrics: false
+  pprofPort: 0
+  loggingFormatTimestamp: deprecated
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/loggregator-agent
@@ -21,11 +46,26 @@ loggregatorAgent:
     imagePullPolicy: IfNotPresent
 
 syslogAgent:
-  syslogBindingCache:
+  certificateSecrets:
+    agent: ""
+    cache: ""
+    metrics: ""
+    drain: ""
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  drainSkipCertVerify: false
+  defaultDrainMetadata: true
+  drainCipherSuites: ~
+  aggregateDrains: ""
+  blacklistedSyslogRanges: []
+  warnOnInvalidDrains: true
+  cache:
+    commonName: "syslog-binding-cache"
+    pollingInterval: 15s
     address: "https://syslog-binding-cache.{{ .Release.Namespace }}.svc.cluster.local:9000"
-  logCacheSyslog:
-    address: "syslog://log-cache-syslog.cf.ci.example.com:8082"
-  certificateSecret: ""
+  metricsPort: 14822
+  debugMetrics: false
+  pprofPort: 0
+  loggingFormatTimestamp: deprecated
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/syslog-agent
@@ -33,10 +73,34 @@ syslogAgent:
     imagePullPolicy: IfNotPresent
 
 syslogBindingCache:
-  cache:
-    commonName: "syslog-binding-cache"
   enabled: false
-  certificateSecret: ""
+  replicas: 1
+  certificateSecrets:
+    api: ""
+    cache: ""
+    loggregatorAgent: ""
+    metrics: ""
+  externalPort: 9000
+  cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  commonName: "syslog-binding-cache"
+  defaultDrainMetadata: true
+  aggregateDrains: ""
+  blacklistedSyslogRanges: []
+  warnOnInvalidDrains: true
+  api:
+    address: "cloud-controller.{{ .Release.Namespace }}.svc.cluster.local"
+    commonName: cloud-controller
+    pollingInterval: 1m
+    batchSize: 1000
+    disableKeepAlives: true
+  loggregator:
+    host: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+    port: 3458
+    cipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  metricsPort: 14828
+  debugMetrics: false
+  pprofPort: 0
+  loggingFormatTimestamp: deprecated
   resources: ~
   image:
     repository: ghcr.io/cloudfoundry/k8s/syslog-binding-cache
