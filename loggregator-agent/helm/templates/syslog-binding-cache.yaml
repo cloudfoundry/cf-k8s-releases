@@ -7,7 +7,7 @@ metadata:
   labels:
     app: syslog-binding-cache
 spec:
-  replicas: 1
+  replicas: {{ .Values.syslogBindingCache.replicas }}
   selector:
     matchLabels:
       app: syslog-binding-cache
@@ -23,63 +23,84 @@ spec:
           image: {{ .Values.syslogBindingCache.image.repository }}:{{ default .Chart.AppVersion .Values.syslogBindingCache.image.tag }}
           imagePullPolicy: {{ .Values.syslogBindingCache.image.imagePullPolicy }}
           ports:
-            - containerPort: 9000
+            - containerPort: {{ .Values.syslogBindingCache.externalPort }}
           env:
             - name: CACHE_PORT
-              value: "9000"
-            - name: API_URL
-              value: "https://cloud-controller.{{ .Release.Namespace }}.svc.cluster.local:9023"
-            - name: API_CA_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/ca.crt
-            - name: API_CERT_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.crt
-            - name: API_KEY_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.key
-            - name: API_COMMON_NAME
-              value: cloud-controller
-            - name: CACHE_CA_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/ca.crt
-            - name: CACHE_CERT_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.crt
-            - name: CACHE_KEY_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.key
+              value: "{{ .Values.syslogBindingCache.externalPort }}"
+            - name: CACHE_CIPHER_SUITES
+              value: {{ .Values.syslogBindingCache.cipherSuites | replace ":" "," | quote }}
             - name: CACHE_COMMON_NAME
-              value: "{{ .Values.syslogBindingCache.cache.commonName }}"
-            - name: METRICS_CA_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/ca.crt
-            - name: METRICS_CERT_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.crt
-            - name: METRICS_KEY_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.key
+              value: {{ .Values.syslogBindingCache.commonName | quote }}
+            - name: CACHE_CA_FILE_PATH
+              value: /etc/ssl/certs/cache/ca.crt
+            - name: CACHE_CERT_FILE_PATH
+              value: /etc/ssl/certs/cache/tls.crt
+            - name: CACHE_KEY_FILE_PATH
+              value: /etc/ssl/certs/cache/tls.key
+            - name: API_URL
+              value: "https://{{ tpl .Values.syslogBindingCache.api.address . }}:9023"
+            - name: API_COMMON_NAME
+              value: {{ .Values.syslogBindingCache.api.commonName | quote }}
+            - name: API_CA_FILE_PATH
+              value: /etc/ssl/certs/api/ca.crt
+            - name: API_CERT_FILE_PATH
+              value: /etc/ssl/certs/api/tls.crt
+            - name: API_KEY_FILE_PATH
+              value: /etc/ssl/certs/api/tls.key
             - name: API_POLLING_INTERVAL
-              value: 1m
+              value: {{ .Values.syslogBindingCache.api.pollingInterval | quote }}
             - name: API_BATCH_SIZE
-              value: '1000'
+              value: "{{ .Values.syslogBindingCache.api.batchSize }}"
             - name: API_DISABLE_KEEP_ALIVES
-              value: 'true'
+              value: {{ .Values.syslogBindingCache.api.disableKeepAlives | quote }}
             - name: AGGREGATE_DRAINS_FILE
               value: /etc/aggregate-drains/aggregate_drains.yml
             - name: LOGGREGATOR_AGENT_HOST
-              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local"
+              value: "{{ tpl .Values.syslogBindingCache.loggregator.host . }}"
             - name: LOGGREGATOR_AGENT_PORT
-              value: "3458"
+              value: "{{ .Values.syslogBindingCache.loggregator.port }}"
+            - name: LOGGREGATOR_AGENT_CIPHER_SUITES
+              value: {{ .Values.syslogBindingCache.loggregator.cipherSuites | replace ":" "," | quote }}
             - name: LOGGREGATOR_AGENT_CA_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/ca.crt
+              value: /etc/ssl/certs/loggregator-agent/ca.crt
             - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.crt
+              value: /etc/ssl/certs/loggregator-agent/tls.crt
             - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
-              value: /etc/ssl/syslog-binding-cache/tls.key
+              value: /etc/ssl/certs/loggregator-agent/tls.key
+            - name: METRICS_PORT
+              value: "{{ .Values.syslogBindingCache.metricsPort }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.syslogBindingCache.debugMetrics | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.syslogBindingCache.pprofPort }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.syslogBindingCache.loggingFormatTimestamp "rfc3339" | quote }}
             - name: BLACKLISTED_SYSLOG_RANGES
-              value: ""
+              value: {{ include "loggregatorAgent.blacklistedRanges" .Values.syslogBindingCache.blacklistedSyslogRanges | quote }}
             - name: WARN_ON_INVALID_DRAINS
-              value: "true"
+              value: {{ .Values.syslogBindingCache.warnOnInvalidDrains | quote }}
           {{- if .Values.syslogBindingCache.resources }}
           resources:
             {{- toYaml .Values.syslogBindingCache.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: syslog-binding-cache
-              mountPath: /etc/ssl/syslog-binding-cache
+            - name: api
+              mountPath: /etc/ssl/certs/api
+              readOnly: true
+            - name: cache
+              mountPath: /etc/ssl/certs/cache
+              readOnly: true
+            - name: loggregator-agent
+              mountPath: /etc/ssl/certs/loggregator-agent
+              readOnly: true
+            - name: metrics
+              mountPath: /etc/ssl/certs/metrics
               readOnly: true
             - name: aggregate-drains
               mountPath: /etc/aggregate-drains
@@ -93,12 +114,21 @@ spec:
         {{- toYaml .Values.syslogBindingCache.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-      - name: syslog-binding-cache
-        secret:
-          secretName: {{ required "syslogBindingCache.certificateSecret is required" .Values.syslogBindingCache.certificateSecret }}
-      - name: aggregate-drains
-        secret:
-          secretName: aggregate-drains
+        - name: api
+          secret:
+            secretName: {{ required "syslogBindingCache.certificateSecrets.api is required" .Values.syslogBindingCache.certificateSecrets.api }}
+        - name: cache
+          secret:
+            secretName: {{ required "syslogBindingCache.certificateSecrets.cache is required" .Values.syslogBindingCache.certificateSecrets.cache }}
+        - name: loggregator-agent
+          secret:
+            secretName: {{ required "syslogBindingCache.certificateSecrets.loggregatorAgent is required" .Values.syslogBindingCache.certificateSecrets.loggregatorAgent }}
+        - name: metrics
+          secret:
+            secretName: {{ required "syslogBindingCache.certificateSecrets.metrics is required" .Values.syslogBindingCache.certificateSecrets.metrics }}
+        - name: aggregate-drains
+          secret:
+            secretName: aggregate-drains
 ---
 kind: Service
 apiVersion: v1
@@ -108,9 +138,9 @@ metadata:
     app: syslog-binding-cache
 spec:
   ports:
-    - port: 9000
+    - port: {{ .Values.syslogBindingCache.externalPort }}
       name: http
-      targetPort: 9000
+      targetPort: {{ .Values.syslogBindingCache.externalPort }}
       protocol: TCP
   selector:
     app: syslog-binding-cache
