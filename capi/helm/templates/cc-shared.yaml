@@ -9,9 +9,8 @@ metadata:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "-2"
 stringData:
-  CLOUD_CONTROLLER_NG_CONFIG: /etc/cloud-controller/config.yaml
   RAILS_ENV: production
-{{- if .Values.cloudController.config.experimental.useYjitCompiler }}
+  {{- if .Values.cloudController.config.experimental.useYjitCompiler }}
   RUBYOPT: "--yjit"
-{{- end }}
+  {{- end }}
 {{- end }}

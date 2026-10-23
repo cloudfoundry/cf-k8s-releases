@@ -1,7 +1,7 @@
 {{ if .Values.cloudController.enabled }}
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: cc-worker
   labels:
@@ -20,27 +20,43 @@ spec:
         app.kubernetes.io/name: cc-worker
     spec:
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}
+      initContainers:
+        - name: set-name-index
+          image: mikefarah/yq:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              yq '.index = env(INDEX) | .name = "cc-worker"' /etc/cloud-controller/config.yaml > /tmp/config.yaml
+          env:
+            - name: INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          volumeMounts:
+            - name: etc-cloud-controller
+              mountPath: /etc/cloud-controller
+            - name: tmpdir
+              mountPath: /tmp
       containers:
         - name: cc-worker
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
-          {{- if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }}
-          command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME),{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}]"]
-          {{- else }}
-          command: ["bundle", "exec", "rake", "jobs:generic[$(POD_NAME)]"]
-          {{- end }}
+          command: ["bundle", "exec", "rake", "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"]
           envFrom:
             - secretRef:
                 name: cc-shared
           env:
             - name: INDEX
-              value: "1"
-            - name: POD_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /tmp/config.yaml
           {{- if .Values.ccWorker.resources }}
           resources:
             {{- toYaml .Values.ccWorker.resources | nindent 12 }}
