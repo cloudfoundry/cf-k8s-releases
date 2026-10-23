@@ -26,6 +26,8 @@ spec:
           env:
             - name: DB_LOG_LEVEL
               value: all
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /etc/cloud-controller/config.yaml
           envFrom:
             - secretRef:
                 name: cc-shared

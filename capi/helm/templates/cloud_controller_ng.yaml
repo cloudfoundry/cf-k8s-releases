@@ -23,7 +23,7 @@ spec:
     app.kubernetes.io/name: cloud-controller
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: cloud-controller
   labels:
@@ -44,19 +44,39 @@ spec:
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
     spec:
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds 1 }}
+      initContainers:
+        - name: set-name-index
+          image: mikefarah/yq:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              yq '.index = env(INDEX) | .name = "api"' /etc/cloud-controller/config.yaml > /tmp/config.yaml
+          env:
+            - name: INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          volumeMounts:
+            - name: etc-cloud-controller
+              mountPath: /etc/cloud-controller
+            - name: tmpdir
+              mountPath: /tmp
       containers:
         - name: cloud-controller
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
-          command: ["bundle", "exec", "bin/cloud_controller", "-c", "/etc/cloud-controller/config.yaml"]
+          command: ["bundle", "exec", "bin/cloud_controller", "-c", "/tmp/config.yaml"]
           envFrom:
             - secretRef:
                 name: cc-shared
           env:
-            - name: INDEX
-              value: "1"
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /tmp/config.yaml
           {{- if .Values.cloudController.resources }}
           resources:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}
@@ -98,14 +118,16 @@ spec:
         - name: local-worker-{{ add $i 1 }}
           image: {{ $.Values.localWorker.image.repository }}:{{ default $.Chart.AppVersion $.Values.localWorker.image.tag }}
           imagePullPolicy: {{ $.Values.localWorker.image.imagePullPolicy }}
-          command: ["bundle", "exec", "rake", "jobs:local[cc_api_worker.$(POD_NAME).{{ add $i 1 }}]"]
+          command: ["bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(INDEX).{{ add $i 1 }}]"]
           env:
-            - name: POD_NAME
+            - name: INDEX
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /tmp/config.yaml
             - name: CLOUD_CONTROLLER_LOCAL_WORKER_OVERRIDE_CONFIG
               value: /etc/cloud-controller/cloud_controller_local_worker_override.yml
           envFrom:

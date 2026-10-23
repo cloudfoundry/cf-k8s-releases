@@ -27,6 +27,9 @@ spec:
           envFrom:
             - secretRef:
                 name: cc-shared
+          env:
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /etc/cloud-controller/config.yaml
           {{- if .Values.ccWorkerClock.resources }}
           resources:
             {{- toYaml .Values.ccWorkerClock.resources | nindent 12 }}
