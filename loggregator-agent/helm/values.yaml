@@ -1,6 +1,7 @@
 forwarderAgent:
   enabled: false
   replicas: 1
+  port: 3458
   certificateSecrets:
     forwarder: ""
     metrics: ""
