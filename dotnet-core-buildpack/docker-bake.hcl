@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/dotnet-core-buildpack
-  default = "2.4.52"
+  default = "2.4.53"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/dotnet-core-buildpack
-  default = "2.4.52"
+  default = "2.4.53"
 }
 
 group "default" {
