@@ -53,6 +53,7 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
+          ref: align-loggregator-agent
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
         with:

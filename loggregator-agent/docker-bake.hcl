@@ -9,7 +9,7 @@ variable "LOGGREGATOR_AGENT_RELEASE_VERSION" {
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
-  default = "8.3.31"
+  default = "8.3.32-1"
 }
 
 group "default" {
