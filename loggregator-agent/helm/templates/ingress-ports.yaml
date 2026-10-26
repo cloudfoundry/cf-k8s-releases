@@ -1,13 +1,16 @@
-{{- if .Values.forwarderAgent.enabled }}
+{{- if .Values.agents.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: ingress-ports
 data:
-  {{- if .Values.loggregatorAgent.enabled }}
-  loggregator.yml: "ingress: {{ .Values.loggregatorAgent.grpcPort | int64 }}"
+  {{- if .Values.agents.loggregatorAgent.enabled }}
+  loggregator.yml: "ingress: {{ .Values.agents.loggregatorAgent.grpcPort | int64 }}"
   {{- end }}
-  {{- if .Values.syslogAgent.enabled }}
-  syslog.yml: "ingress: {{ .Values.syslogAgent.port | int64 }}"
+  syslog.yml: "ingress: {{ .Values.agents.syslogAgent.port | int64 }}"
+  {{- if .Values.agents.otelCollector.enabled }}
+  otel-collector.yml: |
+    ingress: {{ .Values.agents.otelCollector.port | int64 }}
+    protocol: otelcol
   {{- end }}
 {{- end }}

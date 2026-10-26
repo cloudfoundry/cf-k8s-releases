@@ -5,79 +5,13 @@
     "global": {
       "type": "object"
     },
-    "forwarderAgent": {
+    "agents": {
       "additionalProperties": false,
       "properties": {
         "enabled": {
           "type": "boolean"
         },
-        "replicas": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
-        "certificateSecrets": {
-          "additionalProperties": false,
-          "properties": {
-            "forwarder": {
-              "type": "string"
-            },
-            "metrics": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "tags": {
-          "type": "object"
-        },
-        "emitOtelTraces": {
-          "type": "boolean"
-        },
-        "emitOtelMetrics": {
-          "type": "boolean"
-        },
-        "emitOtelLogs": {
-          "type": "boolean"
-        },
-        "otelRetry": {
-          "additionalProperties": false,
-          "properties": {
-            "maxRetries": {
-              "type": "integer"
-            },
-            "queueSize": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "image": {
-          "additionalProperties": false,
-          "properties": {
-            "imagePullPolicy": {
-              "type": "string"
-            },
-            "repository": {
-              "type": "string"
-            },
-            "tag": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "nodeSelector": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "resources": {
           "type": [
             "object",
             "null"
@@ -113,149 +47,101 @@
             "type": "object"
           }
         },
-        "metrics": {
+        "forwarderAgent": {
           "additionalProperties": false,
           "properties": {
             "port": {
-              "type": "integer"
-            },
-            "debug": {
-              "type": "boolean"
-            },
-            "pprofPort": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "logging": {
-          "additionalProperties": false,
-          "properties": {
-            "format": {
-              "additionalProperties": false,
-              "properties": {
-                "timestamp": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "tls": {
-          "additionalProperties": false,
-          "properties": {
-            "cipherSuites": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "deployment": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "loggregatorAgent": {
-      "additionalProperties": false,
-      "properties": {
-        "certificateSecrets": {
-          "additionalProperties": false,
-          "properties": {
-            "loggregator": {
-              "type": "string"
-            },
-            "metrics": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "listeningPort": {
-          "type": "integer"
-        },
-        "disableUdp": {
-          "type": "boolean"
-        },
-        "disableLogs": {
-          "type": "boolean"
-        },
-        "tags": {
-          "type": "object"
-        },
-        "doppler": {
-          "additionalProperties": false,
-          "properties": {
-            "grpcPort": {
               "type": "integer",
               "minimum": 1,
               "maximum": 65535
             },
-            "overrideUrl": {
-              "type": "string"
-            },
-            "overrideAzUrl": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "image": {
-          "additionalProperties": false,
-          "properties": {
-            "imagePullPolicy": {
-              "type": "string"
-            },
-            "repository": {
-              "type": "string"
-            },
-            "tag": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "resources": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "metrics": {
-          "additionalProperties": false,
-          "properties": {
-            "port": {
-              "type": "integer"
-            },
-            "debug": {
-              "type": "boolean"
-            },
-            "pprofPort": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "logging": {
-          "additionalProperties": false,
-          "properties": {
-            "format": {
+            "certificateSecrets": {
               "additionalProperties": false,
               "properties": {
-                "timestamp": {
+                "forwarder": {
+                  "type": "string"
+                },
+                "metrics": {
                   "type": "string"
                 }
               },
               "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "loggregator": {
-          "additionalProperties": false,
-          "properties": {
+            },
+            "tags": {
+              "type": "object"
+            },
+            "emitOtelTraces": {
+              "type": "boolean"
+            },
+            "emitOtelMetrics": {
+              "type": "boolean"
+            },
+            "emitOtelLogs": {
+              "type": "boolean"
+            },
+            "otelRetry": {
+              "additionalProperties": false,
+              "properties": {
+                "maxRetries": {
+                  "type": "integer"
+                },
+                "queueSize": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "image": {
+              "additionalProperties": false,
+              "properties": {
+                "imagePullPolicy": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "resources": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
             "tls": {
               "additionalProperties": false,
               "properties": {
@@ -264,167 +150,342 @@
                 }
               },
               "type": "object"
+            },
+            "deployment": {
+              "type": "string"
             }
           },
           "type": "object"
         },
-        "deployment": {
-          "type": "string"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "grpcPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        }
-      },
-      "type": "object"
-    },
-    "syslogAgent": {
-      "additionalProperties": false,
-      "properties": {
-        "certificateSecrets": {
+        "loggregatorAgent": {
           "additionalProperties": false,
           "properties": {
-            "agent": {
-              "type": "string"
+            "certificateSecrets": {
+              "additionalProperties": false,
+              "properties": {
+                "loggregator": {
+                  "type": "string"
+                },
+                "metrics": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             },
-            "cache": {
-              "type": "string"
+            "listeningPort": {
+              "type": "integer"
+            },
+            "disableUdp": {
+              "type": "boolean"
+            },
+            "disableLogs": {
+              "type": "boolean"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "doppler": {
+              "additionalProperties": false,
+              "properties": {
+                "grpcPort": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                "overrideUrl": {
+                  "type": "string"
+                },
+                "overrideAzUrl": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "image": {
+              "additionalProperties": false,
+              "properties": {
+                "imagePullPolicy": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "resources": {
+              "type": [
+                "object",
+                "null"
+              ]
             },
             "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "loggregator": {
+              "additionalProperties": false,
+              "properties": {
+                "tls": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cipherSuites": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "deployment": {
               "type": "string"
             },
-            "drain": {
-              "type": "string"
+            "enabled": {
+              "type": "boolean"
+            },
+            "grpcPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
             }
           },
           "type": "object"
         },
-        "drainSkipCertVerify": {
-          "type": "boolean"
-        },
-        "defaultDrainMetadata": {
-          "type": "boolean"
-        },
-        "drainCipherSuites": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "pattern": "\\S"
-        },
-        "aggregateDrains": {
-          "type": "string"
-        },
-        "blacklistedSyslogRanges": {
-          "type": "array",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "start": {
-                "type": "string"
-              },
-              "end": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "warnOnInvalidDrains": {
-          "type": "boolean"
-        },
-        "cache": {
+        "syslogAgent": {
           "additionalProperties": false,
           "properties": {
-            "pollingInterval": {
+            "certificateSecrets": {
+              "additionalProperties": false,
+              "properties": {
+                "agent": {
+                  "type": "string"
+                },
+                "cache": {
+                  "type": "string"
+                },
+                "metrics": {
+                  "type": "string"
+                },
+                "drain": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "drainSkipCertVerify": {
+              "type": "boolean"
+            },
+            "defaultDrainMetadata": {
+              "type": "boolean"
+            },
+            "drainCipherSuites": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "\\S"
+            },
+            "aggregateDrains": {
               "type": "string"
+            },
+            "blacklistedSyslogRanges": {
+              "type": "array",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "start": {
+                    "type": "string"
+                  },
+                  "end": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "warnOnInvalidDrains": {
+              "type": "boolean"
+            },
+            "cache": {
+              "additionalProperties": false,
+              "properties": {
+                "pollingInterval": {
+                  "type": "string"
+                },
+                "tls": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cn": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "image": {
+              "additionalProperties": false,
+              "properties": {
+                "imagePullPolicy": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "resources": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "metrics": {
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "debug": {
+                  "type": "boolean"
+                },
+                "pprofPort": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
             },
             "tls": {
               "additionalProperties": false,
               "properties": {
-                "cn": {
+                "cipherSuites": {
                   "type": "string"
                 }
               },
               "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "image": {
-          "additionalProperties": false,
-          "properties": {
-            "imagePullPolicy": {
-              "type": "string"
             },
-            "repository": {
-              "type": "string"
-            },
-            "tag": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "resources": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "metrics": {
-          "additionalProperties": false,
-          "properties": {
             "port": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
             },
-            "debug": {
+            "bindingCacheOverrideUrl": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "otelCollector": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
               "type": "boolean"
             },
-            "pprofPort": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "logging": {
-          "additionalProperties": false,
-          "properties": {
-            "format": {
+            "securityContext": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "image": {
               "additionalProperties": false,
               "properties": {
-                "timestamp": {
+                "imagePullPolicy": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
                   "type": "string"
                 }
               },
               "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "tls": {
-          "additionalProperties": false,
-          "properties": {
-            "cipherSuites": {
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "certificateSecret": {
               "type": "string"
+            },
+            "resources": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "extraVolumes": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "extraVolumeMounts": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "configs": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
             }
           },
           "type": "object"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
-        "bindingCacheOverrideUrl": {
-          "type": "string"
         }
       },
       "type": "object"

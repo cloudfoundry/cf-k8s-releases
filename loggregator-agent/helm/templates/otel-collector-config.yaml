@@ -1,0 +1,36 @@
+{{- if and .Values.agents.enabled .Values.agents.otelCollector.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+data:
+  config.yaml: |
+    receivers:
+      otlp/cf-internal-local:
+        protocols:
+          grpc:
+            endpoint: 127.0.0.1:{{ .Values.agents.otelCollector.port }}
+            tls:
+              client_ca_file: /etc/otel/certs/ca.crt
+              cert_file: /etc/otel/certs/tls.crt
+              key_file: /etc/otel/certs/tls.key
+              min_version: "1.3"
+    exporters:
+      nop: {}
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp/cf-internal-local]
+          exporters: [nop]
+        logs:
+          receivers: [otlp/cf-internal-local]
+          exporters: [nop]
+        traces:
+          receivers: [otlp/cf-internal-local]
+          exporters: [nop]
+  {{- range $index, $config := .Values.agents.otelCollector.configs }}
+  config-{{ $index }}.yaml: |
+    {{- tpl (toYaml $config) $ | nindent 4 }}
+  {{- end }}
+{{- end }}

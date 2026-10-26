@@ -1,0 +1,334 @@
+{{- if .Values.agents.enabled }}
+{{- $cacheURL := tpl .Values.agents.syslogAgent.bindingCacheOverrideUrl . }}
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: loggregator-agents
+  labels:
+    app: loggregator-agents
+spec:
+  selector:
+    matchLabels:
+      app: loggregator-agents
+  template:
+    metadata:
+      labels:
+        app: loggregator-agents
+      annotations:
+        checksum/ingress-ports: {{ include (print $.Template.BasePath "/ingress-ports.yaml") . | sha256sum }}
+        {{- if .Values.agents.otelCollector.enabled }}
+        checksum/otel-collector-config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
+        {{- end }}
+    spec:
+      {{- if and .Values.agents.otelCollector.enabled }}
+      serviceAccountName: loggregator-agents
+      {{- end }}
+      containers:
+        - name: forwarder-agent
+          image: {{ .Values.agents.forwarderAgent.image.repository }}:{{ default .Chart.AppVersion .Values.agents.forwarderAgent.image.tag }}
+          imagePullPolicy: {{ .Values.agents.forwarderAgent.image.imagePullPolicy }}
+          {{- if .Values.agents.forwarderAgent.resources }}
+          resources:
+            {{- toYaml .Values.agents.forwarderAgent.resources | nindent 12 }}
+          {{- end }}
+          env:
+            {{- include "loggregatorAgent.podIdentity" . | nindent 12 }}
+            - name: AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: AGENT_PORT
+              value: {{ .Values.agents.forwarderAgent.port | int64 | quote }}
+            - name: AGENT_CA_FILE_PATH
+              value: /etc/ssl/certs/forwarder-agent/ca.crt
+            - name: AGENT_CERT_FILE_PATH
+              value: /etc/ssl/certs/forwarder-agent/tls.crt
+            - name: AGENT_KEY_FILE_PATH
+              value: /etc/ssl/certs/forwarder-agent/tls.key
+            - name: AGENT_CIPHER_SUITES
+              value: {{ .Values.agents.forwarderAgent.tls.cipherSuites | replace ":" "," | quote }}
+            - name: AGENT_TAGS
+              value: {{ include "loggregatorAgent.tags" (dict "values" .Values.agents.forwarderAgent "root" .) | quote }}
+            - name: EMIT_OTEL_TRACES
+              value: {{ .Values.agents.forwarderAgent.emitOtelTraces | quote }}
+            - name: EMIT_OTEL_METRICS
+              value: {{ .Values.agents.forwarderAgent.emitOtelMetrics | quote }}
+            - name: EMIT_OTEL_LOGS
+              value: {{ .Values.agents.forwarderAgent.emitOtelLogs | quote }}
+            - name: OTEL_RETRY_MAX_RETRIES
+              value: "{{ .Values.agents.forwarderAgent.otelRetry.maxRetries | int64 }}"
+            - name: OTEL_RETRY_QUEUE_SIZE
+              value: "{{ .Values.agents.forwarderAgent.otelRetry.queueSize | int64 }}"
+            - name: METRICS_PORT
+              value: "{{ .Values.agents.forwarderAgent.metrics.port | int64 }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/forwarder-agent-metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/forwarder-agent-metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/forwarder-agent-metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.agents.forwarderAgent.metrics.debug | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.agents.forwarderAgent.metrics.pprofPort | int64 }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.agents.forwarderAgent.logging.format.timestamp "rfc3339" | quote }}
+            - name: DOWNSTREAM_INGRESS_PORT_GLOB
+              value: /ingress-globs/*.yml
+          volumeMounts:
+            - name: forwarder-agent
+              mountPath: /etc/ssl/certs/forwarder-agent
+            - name: forwarder-agent-metrics
+              mountPath: /etc/ssl/certs/forwarder-agent-metrics
+            - name: ingress-globs
+              mountPath: /ingress-globs
+        {{- if .Values.agents.loggregatorAgent.enabled }}
+        - name: loggregator-agent
+          image: {{ .Values.agents.loggregatorAgent.image.repository }}:{{ default .Chart.AppVersion .Values.agents.loggregatorAgent.image.tag }}
+          imagePullPolicy: {{ .Values.agents.loggregatorAgent.image.imagePullPolicy }}
+          {{- if .Values.agents.loggregatorAgent.resources }}
+          resources:
+            {{- toYaml .Values.agents.loggregatorAgent.resources | nindent 12 }}
+          {{- end }}
+          env:
+            {{- include "loggregatorAgent.podIdentity" . | nindent 12 }}
+            - name: AGENT_DEPLOYMENT
+              value: {{ tpl .Values.agents.loggregatorAgent.deployment . | quote }}
+            - name: AGENT_JOB
+              value: forwarder-agent
+            - name: AGENT_INDEX
+              value: "$(POD_NAME)"
+            - name: AGENT_IP
+              value: "$(POD_IP)"
+            - name: AGENT_PORT
+              value: {{ .Values.agents.loggregatorAgent.grpcPort | int64 | quote }}
+            - name: AGENT_CA_FILE
+              value: /etc/ssl/certs/loggregator-agent/ca.crt
+            - name: AGENT_CERT_FILE
+              value: /etc/ssl/certs/loggregator-agent/tls.crt
+            - name: AGENT_KEY_FILE
+              value: /etc/ssl/certs/loggregator-agent/tls.key
+            - name: AGENT_CIPHER_SUITES
+              value: {{ .Values.agents.loggregatorAgent.loggregator.tls.cipherSuites | replace ":" "," | quote }}
+            - name: AGENT_TAGS
+              value: {{ include "loggregatorAgent.tags" (dict "values" .Values.agents.loggregatorAgent "root" .) | quote }}
+            - name: AGENT_DISABLE_UDP
+              value: {{ .Values.agents.loggregatorAgent.disableUdp | quote }}
+            - name: LOGS_DISABLED
+              value: {{ .Values.agents.loggregatorAgent.disableLogs | quote }}
+            - name: AGENT_INCOMING_UDP_PORT
+              value: "{{ .Values.agents.loggregatorAgent.listeningPort | int64 }}"
+            - name: ROUTER_ADDR
+              value: "{{ tpl (required "agents.loggregatorAgent.doppler.overrideUrl is required" .Values.agents.loggregatorAgent.doppler.overrideUrl) . }}:{{ .Values.agents.loggregatorAgent.doppler.grpcPort | int64 }}"
+            {{- if .Values.agents.loggregatorAgent.doppler.overrideAzUrl }}
+            - name: ROUTER_ADDR_WITH_AZ
+              value: "{{ tpl .Values.agents.loggregatorAgent.doppler.overrideAzUrl . }}:{{ .Values.agents.loggregatorAgent.doppler.grpcPort | int64 }}"
+            {{- end }}
+            - name: METRICS_PORT
+              value: "{{ .Values.agents.loggregatorAgent.metrics.port | int64 }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/loggregator-agent-metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/loggregator-agent-metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/loggregator-agent-metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.agents.loggregatorAgent.metrics.debug | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.agents.loggregatorAgent.metrics.pprofPort | int64 }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.agents.loggregatorAgent.logging.format.timestamp "rfc3339" | quote }}
+          volumeMounts:
+            - name: loggregator-agent
+              mountPath: /etc/ssl/certs/loggregator-agent
+            - name: loggregator-agent-metrics
+              mountPath: /etc/ssl/certs/loggregator-agent-metrics
+        {{- end }}
+        - name: syslog-agent
+          image: {{ .Values.agents.syslogAgent.image.repository }}:{{ default .Chart.AppVersion .Values.agents.syslogAgent.image.tag }}
+          imagePullPolicy: {{ .Values.agents.syslogAgent.image.imagePullPolicy }}
+          {{- if .Values.agents.syslogAgent.resources }}
+          resources:
+            {{- toYaml .Values.agents.syslogAgent.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: AGENT_PORT
+              value: {{ .Values.agents.syslogAgent.port | int64 | quote }}
+            - name: AGENT_CA_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent/ca.crt
+            - name: AGENT_CERT_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent/tls.crt
+            - name: AGENT_KEY_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent/tls.key
+            - name: AGENT_CIPHER_SUITES
+              value: {{ .Values.agents.syslogAgent.tls.cipherSuites | replace ":" "," | quote }}
+            - name: DRAIN_SKIP_CERT_VERIFY
+              value: {{ .Values.agents.syslogAgent.drainSkipCertVerify | quote }}
+            - name: DEFAULT_DRAIN_METADATA
+              {{- if and $cacheURL .Values.syslogBindingCache.enabled }}
+              value: {{ .Values.syslogBindingCache.defaultDrainMetadata | quote }}
+              {{- else }}
+              value: {{ .Values.agents.syslogAgent.defaultDrainMetadata | quote }}
+              {{- end }}
+            - name: DRAIN_TRUSTED_CA_FILE
+              {{- if .Values.agents.syslogAgent.certificateSecrets.drain }}
+              value: /etc/ssl/certs/syslog-agent-drain/ca.crt
+              {{- else }}
+              value: ""
+              {{- end }}
+            {{- if .Values.agents.syslogAgent.drainCipherSuites }}
+            - name: DRAIN_CIPHER_SUITES
+              value: {{ .Values.agents.syslogAgent.drainCipherSuites | quote }}
+            {{- end }}
+            - name: BLACKLISTED_SYSLOG_RANGES
+              value: {{ include "loggregatorAgent.blacklistedRanges" .Values.agents.syslogAgent.blacklistedSyslogRanges | quote }}
+            - name: AGGREGATE_DRAIN_URLS
+              value: {{ .Values.agents.syslogAgent.aggregateDrains | quote }}
+            - name: WARN_ON_INVALID_DRAINS
+              value: {{ .Values.agents.syslogAgent.warnOnInvalidDrains | quote }}
+            - name: LOGGREGATOR_AGENT_ADDR
+              value: "localhost:{{ .Values.agents.syslogAgent.port | int64 }}"
+            {{- if $cacheURL }}
+            - name: CACHE_URL
+              value: {{ $cacheURL | quote }}
+            - name: CACHE_COMMON_NAME
+              value: {{ .Values.agents.syslogAgent.cache.tls.cn | quote }}
+            - name: CACHE_POLLING_INTERVAL
+              value: {{ .Values.agents.syslogAgent.cache.pollingInterval | quote }}
+            - name: CACHE_CA_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-cache/ca.crt
+            - name: CACHE_CERT_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-cache/tls.crt
+            - name: CACHE_KEY_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-cache/tls.key
+            {{- end }}
+            - name: METRICS_PORT
+              value: "{{ .Values.agents.syslogAgent.metrics.port | int64 }}"
+            - name: METRICS_CA_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-metrics/ca.crt
+            - name: METRICS_CERT_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-metrics/tls.crt
+            - name: METRICS_KEY_FILE_PATH
+              value: /etc/ssl/certs/syslog-agent-metrics/tls.key
+            - name: DEBUG_METRICS
+              value: {{ .Values.agents.syslogAgent.metrics.debug | quote }}
+            - name: PPROF_PORT
+              value: "{{ .Values.agents.syslogAgent.metrics.pprofPort | int64 }}"
+            - name: USE_RFC3339
+              value: {{ eq .Values.agents.syslogAgent.logging.format.timestamp "rfc3339" | quote }}
+          volumeMounts:
+            - name: syslog-agent
+              mountPath: /etc/ssl/certs/syslog-agent
+            {{- if $cacheURL }}
+            - name: syslog-agent-cache
+              mountPath: /etc/ssl/certs/syslog-agent-cache
+            {{- end }}
+            - name: syslog-agent-metrics
+              mountPath: /etc/ssl/certs/syslog-agent-metrics
+            {{- if .Values.agents.syslogAgent.certificateSecrets.drain }}
+            - name: syslog-agent-drain
+              mountPath: /etc/ssl/certs/syslog-agent-drain
+            {{- end }}
+        {{- if .Values.agents.otelCollector.enabled }}
+        - name: otel-collector
+          image: {{ .Values.agents.otelCollector.image.repository }}:{{ .Values.agents.otelCollector.image.tag }}
+          imagePullPolicy: {{ .Values.agents.otelCollector.image.imagePullPolicy }}
+          env:
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          {{- if .Values.agents.otelCollector.securityContext }}
+          securityContext:
+            {{- toYaml .Values.agents.otelCollector.securityContext | nindent 12 }}
+          {{- end }}
+          {{- if .Values.agents.otelCollector.resources }}
+          resources:
+            {{- toYaml .Values.agents.otelCollector.resources | nindent 12 }}
+          {{- end }}
+          args:
+            - --config=/etc/otel/config/config.yaml
+            {{- range $index, $_ := .Values.agents.otelCollector.configs }}
+            - --config=/etc/otel/config/config-{{ $index }}.yaml
+            {{- end }}
+          volumeMounts:
+            - name: otel-collector-config
+              mountPath: /etc/otel/config
+              readOnly: true
+            - name: otel-collector-tls
+              mountPath: /etc/otel/certs
+              readOnly: true
+            {{- with .Values.agents.otelCollector.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- end }}
+      {{- if .Values.agents.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.agents.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.agents.tolerations }}
+      tolerations:
+        {{- toYaml .Values.agents.tolerations | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: forwarder-agent
+          secret:
+            secretName: {{ required "agents.forwarderAgent.certificateSecrets.forwarder is required" .Values.agents.forwarderAgent.certificateSecrets.forwarder }}
+        - name: forwarder-agent-metrics
+          secret:
+            secretName: {{ required "agents.forwarderAgent.certificateSecrets.metrics is required" .Values.agents.forwarderAgent.certificateSecrets.metrics }}
+        {{- if .Values.agents.loggregatorAgent.enabled }}
+        - name: loggregator-agent
+          secret:
+            secretName: {{ required "agents.loggregatorAgent.certificateSecrets.loggregator is required" .Values.agents.loggregatorAgent.certificateSecrets.loggregator }}
+        - name: loggregator-agent-metrics
+          secret:
+            secretName: {{ required "agents.loggregatorAgent.certificateSecrets.metrics is required" .Values.agents.loggregatorAgent.certificateSecrets.metrics }}
+        {{- end }}
+        - name: syslog-agent
+          secret:
+            secretName: {{ required "agents.syslogAgent.certificateSecrets.agent is required" .Values.agents.syslogAgent.certificateSecrets.agent }}
+        {{- if $cacheURL }}
+        - name: syslog-agent-cache
+          secret:
+            secretName: {{ required "agents.syslogAgent.certificateSecrets.cache is required" .Values.agents.syslogAgent.certificateSecrets.cache }}
+        {{- end }}
+        - name: syslog-agent-metrics
+          secret:
+            secretName: {{ required "agents.syslogAgent.certificateSecrets.metrics is required" .Values.agents.syslogAgent.certificateSecrets.metrics }}
+        {{- if .Values.agents.syslogAgent.certificateSecrets.drain }}
+        - name: syslog-agent-drain
+          secret:
+            secretName: {{ .Values.agents.syslogAgent.certificateSecrets.drain }}
+        {{- end }}
+        {{- if .Values.agents.otelCollector.enabled }}
+        - name: otel-collector-config
+          configMap:
+            name: otel-collector-config
+        - name: otel-collector-tls
+          secret:
+            secretName: {{ required "agents.otelCollector.certificateSecret is required when agents.otelCollector is enabled" .Values.agents.otelCollector.certificateSecret }}
+        {{- with .Values.agents.otelCollector.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- end }}
+        - name: ingress-globs
+          configMap:
+            name: ingress-ports
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: forwarder-agent
+  labels:
+    app: loggregator-agents
+spec:
+  trafficDistribution: PreferSameNode
+  ports:
+    - port: {{ .Values.agents.forwarderAgent.port }}
+      targetPort: {{ .Values.agents.forwarderAgent.port }}
+      protocol: TCP
+  selector:
+    app: loggregator-agents
+{{- end }}

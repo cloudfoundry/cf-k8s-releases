@@ -35,9 +35,9 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: loggregator-agent
         run: |
-          yq -e -i '.forwarderAgent.image.repository = "forwarder-agent"' helm/values.yaml
-          yq -e -i '.loggregatorAgent.image.repository = "loggregator-agent"' helm/values.yaml
-          yq -e -i '.syslogAgent.image.repository = "syslog-agent"' helm/values.yaml
+          yq -e -i '.agents.forwarderAgent.image.repository = "forwarder-agent"' helm/values.yaml
+          yq -e -i '.agents.loggregatorAgent.image.repository = "loggregator-agent"' helm/values.yaml
+          yq -e -i '.agents.syslogAgent.image.repository = "syslog-agent"' helm/values.yaml
           yq -e -i '.syslogBindingCache.image.repository = "syslog-binding-cache"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
@@ -53,6 +53,7 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
+          ref: add-otel-collector
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
         with:
