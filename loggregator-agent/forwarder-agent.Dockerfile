@@ -7,7 +7,7 @@ WORKDIR /loggregator-agent-release/src
 
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/local/bin/forwarder-agent ./cmd/forwarder-agent
 
-FROM ubuntu:latest
+FROM gcr.io/distroless/static:latest
 
 COPY --from=builder /usr/local/bin/forwarder-agent /usr/local/bin/forwarder-agent
 

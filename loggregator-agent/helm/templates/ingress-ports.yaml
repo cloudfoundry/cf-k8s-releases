@@ -1,7 +1,13 @@
+{{- if .Values.forwarderAgent.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: ingress-ports
 data:
-  loggregator.yml: "ingress: 3459"
-  syslog.yml: "ingress: 3460"
+  {{- if .Values.loggregatorAgent.enabled }}
+  loggregator.yml: "ingress: {{ .Values.loggregatorAgent.grpcPort | int64 }}"
+  {{- end }}
+  {{- if .Values.syslogAgent.enabled }}
+  syslog.yml: "ingress: {{ .Values.syslogAgent.port | int64 }}"
+  {{- end }}
+{{- end }}

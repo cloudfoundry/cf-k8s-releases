@@ -32,9 +32,6 @@
           },
           "type": "object"
         },
-        "cipherSuites": {
-          "type": "string"
-        },
         "tags": {
           "type": "object"
         },
@@ -59,18 +56,6 @@
           },
           "type": "object"
         },
-        "metricsPort": {
-          "type": "integer"
-        },
-        "debugMetrics": {
-          "type": "boolean"
-        },
-        "pprofPort": {
-          "type": "integer"
-        },
-        "loggingFormatTimestamp": {
-          "type": "string"
-        },
         "image": {
           "additionalProperties": false,
           "properties": {
@@ -87,13 +72,22 @@
           "type": "object"
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -118,6 +112,48 @@
             ],
             "type": "object"
           }
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "debug": {
+              "type": "boolean"
+            },
+            "pprofPort": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "format": {
+              "additionalProperties": false,
+              "properties": {
+                "timestamp": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tls": {
+          "additionalProperties": false,
+          "properties": {
+            "cipherSuites": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "deployment": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -146,32 +182,25 @@
         "disableLogs": {
           "type": "boolean"
         },
-        "cipherSuites": {
-          "type": "string"
-        },
         "tags": {
           "type": "object"
         },
         "doppler": {
           "additionalProperties": false,
           "properties": {
-            "address": {
+            "grpcPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "overrideUrl": {
+              "type": "string"
+            },
+            "overrideAzUrl": {
               "type": "string"
             }
           },
           "type": "object"
-        },
-        "metricsPort": {
-          "type": "integer"
-        },
-        "debugMetrics": {
-          "type": "boolean"
-        },
-        "pprofPort": {
-          "type": "integer"
-        },
-        "loggingFormatTimestamp": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,
@@ -189,7 +218,66 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "debug": {
+              "type": "boolean"
+            },
+            "pprofPort": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "format": {
+              "additionalProperties": false,
+              "properties": {
+                "timestamp": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "loggregator": {
+          "additionalProperties": false,
+          "properties": {
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cipherSuites": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "deployment": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "grpcPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
         }
       },
       "type": "object"
@@ -215,9 +303,6 @@
           },
           "type": "object"
         },
-        "cipherSuites": {
-          "type": "string"
-        },
         "drainSkipCertVerify": {
           "type": "boolean"
         },
@@ -225,7 +310,11 @@
           "type": "boolean"
         },
         "drainCipherSuites": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "\\S"
         },
         "aggregateDrains": {
           "type": "string"
@@ -251,29 +340,20 @@
         "cache": {
           "additionalProperties": false,
           "properties": {
-            "commonName": {
-              "type": "string"
-            },
             "pollingInterval": {
               "type": "string"
             },
-            "address": {
-              "type": "string"
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cn": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
-        },
-        "metricsPort": {
-          "type": "integer"
-        },
-        "debugMetrics": {
-          "type": "boolean"
-        },
-        "pprofPort": {
-          "type": "integer"
-        },
-        "loggingFormatTimestamp": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,
@@ -291,7 +371,60 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "debug": {
+              "type": "boolean"
+            },
+            "pprofPort": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "format": {
+              "additionalProperties": false,
+              "properties": {
+                "timestamp": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tls": {
+          "additionalProperties": false,
+          "properties": {
+            "cipherSuites": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "bindingCacheOverrideUrl": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -327,17 +460,17 @@
         "externalPort": {
           "type": "integer"
         },
-        "cipherSuites": {
-          "type": "string"
-        },
-        "commonName": {
-          "type": "string"
-        },
         "defaultDrainMetadata": {
           "type": "boolean"
         },
         "aggregateDrains": {
-          "type": "string"
+          "type": [
+            "string",
+            "array"
+          ],
+          "items": {
+            "$ref": "#/definitions/aggregateDrain"
+          }
         },
         "blacklistedSyslogRanges": {
           "type": "array",
@@ -360,12 +493,6 @@
         "api": {
           "additionalProperties": false,
           "properties": {
-            "address": {
-              "type": "string"
-            },
-            "commonName": {
-              "type": "string"
-            },
             "pollingInterval": {
               "type": "string"
             },
@@ -374,6 +501,18 @@
             },
             "disableKeepAlives": {
               "type": "boolean"
+            },
+            "overrideUrl": {
+              "type": "string"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cn": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
@@ -387,23 +526,17 @@
             "port": {
               "type": "integer"
             },
-            "cipherSuites": {
-              "type": "string"
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cipherSuites": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
-        },
-        "metricsPort": {
-          "type": "integer"
-        },
-        "debugMetrics": {
-          "type": "boolean"
-        },
-        "pprofPort": {
-          "type": "integer"
-        },
-        "loggingFormatTimestamp": {
-          "type": "string"
         },
         "image": {
           "additionalProperties": false,
@@ -421,13 +554,22 @@
           "type": "object"
         },
         "nodeSelector": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -452,10 +594,67 @@
             ],
             "type": "object"
           }
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "debug": {
+              "type": "boolean"
+            },
+            "pprofPort": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "format": {
+              "additionalProperties": false,
+              "properties": {
+                "timestamp": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tls": {
+          "additionalProperties": false,
+          "properties": {
+            "cipherSuites": {
+              "type": "string"
+            },
+            "cn": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         }
       },
       "type": "object"
     }
   },
-  "type": "object"
+  "type": "object",
+  "definitions": {
+    "aggregateDrain": {
+      "oneOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/aggregateDrain"
+          }
+        }
+      ]
+    }
+  }
 }
