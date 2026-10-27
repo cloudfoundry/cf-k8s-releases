@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nodejs-buildpack
-  default = "1.9.6"
+  default = "1.9.7"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nodejs-buildpack
-  default = "1.9.6"
+  default = "1.9.7"
 }
 
 group "default" {
