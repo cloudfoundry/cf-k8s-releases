@@ -17,6 +17,9 @@ gorouter:
 
 udpForwarder:
   certificateSecret: ""
+  metronEndpoint:
+    host: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
+    port: 3458
   image:
     repository: ghcr.io/cloudfoundry/k8s/udp-forwarder
     # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
@@ -30,6 +33,9 @@ routingApi:
   locketCertificateSecret: ""
   uaaCertificateSecret: ""
   systemDomain: "cf.127-0-0-1.nip.io"
+  metronEndpoint:
+    host: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
+    port: 3458
   sqldb:
     password: ~
     user: postgres

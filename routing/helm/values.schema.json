@@ -156,6 +156,20 @@
         "uaaCertificateSecret": {
           "type": "string"
         },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "type": "object"
+        },
         "uaa": {
           "additionalProperties": false,
           "properties": {
@@ -431,6 +445,20 @@
       "properties": {
         "certificateSecret": {
           "type": "string"
+        },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
