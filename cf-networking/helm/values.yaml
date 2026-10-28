@@ -27,7 +27,6 @@ policyServer:
   listenIp: "0.0.0.0"
   listenPort: 4002
   debugPort: 31821
-  metronPort: 3457
   uaaClient: network-policy
   uaaHostname: uaa.{{ .Release.Namespace }}.svc.cluster.local
   uaaPort: 8443
@@ -69,7 +68,6 @@ serviceDiscoveryController:
   port: 8054
   logLevelAddress: "127.0.0.1"
   logLevelPort: 8055
-  metronPort: 3457
   stalenessThresholdSeconds: 180
   routeEmitterIntervalSeconds: 60
   readHeaderTimeout: "30s"
@@ -91,7 +89,6 @@ boshDnsAdapter:
   # BOSH binds loopback; 0.0.0.0 lets the kubelet reach /health for the liveness probe
   address: "0.0.0.0"
   port: 8053
-  metronPort: 3457
   logLevelAddress: "127.0.0.1"
   logLevelPort: 8066
   resources: ~
@@ -117,6 +114,9 @@ boshDns:
   tolerations: ~
 udpForwarder:
   certificateSecret: ""
+  metronEndpoint:
+    host: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
+    port: 3458
   image:
     repository: ghcr.io/cloudfoundry/k8s/udp-forwarder
     # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release

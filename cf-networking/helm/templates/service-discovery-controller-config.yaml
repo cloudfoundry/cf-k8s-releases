@@ -19,7 +19,7 @@ stringData:
       "server_cert": "/etc/ssl/certs/service-discovery-controller/tls.crt",
       "server_key": "/etc/ssl/certs/service-discovery-controller/tls.key",
       "ca_cert": "/etc/ssl/certs/service-discovery-controller-client-ca/ca.crt",
-      "metron_port": {{ .Values.serviceDiscoveryController.metronPort }},
+      "metron_port": 3457,
       "staleness_threshold_seconds": {{ .Values.serviceDiscoveryController.stalenessThresholdSeconds }},
       "pruning_interval_seconds": {{ .Values.serviceDiscoveryController.routeEmitterIntervalSeconds }},
       "metrics_emit_seconds": 10,
