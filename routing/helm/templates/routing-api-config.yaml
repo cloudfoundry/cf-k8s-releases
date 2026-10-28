@@ -11,8 +11,8 @@ stringData:
     max_ttl: 120s
     system_domain: {{ .Values.routingApi.systemDomain | quote }}
     metron_config:
-      address: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
-      port: 3458
+      address: {{ tpl .Values.routingApi.metronEndpoint.host . }}
+      port: {{ .Values.routingApi.metronEndpoint.port }}
     metrics_reporting_interval: 30s
     statsd_endpoint: localhost:8125
     oauth:
