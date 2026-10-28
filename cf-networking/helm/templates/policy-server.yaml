@@ -149,7 +149,7 @@ spec:
           {{- end }}
           env:
             - name: UDP_PORT
-              value: {{ .Values.policyServer.metronPort | quote }}
+              value: "3457"
             - name: LOGGREGATOR_AGENT_CA_FILE_PATH
               value: /etc/ssl/certs/udp-forwarder/ca.crt
             - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
@@ -157,7 +157,7 @@ spec:
             - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
               value: /etc/ssl/certs/udp-forwarder/tls.key
             - name: LOGGREGATOR_AGENT_ADDR
-              value: "forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local:3458"
+              value: "{{ tpl .Values.udpForwarder.metronEndpoint.host . }}:{{ .Values.udpForwarder.metronEndpoint.port }}"
             - name: METRICS_CA_FILE_PATH
               value: /etc/ssl/certs/udp-forwarder/ca.crt
             - name: METRICS_CERT_FILE_PATH

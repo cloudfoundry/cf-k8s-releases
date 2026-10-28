@@ -21,7 +21,7 @@ data:
       "client_cert": "/etc/ssl/certs/bosh-dns-adapter/tls.crt",
       "client_key": "/etc/ssl/certs/bosh-dns-adapter/tls.key",
       "ca_cert": "/etc/ssl/certs/bosh-dns-adapter-server-ca/ca.crt",
-      "metron_port": {{ .Values.boshDnsAdapter.metronPort }},
+      "metron_port": 3457,
       "metrics_emit_seconds": 10,
       "log_level_address": "{{ .Values.boshDnsAdapter.logLevelAddress }}",
       "log_level_port": {{ .Values.boshDnsAdapter.logLevelPort }},

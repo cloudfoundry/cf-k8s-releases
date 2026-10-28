@@ -74,11 +74,6 @@
           "minimum": 1,
           "maximum": 65535
         },
-        "metronPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
         "logLevelAddress": {
           "type": "string"
         },
@@ -140,6 +135,20 @@
       "properties": {
         "certificateSecret": {
           "type": "string"
+        },
+        "metronEndpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": false,
@@ -333,11 +342,6 @@
           "minimum": 1,
           "maximum": 65535
         },
-        "metronPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
         "uaaClient": {
           "type": "string"
         },
@@ -488,11 +492,6 @@
           "type": "string"
         },
         "logLevelPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
-        "metronPort": {
           "type": "integer",
           "minimum": 1,
           "maximum": 65535
