@@ -1,5 +1,5 @@
 # Build image
-FROM --platform=$BUILDPLATFORM bellsoft/liberica-openjdk-debian:25.0.4.1 AS builder
+FROM --platform=$BUILDPLATFORM bellsoft/liberica-openjdk-debian:25.0.5 AS builder
 
 WORKDIR /app
 COPY --from=src . .
