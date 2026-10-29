@@ -4,19 +4,38 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: syslog-binding-cache
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.syslogBindingCache.replicas }}
   selector:
     matchLabels:
-      app: syslog-binding-cache
+      app.kubernetes.io/name: syslog-binding-cache
   template:
     metadata:
       labels:
-        app: syslog-binding-cache
+        app.kubernetes.io/name: syslog-binding-cache
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.syslogBindingCache.podLabels }}
+        {{- toYaml .Values.syslogBindingCache.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/aggregate-drains: {{ include (print $.Template.BasePath "/aggregate-drains.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.syslogBindingCache.podAnnotations }}
+        {{- toYaml .Values.syslogBindingCache.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: syslog-binding-cache
@@ -134,8 +153,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: syslog-binding-cache
+  {{- if or .Values.commonAnnotations .Values.syslogBindingCache.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.syslogBindingCache.serviceAnnotations }}
+    {{- toYaml .Values.syslogBindingCache.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.syslogBindingCache.serviceLabels }}
+    {{- toYaml .Values.syslogBindingCache.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ .Values.syslogBindingCache.externalPort }}
@@ -143,5 +177,5 @@ spec:
       targetPort: {{ .Values.syslogBindingCache.externalPort }}
       protocol: TCP
   selector:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
 {{- end }}

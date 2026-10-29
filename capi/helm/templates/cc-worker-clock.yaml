@@ -4,8 +4,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cc-worker-clock
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cc-worker-clock
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.ccWorkerClock.replicas }}
   selector:
@@ -16,8 +23,20 @@ spec:
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.ccWorkerClock.podAnnotations }}
+        {{- toYaml .Values.ccWorkerClock.podAnnotations | nindent 8 }}
+        {{- end }}
       labels:
         app.kubernetes.io/name: cc-worker-clock
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.ccWorkerClock.podLabels }}
+        {{- toYaml .Values.ccWorkerClock.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: cc-worker-clock

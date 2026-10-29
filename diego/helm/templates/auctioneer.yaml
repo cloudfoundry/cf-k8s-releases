@@ -4,19 +4,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: auctioneer
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: auctioneer
+    app.kubernetes.io/name: auctioneer
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.auctioneer.replicas }}
   selector:
     matchLabels:
-      app: auctioneer
+      app.kubernetes.io/name: auctioneer
   template:
     metadata:
       labels:
-        app: auctioneer
+        app.kubernetes.io/name: auctioneer
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.auctioneer.podLabels }}
+        {{- toYaml .Values.auctioneer.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/auctioneer-config: {{ include (print $.Template.BasePath "/auctioneer-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.auctioneer.podAnnotations }}
+        {{- toYaml .Values.auctioneer.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       initContainers:
         - name: auctioneer-init
@@ -99,13 +118,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: auctioneer
+  {{- if or .Values.commonAnnotations .Values.auctioneer.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.auctioneer.serviceAnnotations }}
+    {{- toYaml .Values.auctioneer.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: auctioneer
+    app.kubernetes.io/name: auctioneer
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.auctioneer.serviceLabels }}
+    {{- toYaml .Values.auctioneer.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 9016
       targetPort: 9016
       protocol: TCP
   selector:
-    app: auctioneer
+    app.kubernetes.io/name: auctioneer
 {{- end }}

@@ -4,6 +4,14 @@ kind: Secret
 apiVersion: v1
 metadata:
   name: routing-api-config
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 stringData:
   routing-api.yaml: |-
     ---

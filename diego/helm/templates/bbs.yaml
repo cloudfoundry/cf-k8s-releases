@@ -4,19 +4,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: bbs
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: bbs
+    app.kubernetes.io/name: bbs
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.bbs.replicas }}
   selector:
     matchLabels:
-      app: bbs
+      app.kubernetes.io/name: bbs
   template:
     metadata:
       labels:
-        app: bbs
+        app.kubernetes.io/name: bbs
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.bbs.podLabels }}
+        {{- toYaml .Values.bbs.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/bbs-config: {{ include (print $.Template.BasePath "/bbs-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.bbs.podAnnotations }}
+        {{- toYaml .Values.bbs.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       initContainers:
         - name: bbs-init
@@ -109,13 +128,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: bbs
+  {{- if or .Values.commonAnnotations .Values.bbs.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.bbs.serviceAnnotations }}
+    {{- toYaml .Values.bbs.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: bbs
+    app.kubernetes.io/name: bbs
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.bbs.serviceLabels }}
+    {{- toYaml .Values.bbs.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 8889
       targetPort: 8889
       protocol: TCP
   selector:
-    app: bbs
+    app.kubernetes.io/name: bbs
 {{- end }}

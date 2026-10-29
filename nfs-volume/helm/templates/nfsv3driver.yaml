@@ -3,16 +3,38 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: nfsv3driver
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: nfsv3driver
+    app.kubernetes.io/name: nfsv3driver
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      app: nfsv3driver
+      app.kubernetes.io/name: nfsv3driver
   template:
     metadata:
+      {{- if or .Values.commonAnnotations .Values.nfsv3driver.podAnnotations }}
+      annotations:
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.nfsv3driver.podAnnotations }}
+        {{- toYaml .Values.nfsv3driver.podAnnotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
       labels:
-        app: nfsv3driver
+        app.kubernetes.io/name: nfsv3driver
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.nfsv3driver.podLabels }}
+        {{- toYaml .Values.nfsv3driver.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: nfsv3driver

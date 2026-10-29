@@ -4,20 +4,39 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: routing-api
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: routing-api
+    app.kubernetes.io/name: routing-api
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: routing-api
+      app.kubernetes.io/name: routing-api
   template:
     metadata:
       labels:
-        app: routing-api
+        app.kubernetes.io/name: routing-api
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.routingApi.podLabels }}
+        {{- toYaml .Values.routingApi.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/routing-api-config: {{ include (print $.Template.BasePath "/routing-api-config.yaml") . | sha256sum }}
         checksum/routing-api-route-registrar-config: {{ include (print $.Template.BasePath "/routing-api-route-registrar-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.routingApi.podAnnotations }}
+        {{- toYaml .Values.routingApi.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       shareProcessNamespace: true
       initContainers:
@@ -120,13 +139,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: routing-api
+  {{- if or .Values.commonAnnotations .Values.routingApi.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.routingApi.serviceAnnotations }}
+    {{- toYaml .Values.routingApi.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: routing-api
+    app.kubernetes.io/name: routing-api
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.routingApi.serviceLabels }}
+    {{- toYaml .Values.routingApi.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - name: https
       port: 3001
       targetPort: 3001
   selector:
-    app: routing-api
+    app.kubernetes.io/name: routing-api
 {{- end }}

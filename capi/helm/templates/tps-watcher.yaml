@@ -4,19 +4,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: tps-watcher
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: tps-watcher
+    app.kubernetes.io/name: tps-watcher
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.tpsWatcher.replicas }}
   selector:
     matchLabels:
-      app: tps-watcher
+      app.kubernetes.io/name: tps-watcher
   template:
     metadata:
       labels:
-        app: tps-watcher
+        app.kubernetes.io/name: tps-watcher
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.tpsWatcher.podLabels }}
+        {{- toYaml .Values.tpsWatcher.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/tps-watcher-config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.tpsWatcher.podAnnotations }}
+        {{- toYaml .Values.tpsWatcher.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       initContainers:
         - name: set-instance-id

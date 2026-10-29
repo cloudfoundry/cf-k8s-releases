@@ -4,19 +4,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: locket
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: locket
+    app.kubernetes.io/name: locket
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.locket.replicas }}
   selector:
     matchLabels:
-      app: locket
+      app.kubernetes.io/name: locket
   template:
     metadata:
       labels:
-        app: locket
+        app.kubernetes.io/name: locket
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.locket.podLabels }}
+        {{- toYaml .Values.locket.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/locket-config: {{ include (print $.Template.BasePath "/locket-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.locket.podAnnotations }}
+        {{- toYaml .Values.locket.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: locket
@@ -73,13 +92,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: locket
+  {{- if or .Values.commonAnnotations .Values.locket.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.locket.serviceAnnotations }}
+    {{- toYaml .Values.locket.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: locket
+    app.kubernetes.io/name: locket
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.locket.serviceLabels }}
+    {{- toYaml .Values.locket.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 8891
       targetPort: 8891
       protocol: TCP
   selector:
-    app: locket
+    app.kubernetes.io/name: locket
 {{- end }}

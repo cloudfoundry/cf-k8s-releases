@@ -10,18 +10,40 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: log-cache-backend
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: log-cache
+    app.kubernetes.io/name: log-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   serviceName: log-cache-headless
   replicas: {{ $backend.replicas }}
   selector:
     matchLabels:
-      app: log-cache
+      app.kubernetes.io/name: log-cache
   template:
     metadata:
+      {{- if or .Values.commonAnnotations .Values.logCacheBackend.podAnnotations }}
+      annotations:
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.logCacheBackend.podAnnotations }}
+        {{- toYaml .Values.logCacheBackend.podAnnotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
       labels:
-        app: log-cache
+        app.kubernetes.io/name: log-cache
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.logCacheBackend.podLabels }}
+        {{- toYaml .Values.logCacheBackend.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       {{- if $syslog.enabled }}
@@ -181,8 +203,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: log-cache-syslog
+  {{- if or .Values.commonAnnotations .Values.logCacheBackend.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.logCacheBackend.serviceAnnotations }}
+    {{- toYaml .Values.logCacheBackend.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: log-cache
+    app.kubernetes.io/name: log-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.logCacheBackend.serviceLabels }}
+    {{- toYaml .Values.logCacheBackend.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ $syslog.syslogPort }}
@@ -190,29 +227,59 @@ spec:
       targetPort: {{ $syslog.syslogPort }}
       protocol: TCP
   selector:
-    app: log-cache
+    app.kubernetes.io/name: log-cache
 {{- end }}
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: log-cache
+  {{- if or .Values.commonAnnotations .Values.logCacheBackend.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.logCacheBackend.serviceAnnotations }}
+    {{- toYaml .Values.logCacheBackend.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: log-cache
+    app.kubernetes.io/name: log-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.logCacheBackend.serviceLabels }}
+    {{- toYaml .Values.logCacheBackend.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ $lc.port }}
       name: logcache
       targetPort: {{ $lc.port }}
   selector:
-    app: log-cache
+    app.kubernetes.io/name: log-cache
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: log-cache-headless
+  {{- if or .Values.commonAnnotations .Values.logCacheBackend.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.logCacheBackend.serviceAnnotations }}
+    {{- toYaml .Values.logCacheBackend.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: log-cache
+    app.kubernetes.io/name: log-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.logCacheBackend.serviceLabels }}
+    {{- toYaml .Values.logCacheBackend.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   clusterIP: None
   ports:
@@ -220,4 +287,4 @@ spec:
       name: logcache
       targetPort: {{ $lc.port }}
   selector:
-    app: log-cache
+    app.kubernetes.io/name: log-cache

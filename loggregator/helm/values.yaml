@@ -1,9 +1,16 @@
+commonLabels: ~
+commonAnnotations: ~
+
 systemDomain: "cf.127-0-0-1.nip.io"
 
 loggregator:
   enabled: false
 
 doppler:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   replicas: 1
   certificateSecret: ""
   grpcPort: 8082
@@ -24,6 +31,10 @@ doppler:
   tolerations: ~
 
 logApi:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   replicas: 1
 
 reverseLogProxy:

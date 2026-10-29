@@ -4,20 +4,39 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: cf-tcp-router
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: cf-tcp-router
+    app.kubernetes.io/name: cf-tcp-router
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cf-tcp-router
+      app.kubernetes.io/name: cf-tcp-router
   template:
     metadata:
       labels:
-        app: cf-tcp-router
+        app.kubernetes.io/name: cf-tcp-router
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.tcpRouter.podLabels }}
+        {{- toYaml .Values.tcpRouter.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/cf-tcp-router-config: {{ include (print $.Template.BasePath "/cf-tcp-router-config.yaml") . | sha256sum }}
         checksum/haproxy-config: {{ include (print $.Template.BasePath "/haproxy-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.tcpRouter.podAnnotations }}
+        {{- toYaml .Values.tcpRouter.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       shareProcessNamespace: true
       initContainers:
@@ -124,13 +143,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: cf-tcp-router
+  {{- if or .Values.commonAnnotations .Values.tcpRouter.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.tcpRouter.serviceAnnotations }}
+    {{- toYaml .Values.tcpRouter.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: cf-tcp-router
+    app.kubernetes.io/name: cf-tcp-router
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.tcpRouter.serviceLabels }}
+    {{- toYaml .Values.tcpRouter.serviceLabels | nindent 4 }}
+    {{- end }}
 {{- $startPort := int .Values.tcpRouter.startPort }}
 {{- $numPorts := int .Values.tcpRouter.numPorts }}
 spec:
   selector:
-    app: cf-tcp-router
+    app.kubernetes.io/name: cf-tcp-router
   ports:
     {{- range $index := until $numPorts }}
     - name: tcp-{{ add $index 1 }}

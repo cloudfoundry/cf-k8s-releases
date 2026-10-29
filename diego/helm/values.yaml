@@ -1,4 +1,11 @@
+commonLabels: ~
+commonAnnotations: ~
+
 auctioneer:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   certificateSecrets:
@@ -39,6 +46,10 @@ auctioneer:
   tolerations: ~
 
 bbs:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   certificateSecrets:
@@ -114,6 +125,10 @@ bbs:
   tolerations: ~
 
 fileserver:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   listenAddr: "0.0.0.0:8080"
@@ -138,6 +153,10 @@ fileserver:
   tolerations: ~
 
 locket:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   certificateSecrets:
@@ -178,6 +197,10 @@ locket:
   tolerations: ~
 
 sshProxy:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   certificateSecrets:
@@ -233,6 +256,8 @@ sshProxy:
   tolerations: ~
 
 routeEmitter:
+  podLabels: ~
+  podAnnotations: ~
   enabled: false
   certificateSecrets:
     bbs: ""
@@ -293,6 +318,8 @@ routeEmitter:
       effect: NoSchedule
 
 rep:
+  podLabels: ~
+  podAnnotations: ~
   enabled: false
   image:
     repository: ghcr.io/cloudfoundry/k8s/rep

@@ -3,20 +3,39 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: uaa
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: uaa
+    app.kubernetes.io/name: uaa
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      app: uaa
+      app.kubernetes.io/name: uaa
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
         checksum/uaa-route-registrar-config: {{ include (print $.Template.BasePath "/uaa-route-registrar-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
       labels:
-        app: uaa
+        app.kubernetes.io/name: uaa
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podLabels }}
+        {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: uaa
@@ -127,12 +146,27 @@ kind: Service
 apiVersion: v1
 metadata:
   name: uaa
+  {{- if or .Values.commonAnnotations .Values.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.serviceAnnotations }}
+    {{- toYaml .Values.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: uaa
+    app.kubernetes.io/name: uaa
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.serviceLabels }}
+    {{- toYaml .Values.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 8443
       name: https
       targetPort: 8443
   selector:
-    app: uaa
+    app.kubernetes.io/name: uaa
