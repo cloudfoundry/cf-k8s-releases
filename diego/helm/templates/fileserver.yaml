@@ -4,8 +4,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: fileserver
+  {{- if or .Values.commonAnnotations .Values.fileserver.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.fileserver.serviceAnnotations }}
+    {{- toYaml .Values.fileserver.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: fileserver
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.fileserver.serviceLabels }}
+    {{- toYaml .Values.fileserver.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
 {{- if .Values.fileserver.httpsServerEnabled }}
@@ -23,8 +38,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: fileserver
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: fileserver
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.fileserver.replicas }}
   selector:
@@ -34,8 +56,20 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: fileserver
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.fileserver.podLabels }}
+        {{- toYaml .Values.fileserver.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/fileserver-config: {{ include (print $.Template.BasePath "/fileserver-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.fileserver.podAnnotations }}
+        {{- toYaml .Values.fileserver.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: fileserver

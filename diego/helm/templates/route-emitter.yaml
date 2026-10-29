@@ -5,11 +5,27 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: route-emitter
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: route-emitter
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 rules:
 - apiGroups:
   - ""
@@ -23,6 +39,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: route-emitter
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -36,18 +60,37 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: route-emitter
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: route-emitter
+    app.kubernetes.io/name: route-emitter
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      app: route-emitter
+      app.kubernetes.io/name: route-emitter
   template:
     metadata:
       labels:
-        app: route-emitter
+        app.kubernetes.io/name: route-emitter
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.routeEmitter.podLabels }}
+        {{- toYaml .Values.routeEmitter.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/route-emitter-config: {{ include (print $.Template.BasePath "/route-emitter-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.routeEmitter.podAnnotations }}
+        {{- toYaml .Values.routeEmitter.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: route-emitter
       initContainers:

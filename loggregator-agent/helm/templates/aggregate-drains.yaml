@@ -4,8 +4,15 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: aggregate-drains
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 type: Opaque
 stringData:
   aggregate_drains.yml: |

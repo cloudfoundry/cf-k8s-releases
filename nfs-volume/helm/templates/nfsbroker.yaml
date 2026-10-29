@@ -4,20 +4,39 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: nfsbroker
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: nfsbroker
+    app.kubernetes.io/name: nfsbroker
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nfsbroker
+      app.kubernetes.io/name: nfsbroker
   template:
     metadata:
       labels:
-        app: nfsbroker
+        app.kubernetes.io/name: nfsbroker
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.nfsbroker.podLabels }}
+        {{- toYaml .Values.nfsbroker.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/nfsbroker-config: {{ include (print $.Template.BasePath "/nfsbroker-config.yaml") . | sha256sum }}
         checksum/nfsbroker-credentials: {{ include (print $.Template.BasePath "/nfsbroker-credentials.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.nfsbroker.podAnnotations }}
+        {{- toYaml .Values.nfsbroker.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: nfsbroker
@@ -68,11 +87,29 @@ kind: Service
 apiVersion: v1
 metadata:
   name: nfsbroker
+  {{- if or .Values.commonLabels .Values.nfsbroker.serviceLabels }}
+  labels:
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.nfsbroker.serviceLabels }}
+    {{- toYaml .Values.nfsbroker.serviceLabels | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- if or .Values.commonAnnotations .Values.nfsbroker.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.nfsbroker.serviceAnnotations }}
+    {{- toYaml .Values.nfsbroker.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
 spec:
   ports:
     - port: 8080
       targetPort: 8080
       protocol: TCP
   selector:
-    app: nfsbroker
+    app.kubernetes.io/name: nfsbroker
 {{- end }}

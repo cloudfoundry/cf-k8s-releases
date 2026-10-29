@@ -4,11 +4,27 @@ kind: ServiceAccount
 metadata:
   name: loggregator-agents
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: loggregator-agents
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 rules:
 - apiGroups: [""]
   resources: ["pods", "namespaces", "nodes"]
@@ -27,6 +43,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: loggregator-agents
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 subjects:
 - kind: ServiceAccount
   name: loggregator-agents

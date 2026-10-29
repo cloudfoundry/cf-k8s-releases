@@ -4,18 +4,40 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: doppler
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: doppler
+    app.kubernetes.io/name: doppler
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   serviceName: doppler
   replicas: {{ .Values.doppler.replicas }}
   selector:
     matchLabels:
-      app: doppler
+      app.kubernetes.io/name: doppler
   template:
     metadata:
+      {{- if or .Values.commonAnnotations .Values.doppler.podAnnotations }}
+      annotations:
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.doppler.podAnnotations }}
+        {{- toYaml .Values.doppler.podAnnotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
       labels:
-        app: doppler
+        app.kubernetes.io/name: doppler
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.doppler.podLabels }}
+        {{- toYaml .Values.doppler.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: doppler
@@ -69,8 +91,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: doppler
+  {{- if or .Values.commonAnnotations .Values.doppler.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.doppler.serviceAnnotations }}
+    {{- toYaml .Values.doppler.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: doppler
+    app.kubernetes.io/name: doppler
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.doppler.serviceLabels }}
+    {{- toYaml .Values.doppler.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   clusterIP: None
   ports:
@@ -79,5 +116,5 @@ spec:
       name: https
       protocol: TCP
   selector:
-    app: doppler
+    app.kubernetes.io/name: doppler
 {{- end }}

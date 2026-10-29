@@ -4,8 +4,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: cloud-controller
+  {{- if or .Values.commonAnnotations .Values.cloudController.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.cloudController.serviceAnnotations }}
+    {{- toYaml .Values.cloudController.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cloud-controller
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.cloudController.serviceLabels }}
+    {{- toYaml .Values.cloudController.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 9023
@@ -26,8 +41,15 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: cloud-controller
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cloud-controller
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.cloudController.replicas }}
   selector:
@@ -37,11 +59,23 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: cloud-controller
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.cloudController.podLabels }}
+        {{- toYaml .Values.cloudController.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cloud-controller-route-registrar-config: {{ include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") . | sha256sum }}
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.cloudController.podAnnotations }}
+        {{- toYaml .Values.cloudController.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds 1 }}
       initContainers:

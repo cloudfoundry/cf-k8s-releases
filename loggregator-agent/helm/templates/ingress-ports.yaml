@@ -3,6 +3,14 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: ingress-ports
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 data:
   {{- if .Values.agents.loggregatorAgent.enabled }}
   loggregator.yml: "ingress: {{ .Values.agents.loggregatorAgent.grpcPort | int64 }}"

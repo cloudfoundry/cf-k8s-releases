@@ -1,4 +1,11 @@
+commonLabels: ~
+commonAnnotations: ~
+
 agents:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   nodeSelector: {}
   tolerations: []
@@ -125,6 +132,10 @@ agents:
     #           exporters: [otlp/custom]
 
 syslogBindingCache:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   certificateSecrets:

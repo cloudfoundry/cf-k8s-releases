@@ -1,3 +1,10 @@
+commonLabels: ~
+commonAnnotations: ~
+podLabels: ~
+podAnnotations: ~
+serviceLabels: ~
+serviceAnnotations: ~
+
 hostname: "credhub.{{ .Release.Namespace }}.svc.cluster.local"
 uaa:
   address: "https://uaa.{{ .Release.Namespace }}.svc.cluster.local:8443"

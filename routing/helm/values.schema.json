@@ -2,14 +2,49 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
+    "commonLabels": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "commonAnnotations": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "global": {
-      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
       "title": "global",
       "type": "object"
     },
     "gorouter": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "certificateSecret": {
           "type": "string"
         },
@@ -147,6 +182,30 @@
     "routingApi": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "certificateSecret": {
           "type": "string"
         },
@@ -287,6 +346,30 @@
     "tcpRouter": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "certificateSecret": {
           "type": "string"
         },
@@ -475,7 +558,6 @@
             },
             "tag": {
               "default": "8.3.13",
-              "description": "renovate: dataSource=docker depName=loggregator-agent-release packageName=ghcr.io/cloudfoundry/k8s/udp-forwarder",
               "title": "tag",
               "type": "string"
             }

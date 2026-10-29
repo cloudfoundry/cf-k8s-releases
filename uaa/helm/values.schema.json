@@ -3,6 +3,42 @@
   "additionalProperties": false,
   "type": "object",
   "properties": {
+    "commonLabels": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "commonAnnotations": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "podLabels": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "podAnnotations": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "serviceLabels": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "serviceAnnotations": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
      "global": {
       "type": "object"
     },

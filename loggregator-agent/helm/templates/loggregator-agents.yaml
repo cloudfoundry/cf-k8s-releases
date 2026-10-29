@@ -5,18 +5,37 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: loggregator-agents
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: loggregator-agents
+    app.kubernetes.io/name: loggregator-agents
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      app: loggregator-agents
+      app.kubernetes.io/name: loggregator-agents
   template:
     metadata:
       labels:
-        app: loggregator-agents
+        app.kubernetes.io/name: loggregator-agents
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.agents.podLabels }}
+        {{- toYaml .Values.agents.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/ingress-ports: {{ include (print $.Template.BasePath "/ingress-ports.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.agents.podAnnotations }}
+        {{- toYaml .Values.agents.podAnnotations | nindent 8 }}
+        {{- end }}
         {{- if .Values.agents.otelCollector.enabled }}
         checksum/otel-collector-config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
         {{- end }}
@@ -321,8 +340,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: forwarder-agent
+  {{- if or .Values.commonAnnotations .Values.agents.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.agents.serviceAnnotations }}
+    {{- toYaml .Values.agents.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: loggregator-agents
+    app.kubernetes.io/name: loggregator-agents
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.agents.serviceLabels }}
+    {{- toYaml .Values.agents.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   trafficDistribution: PreferSameNode
   ports:
@@ -330,5 +364,5 @@ spec:
       targetPort: {{ .Values.agents.forwarderAgent.port }}
       protocol: TCP
   selector:
-    app: loggregator-agents
+    app.kubernetes.io/name: loggregator-agents
 {{- end }}

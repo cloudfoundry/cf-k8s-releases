@@ -6,19 +6,38 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: log-cache-api
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: log-cache-api
+    app.kubernetes.io/name: log-cache-api
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ $api.replicas }}
   selector:
     matchLabels:
-      app: log-cache-api
+      app.kubernetes.io/name: log-cache-api
   template:
     metadata:
       labels:
-        app: log-cache-api
+        app.kubernetes.io/name: log-cache-api
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.logCacheApi.podLabels }}
+        {{- toYaml .Values.logCacheApi.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/logcache-route-registrar-config: {{ include (print $.Template.BasePath "/logcache-route-registrar-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.logCacheApi.podAnnotations }}
+        {{- toYaml .Values.logCacheApi.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: cf-auth-proxy

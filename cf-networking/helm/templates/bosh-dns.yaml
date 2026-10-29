@@ -4,19 +4,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: bosh-dns
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: bosh-dns
+    app.kubernetes.io/name: bosh-dns
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.boshDns.replicas }}
   selector:
     matchLabels:
-      app: bosh-dns
+      app.kubernetes.io/name: bosh-dns
   template:
     metadata:
       labels:
-        app: bosh-dns
+        app.kubernetes.io/name: bosh-dns
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.boshDns.podLabels }}
+        {{- toYaml .Values.boshDns.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/bosh-dns-config: {{ include (print $.Template.BasePath "/bosh-dns-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.boshDns.podAnnotations }}
+        {{- toYaml .Values.boshDns.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: bosh-dns-adapter
@@ -124,8 +143,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: bosh-dns
+  {{- if or .Values.commonAnnotations .Values.boshDns.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.boshDns.serviceAnnotations }}
+    {{- toYaml .Values.boshDns.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: bosh-dns
+    app.kubernetes.io/name: bosh-dns
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.boshDns.serviceLabels }}
+    {{- toYaml .Values.boshDns.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 53
@@ -137,5 +171,5 @@ spec:
       name: udp
       protocol: UDP
   selector:
-    app: bosh-dns
+    app.kubernetes.io/name: bosh-dns
 {{- end }}

@@ -3,20 +3,39 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: credhub
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: credhub
+    app.kubernetes.io/name: credhub
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: credhub
+      app.kubernetes.io/name: credhub
   template:
     metadata:
       name: credhub
       labels:
-        app: credhub
+        app.kubernetes.io/name: credhub
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podLabels }}
+        {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/credhub-config: {{ include (print $.Template.BasePath "/credhub-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: credhub-server
@@ -83,8 +102,23 @@ apiVersion: v1
 kind: Service
 metadata:
   name: credhub
+  {{- if or .Values.commonAnnotations .Values.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.serviceAnnotations }}
+    {{- toYaml .Values.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: credhub
+    app.kubernetes.io/name: credhub
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.serviceLabels }}
+    {{- toYaml .Values.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
   - port: 8844
@@ -96,4 +130,4 @@ spec:
     targetPort: 9001
     protocol: TCP
   selector:
-    app: credhub
+    app.kubernetes.io/name: credhub

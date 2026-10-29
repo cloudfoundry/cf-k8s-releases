@@ -1,4 +1,11 @@
+commonLabels: ~
+commonAnnotations: ~
+
 policyServer:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   resources: ~
@@ -56,6 +63,10 @@ policyServer:
   nodeSelector: ~
   tolerations: ~
 serviceDiscoveryController:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   resources: ~
@@ -102,6 +113,10 @@ boshDnsAdapter:
     tag: ""
     imagePullPolicy: IfNotPresent
 boshDns:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   replicas: 1
   resources: ~
   certificateSecret: ""

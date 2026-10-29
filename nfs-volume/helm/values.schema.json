@@ -2,12 +2,48 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
+    "commonLabels": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "commonAnnotations": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "global": {
       "type": "object"
     },
     "nfsbroker": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "certificateSecret": {
           "type": "string"
         },
@@ -75,6 +111,18 @@
     "nfsv3driver": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },

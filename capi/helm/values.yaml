@@ -1,16 +1,27 @@
+commonLabels: ~
+commonAnnotations: ~
+
 ccDeploymentUpdater:
+  podLabels: ~
+  podAnnotations: ~
   replicas: 1
   resources: ~
   nodeSelector: ~
   tolerations: ~
 
 ccWorker:
+  podLabels: ~
+  podAnnotations: ~
   replicas: 1
   resources: ~
   nodeSelector: ~
   tolerations: ~
 
 ccUploader:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   replicas: 1
   resources: ~
   certificateSecrets:
@@ -37,12 +48,18 @@ ccUploader:
     ccUploaderDrainTimeoutInMinutes: 15
 
 ccWorkerClock:
+  podLabels: ~
+  podAnnotations: ~
   replicas: 1
   resources: ~
   nodeSelector: ~
   tolerations: ~
 
 cloudController:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   replicas: 1
   resources: ~
@@ -450,6 +467,8 @@ valkey:
   resources: ~
 
 tpsWatcher:
+  podLabels: ~
+  podAnnotations: ~
   enabled: false
   replicas: 1
   resources: ~

@@ -1,4 +1,11 @@
+commonLabels: ~
+commonAnnotations: ~
+
 gorouter:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   certificateSecret: ""
   name: gorouter
@@ -28,6 +35,10 @@ udpForwarder:
   resources: ~
 
 routingApi:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   certificateSecret: ""
   locketCertificateSecret: ""
@@ -56,6 +67,10 @@ routingApi:
   resources: ~
 
 tcpRouter:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   certificateSecret: ""
   oauthClientsSecret: ""

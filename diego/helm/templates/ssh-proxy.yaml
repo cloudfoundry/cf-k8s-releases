@@ -5,19 +5,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: ssh-proxy
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: ssh-proxy
+    app.kubernetes.io/name: ssh-proxy
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.sshProxy.replicas }}
   selector:
     matchLabels:
-      app: ssh-proxy
+      app.kubernetes.io/name: ssh-proxy
   template:
     metadata:
       labels:
-        app: ssh-proxy
+        app.kubernetes.io/name: ssh-proxy
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.sshProxy.podLabels }}
+        {{- toYaml .Values.sshProxy.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/ssh-proxy-config: {{ include (print $.Template.BasePath "/ssh-proxy-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.sshProxy.podAnnotations }}
+        {{- toYaml .Values.sshProxy.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: ssh-proxy
@@ -94,21 +113,44 @@ kind: Service
 apiVersion: v1
 metadata:
   name: ssh-proxy
+  {{- if or .Values.commonAnnotations .Values.sshProxy.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.sshProxy.serviceAnnotations }}
+    {{- toYaml .Values.sshProxy.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: ssh-proxy
+    app.kubernetes.io/name: ssh-proxy
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.sshProxy.serviceLabels }}
+    {{- toYaml .Values.sshProxy.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 2222
       targetPort: 2222
       protocol: TCP
   selector:
-    app: ssh-proxy
+    app.kubernetes.io/name: ssh-proxy
 {{- if .Values.sshProxy.gateway.enabled }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
 metadata:
   name: ssh-proxy
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 spec:
   parentRefs:
     - name: istio-gateway

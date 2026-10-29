@@ -4,8 +4,15 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: cc-worker
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cc-worker
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.ccWorker.replicas }}
   selector:
@@ -16,8 +23,20 @@ spec:
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.ccWorker.podAnnotations }}
+        {{- toYaml .Values.ccWorker.podAnnotations | nindent 8 }}
+        {{- end }}
       labels:
         app.kubernetes.io/name: cc-worker
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.ccWorker.podLabels }}
+        {{- toYaml .Values.ccWorker.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}
       initContainers:

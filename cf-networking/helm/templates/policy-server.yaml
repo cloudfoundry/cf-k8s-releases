@@ -4,20 +4,39 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: policy-server
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: policy-server
+    app.kubernetes.io/name: policy-server
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.policyServer.replicas }}
   selector:
     matchLabels:
-      app: policy-server
+      app.kubernetes.io/name: policy-server
   template:
     metadata:
       labels:
-        app: policy-server
+        app.kubernetes.io/name: policy-server
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.policyServer.podLabels }}
+        {{- toYaml .Values.policyServer.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/policy-server-config: {{ include (print $.Template.BasePath "/policy-server-config.yaml") . | sha256sum }}
         checksum/policy-server-route-registrar-config: {{ include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.policyServer.podAnnotations }}
+        {{- toYaml .Values.policyServer.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       initContainers:
         - name: render-asg-syncer-config
@@ -220,8 +239,23 @@ kind: Service
 apiVersion: v1
 metadata:
   name: policy-server
+  {{- if or .Values.commonAnnotations .Values.policyServer.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.policyServer.serviceAnnotations }}
+    {{- toYaml .Values.policyServer.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: policy-server
+    app.kubernetes.io/name: policy-server
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.policyServer.serviceLabels }}
+    {{- toYaml .Values.policyServer.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
   - port: {{ .Values.policyServer.internal.listenPort }}
@@ -229,5 +263,5 @@ spec:
     targetPort: {{ .Values.policyServer.internal.listenPort }}
     appProtocol: kubernetes.io/h2c
   selector:
-    app: policy-server
+    app.kubernetes.io/name: policy-server
 {{- end }}

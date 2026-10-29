@@ -5,6 +5,14 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: policy-server-config
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
 stringData:
   policy-server.json: |-
     {

@@ -4,18 +4,37 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: rep
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: rep
+    app.kubernetes.io/name: rep
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      app: rep
+      app.kubernetes.io/name: rep
   template:
     metadata:
       annotations:
         checksum/rep-config: {{ include (print $.Template.BasePath "/rep-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.rep.podAnnotations }}
+        {{- toYaml .Values.rep.podAnnotations | nindent 8 }}
+        {{- end }}
       labels:
-        app: rep
+        app.kubernetes.io/name: rep
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.rep.podLabels }}
+        {{- toYaml .Values.rep.podLabels | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: rep
       hostPID: true

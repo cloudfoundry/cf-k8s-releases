@@ -4,19 +4,38 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: service-discovery-controller
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: service-discovery-controller
+    app.kubernetes.io/name: service-discovery-controller
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.serviceDiscoveryController.replicas }}
   selector:
     matchLabels:
-      app: service-discovery-controller
+      app.kubernetes.io/name: service-discovery-controller
   template:
     metadata:
       labels:
-        app: service-discovery-controller
+        app.kubernetes.io/name: service-discovery-controller
+        {{- if .Values.commonLabels }}
+        {{- toYaml .Values.commonLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.serviceDiscoveryController.podLabels }}
+        {{- toYaml .Values.serviceDiscoveryController.podLabels | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/service-discovery-controller-config: {{ include (print $.Template.BasePath "/service-discovery-controller-config.yaml") . | sha256sum }}
+        {{- if .Values.commonAnnotations }}
+        {{- toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.serviceDiscoveryController.podAnnotations }}
+        {{- toYaml .Values.serviceDiscoveryController.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: service-discovery-controller
@@ -95,13 +114,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: service-discovery-controller
+  {{- if or .Values.commonAnnotations .Values.serviceDiscoveryController.serviceAnnotations }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.serviceDiscoveryController.serviceAnnotations }}
+    {{- toYaml .Values.serviceDiscoveryController.serviceAnnotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
   labels:
-    app: service-discovery-controller
+    app.kubernetes.io/name: service-discovery-controller
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.serviceDiscoveryController.serviceLabels }}
+    {{- toYaml .Values.serviceDiscoveryController.serviceLabels | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ .Values.serviceDiscoveryController.port }}
       targetPort: {{ .Values.serviceDiscoveryController.port }}
       protocol: TCP
   selector:
-    app: service-discovery-controller
+    app.kubernetes.io/name: service-discovery-controller
 {{- end }}

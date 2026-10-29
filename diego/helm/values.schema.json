@@ -2,9 +2,45 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
+    "commonLabels": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "commonAnnotations": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "auctioneer": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -167,6 +203,30 @@
     "bbs": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -461,6 +521,18 @@
     "rep": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -854,6 +926,30 @@
     "fileserver": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -962,6 +1058,30 @@
     "locket": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -1118,6 +1238,18 @@
     "routeEmitter": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -1340,6 +1472,30 @@
     "sshProxy": {
       "additionalProperties": false,
       "properties": {
+        "podLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "serviceAnnotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "enabled": {
           "type": "boolean"
         },
