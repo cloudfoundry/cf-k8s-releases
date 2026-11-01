@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/ruby-buildpack
-  default = "1.11.3"
+  default = "1.11.4"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/ruby-buildpack
-  default = "1.11.3"
+  default = "1.11.4"
 }
 
 group "default" {
