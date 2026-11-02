@@ -24,12 +24,22 @@ data:
         log global
         timeout connect 30000ms
         maxconn 64000
-        timeout client 300000ms
-        timeout server 300000ms
+        {{- if gt (int .Values.tcpRouter.requestTimeoutInSeconds) 0 }}
+        timeout client {{ mul .Values.tcpRouter.requestTimeoutInSeconds 1000 }}ms
+        timeout server {{ mul .Values.tcpRouter.requestTimeoutInSeconds 1000 }}ms
+        {{- end }}
 
+    {{- if .Values.tcpRouter.enableNonTLSHealthChecks }}
     listen health_check_http_url
         mode http
-        bind :80
+        bind :{{ .Values.tcpRouter.healthCheckPort }}
+        monitor-uri /health
+        monitor fail if { env(IS_DRAINING) -m str true }
+    {{- end }}
+
+    listen health_check_https_url
+        mode http
+        bind :{{ .Values.tcpRouter.tlsHealthCheckPort }} ssl crt /tmp/tcp-health.pem
         monitor-uri /health
         monitor fail if { env(IS_DRAINING) -m str true }
 {{- end }}

@@ -40,7 +40,7 @@ jobs:
         working-directory: routing
         run: |
           yq -e -i '.gorouter.image.repository = "gorouter"' helm/values.yaml
-          yq -e -i '.routingApi.image.repository = "routing-api"' helm/values.yaml
+          yq -e -i '.routingAPI.image.repository = "routing-api"' helm/values.yaml
           yq -e -i '.tcpRouter.image.repository = "cf-tcp-router"' helm/values.yaml
           yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
           yq -e -i '.udpForwarder.image.repository = "udp-forwarder"' helm/values.yaml
@@ -62,6 +62,7 @@ jobs:
           install-optional-components: "true"
           load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
+          ref: align-routing
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
         with:

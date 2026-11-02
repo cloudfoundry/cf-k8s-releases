@@ -3,13 +3,19 @@
   "additionalProperties": false,
   "properties": {
     "commonLabels": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": {
         "type": "string"
       }
     },
     "commonAnnotations": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": {
         "type": "string"
       }
@@ -19,89 +25,705 @@
       "type": "object"
     },
     "gorouter": {
+      "type": "object",
       "additionalProperties": false,
       "properties": {
-        "podLabels": {
-          "type": ["object", "null"],
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "podAnnotations": {
-          "type": ["object", "null"],
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "serviceLabels": {
-          "type": ["object", "null"],
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "serviceAnnotations": {
-          "type": ["object", "null"],
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "certificateSecret": {
-          "type": "string"
-        },
         "enabled": {
-          "default": true,
-          "title": "enabled",
           "type": "boolean"
         },
-        "isolationSegments": {
-          "default": [],
+        "name": {
+          "type": "string"
+        },
+        "podLabels": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "podAnnotations": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "serviceLabels": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "serviceAnnotations": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "zone": {
+          "type": "string"
+        },
+        "certificateSecrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "statusTLS": {
+              "type": "string"
+            },
+            "prometheusTLS": {
+              "type": "string"
+            },
+            "serverTLS": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "trustedCAs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "clientCA": {
+              "type": "string"
+            },
+            "backendsTLS": {
+              "type": "string"
+            },
+            "routeServicesTLS": {
+              "type": "string"
+            },
+            "natsTLS": {
+              "type": "string"
+            },
+            "routingAPITLS": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "domainCAs": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {}
+            }
+          }
+        },
+        "port": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "user": {
+              "type": "string"
+            },
+            "password": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "enableNonTLSHealthChecks": {
+              "type": "boolean"
+            },
+            "enableDeprecatedVarzHealthzEndpoints": {
+              "type": "boolean"
+            },
+            "routes": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                }
+              }
+            },
+            "tls": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "enableEnvelopeV1Metrics": {
+          "type": "boolean"
+        },
+        "prometheus": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "requestedRouteRegistrationIntervalInSeconds": {
+          "type": "integer"
+        },
+        "loadBalancerHealthyThreshold": {
+          "type": "integer"
+        },
+        "balancingAlgorithm": {
+          "type": "string",
+          "enum": [
+            "round-robin",
+            "least-connection"
+          ]
+        },
+        "balancingAlgorithmAZPreference": {
+          "type": "string",
+          "enum": [
+            "none",
+            "locally-optimistic"
+          ]
+        },
+        "numberOfCPUs": {
+          "type": "integer"
+        },
+        "debugAddress": {
+          "type": "string"
+        },
+        "secureCookies": {
+          "type": "boolean"
+        },
+        "stickySessionCookieNames": {
+          "type": "array",
           "items": {
             "type": "string"
-          },
-          "type": "array"
+          }
+        },
+        "stickySessionsForAuthNegotiate": {
+          "type": "boolean"
+        },
+        "drainWait": {
+          "type": "integer"
+        },
+        "drainTimeout": {
+          "type": "integer"
+        },
+        "healthcheckUserAgent": {
+          "type": "string"
+        },
+        "enableSSL": {
+          "type": "boolean"
+        },
+        "tlsPort": {
+          "type": "integer"
+        },
+        "clientCertValidation": {
+          "type": "string",
+          "enum": [
+            "none",
+            "request",
+            "require"
+          ]
+        },
+        "disableHTTP": {
+          "type": "boolean"
+        },
+        "enableHTTP2": {
+          "type": "boolean"
+        },
+        "enableHTTP1ConcurrentReadWrite": {
+          "type": "boolean"
+        },
+        "minTLSVersion": {
+          "type": "string",
+          "enum": [
+            "TLSv1.0",
+            "TLSv1.1",
+            "TLSv1.2",
+            "TLSv1.3"
+          ]
+        },
+        "maxTLSVersion": {
+          "type": "string",
+          "enum": [
+            "TLSv1.2",
+            "TLSv1.3"
+          ]
+        },
+        "onlyTrustClientCACerts": {
+          "type": "boolean"
+        },
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "forwardedClientCert": {
+                "type": "string",
+                "enum": [
+                  "always_forward",
+                  "forward",
+                  "sanitize_set"
+                ]
+              },
+              "xfccFormat": {
+                "type": "string",
+                "enum": [
+                  "raw",
+                  "envoy"
+                ]
+              }
+            },
+            "if": {
+              "required": [
+                "forwardedClientCert"
+              ],
+              "properties": {
+                "forwardedClientCert": {
+                  "const": "always_forward"
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "xfccFormat"
+                ]
+              }
+            }
+          }
+        },
+        "backends": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxAttempts": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxConns": {
+              "type": "integer"
+            }
+          }
+        },
+        "sslSkipValidation": {
+          "type": "boolean"
+        },
+        "cipherSuites": {
+          "type": "string"
+        },
+        "forwardedClientCert": {
+          "type": "string"
+        },
+        "routeServices": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxAttempts": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "enableWebsockets": {
+              "type": "boolean"
+            },
+            "egressBlocklist": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "routeServicesSecret": {
+          "type": "string"
+        },
+        "routeServicesInternalLookup": {
+          "type": "boolean"
+        },
+        "routeServicesInternalLookupAllowlist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "routeServicesInternalServerPort": {
+          "type": "integer"
+        },
+        "routeServicesSecretDecryptOnly": {
+          "type": "string"
+        },
+        "routeServicesRecommendHTTPS": {
+          "type": "boolean"
+        },
+        "routeServicesTimeout": {
+          "type": "integer"
+        },
+        "routeServicesStrictSignatureValidation": {
+          "type": "boolean"
+        },
+        "maxRequestHeaderKB": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "maxResponseHeaderKB": {
+          "type": "integer"
+        },
+        "maxRequestHeaders": {
+          "type": "integer",
+          "anyOf": [
+            {
+              "maximum": 0
+            },
+            {
+              "minimum": 30
+            }
+          ]
+        },
+        "maxResponseHeaders": {
+          "type": "integer",
+          "anyOf": [
+            {
+              "maximum": 0
+            },
+            {
+              "minimum": 30
+            }
+          ]
+        },
+        "extraHeadersToLog": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "loggingLevel": {
+          "type": "string"
+        },
+        "enableLogAttemptsDetails": {
+          "type": "boolean"
+        },
+        "logging": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "syslogTag": {
+              "type": "string"
+            },
+            "syslogMessageLimit": {
+              "type": "integer"
+            },
+            "syslogAddr": {
+              "type": "string"
+            },
+            "syslogNetwork": {
+              "type": "string"
+            },
+            "extraAccessLogFields": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "backend_time",
+                  "caller_cf_app",
+                  "caller_cf_org",
+                  "caller_cf_space",
+                  "dial_time",
+                  "dns_time",
+                  "failed_attempts",
+                  "failed_attempts_time",
+                  "local_address",
+                  "route_policy",
+                  "tls_sni",
+                  "tls_time"
+                ]
+              }
+            }
+          }
+        },
+        "enableProxy": {
+          "type": "boolean"
+        },
+        "maxIdleConnections": {
+          "type": "integer"
+        },
+        "keepAliveProbeInterval": {
+          "type": "string"
+        },
+        "keepAlive100ContinueRequests": {
+          "type": "boolean"
+        },
+        "forceForwardedProtoHTTPS": {
+          "type": "boolean"
+        },
+        "sanitizeForwardedProto": {
+          "type": "boolean"
+        },
+        "httpRewrite": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "responses": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "addHeadersIfNotPresent": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "removeHeaders": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "hopByHopHeadersToFilter": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frontendIdleTimeout": {
+          "type": "integer"
+        },
+        "readHeaderTimeout": {
+          "type": "integer"
+        },
+        "tracing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enableZipkin": {
+              "type": "boolean"
+            },
+            "enableW3C": {
+              "type": "boolean"
+            },
+            "w3cTenantID": {
+              "type": "string"
+            }
+          }
+        },
+        "isolationSegments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "routingTableShardingMode": {
-          "default": "all",
+          "type": "string"
+        },
+        "disableLogForwardedFor": {
+          "type": "boolean"
+        },
+        "disableLogSourceIP": {
+          "type": "boolean"
+        },
+        "redactQueryParameters": {
+          "type": "string"
+        },
+        "htmlErrorTemplate": {
           "type": "string"
         },
         "nats": {
+          "type": "object",
           "additionalProperties": false,
           "properties": {
-            "host": {
+            "hostname": {
               "type": "string"
             },
             "port": {
               "type": "integer"
+            },
+            "tlsEnabled": {
+              "type": "boolean"
             }
-          },
-          "type": "object"
+          }
         },
-        "name": {
-          "default": "gorouter",
-          "type": "string"
+        "traceKey": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "requestTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "http1RequestTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "http2RequestTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "endpointDialTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "websocketDialTimeoutInSeconds": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "tlsHandshakeTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "metron": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            }
+          }
+        },
+        "uaa": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "clients": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "gorouter": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "secret": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "tokenEndpoint": {
+              "type": "string"
+            },
+            "ssl": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "port": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "routingAPI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "uri": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "authDisabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "writeAccessLogsLocally": {
+          "type": "boolean"
+        },
+        "enableAccessLogStreaming": {
+          "type": "boolean"
+        },
+        "suspendPruningIfNatsUnavailable": {
+          "type": "boolean"
+        },
+        "forBackwardsCompatibilityOnly": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "emptyPoolResponseCode503": {
+              "type": "boolean"
+            },
+            "emptyPoolTimeout": {
+              "type": "string"
+            }
+          }
+        },
+        "perAppPrometheusHTTPMetricsReporting": {
+          "type": "boolean"
+        },
+        "perRequestMetricsReporting": {
+          "type": "boolean"
+        },
+        "sendHTTPStartStopServerEvent": {
+          "type": "boolean"
+        },
+        "sendHTTPStartStopClientEvent": {
+          "type": "boolean"
+        },
+        "enableVerifyClientCertificateMetadata": {
+          "type": "boolean"
+        },
+        "verifyClientCertificateMetadata": {
+          "type": "array"
+        },
+        "go": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "httplaxcontentlength": {
+              "type": "boolean"
+            }
+          }
         },
         "image": {
+          "type": "object",
           "additionalProperties": false,
           "properties": {
             "repository": {
-              "default": "ghcr.io/cloudfoundry/k8s/gorouter",
-              "title": "repository",
               "type": "string"
             },
             "tag": {
-              "default": "",
-              "title": "tag",
               "type": "string"
             },
             "imagePullPolicy": {
               "type": "string"
             }
-          },
-          "title": "image",
-          "type": "object"
-        },
-        "resources": {
-          "type": ["object", "null"]
+          }
         },
         "nodeSelector": {
           "type": [
@@ -113,42 +735,113 @@
           "type": [
             "array",
             "null"
-          ],
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "effect": {
-                "type": "string"
-              },
-              "key": {
-                "type": "string"
-              },
-              "operator": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "effect",
-              "key",
-              "operator",
-              "value"
-            ],
-            "type": "object"
-          }
+          ]
+        },
+        "resources": {
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
-      "title": "gorouter",
-      "type": "object"
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "disableHTTP": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "enableSSL": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enableSSL": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "certificateSecrets": {
+                "properties": {
+                  "serverTLS": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "perAppPrometheusHTTPMetricsReporting": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prometheus": {
+                "required": [
+                  "port"
+                ],
+                "properties": {
+                  "port": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enableVerifyClientCertificateMetadata": {
+                "const": true
+              },
+              "verifyClientCertificateMetadata": {
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "certificateSecrets": {
+                "properties": {
+                  "clientCA": {
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "routeRegistrar": {
+      "type": "object",
       "additionalProperties": false,
       "properties": {
+        "certificateSecret": {
+          "type": "string"
+        },
+        "loggingLevel": {
+          "type": "string"
+        },
         "nats": {
-          "additionalProperties": false,
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "address": {
               "type": "string"
@@ -156,75 +849,200 @@
           }
         },
         "image": {
+          "type": "object",
           "additionalProperties": false,
           "properties": {
-            "imagePullPolicy": {
-              "default": "IfNotPresent",
-              "type": "string"
-            },
             "repository": {
               "type": "string"
             },
             "tag": {
               "type": "string"
+            },
+            "imagePullPolicy": {
+              "type": "string"
             }
-          },
-          "title": "image",
-          "type": "object"
+          }
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      },
-      "title": "routeRegistrar",
-      "type": "object"
+      }
     },
-    "routingApi": {
+    "routingAPI": {
       "additionalProperties": false,
       "properties": {
         "podLabels": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
         "podAnnotations": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
         "serviceLabels": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
         "serviceAnnotations": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
-        "certificateSecret": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "certificateSecrets": {
+          "additionalProperties": false,
+          "properties": {
+            "mtlsServer": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "locketTLS": {
+              "type": "string"
+            },
+            "databaseCA": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "maxTTL": {
           "type": "string"
         },
-        "locketCertificateSecret": {
+        "authDisabled": {
+          "type": "boolean"
+        },
+        "metricsReportingInterval": {
           "type": "string"
         },
-        "uaaCertificateSecret": {
+        "statsdEndpoint": {
           "type": "string"
         },
-        "metronEndpoint": {
+        "debugAddress": {
+          "type": "string"
+        },
+        "statsdClientFlushInterval": {
+          "type": "string"
+        },
+        "systemDomain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "skipSSLValidation": {
+          "type": "boolean"
+        },
+        "logLevel": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "enabledAPIEndpoints": {
+          "type": "string",
+          "enum": [
+            "mtls",
+            "both"
+          ]
+        },
+        "mtlsPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "metron": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "sqldb": {
           "additionalProperties": false,
           "properties": {
             "host": {
               "type": "string"
             },
             "port": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 65535
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "password": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "skipHostnameValidation": {
+              "type": "boolean"
+            },
+            "maxOpenConnections": {
+              "type": "integer"
+            },
+            "maxIdleConnections": {
+              "type": "integer"
+            },
+            "connectionsMaxLifetimeSeconds": {
+              "type": "integer"
             }
           },
           "type": "object"
@@ -232,46 +1050,52 @@
         "uaa": {
           "additionalProperties": false,
           "properties": {
-            "address": {
+            "tokenEndpoint": {
               "type": "string"
             },
-            "port": {
-              "type": "integer"
+            "tlsPort": {
+              "type": [
+                "integer",
+                "null"
+              ]
             }
           },
           "type": "object"
         },
-        "locketAddress": {
+        "routerGroups": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "reservedSystemComponentPorts": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "failOnRouterPortConflicts": {
+          "type": "boolean"
+        },
+        "lockTTL": {
           "type": "string"
         },
-        "sqldb": {
+        "lockRetryInterval": {
+          "type": "string"
+        },
+        "locket": {
           "additionalProperties": false,
           "properties": {
-            "user": {
+            "apiLocation": {
               "type": "string"
-            },
-            "password": {
-              "type": ["string", "null"]
-            },
-            "address": {
-              "type": "string"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "caCertificateSecret": {
-              "type": "string"
-            },
-            "skipSSLVerify": {
-              "type": "boolean"
             }
           },
           "type": "object"
         },
-        "enabled": {
-          "default": true,
-          "title": "enabled",
-          "type": "boolean"
+        "adminPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
         },
         "image": {
           "additionalProperties": false,
@@ -295,14 +1119,6 @@
           "title": "image",
           "type": "object"
         },
-        "systemDomain": {
-          "default": "cf.127-0-0-1.nip.io",
-          "title": "systemDomain",
-          "type": "string"
-        },
-        "resources": {
-          "type": ["object", "null"]
-        },
         "nodeSelector": {
           "type": [
             "object",
@@ -338,52 +1154,244 @@
             ],
             "type": "object"
           }
+        },
+        "resources": {
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
-      "title": "routingApi",
       "type": "object"
     },
     "tcpRouter": {
+      "type": "object",
       "additionalProperties": false,
       "properties": {
         "podLabels": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
         "podAnnotations": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
         "serviceLabels": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
         "serviceAnnotations": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": {
             "type": "string"
           }
         },
-        "certificateSecret": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "certificateSecrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "routingAPITLS": {
+              "type": "string"
+            },
+            "uaaCA": {
+              "type": "string"
+            },
+            "backendTLS": {
+              "type": "string"
+            },
+            "backendCA": {
+              "type": "string"
+            },
+            "healthCheckTLS": {
+              "type": "string"
+            },
+            "frontendTLS": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "secretName"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]+$"
+                  },
+                  "secretName": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "startPort": {
+          "type": "integer"
+        },
+        "numPorts": {
+          "type": "integer"
+        },
+        "debugAddress": {
           "type": "string"
         },
         "isolationSegments": {
-          "default": [],
+          "type": "array",
           "items": {
             "type": "string"
-          },
-          "type": "array"
+          }
         },
-        "enabled": {
-          "default": true,
-          "title": "enabled",
+        "logLevel": {
+          "type": "string"
+        },
+        "tcpStatsCollectionInterval": {
+          "type": "string"
+        },
+        "oauthSecret": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "backendTLS": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "requestTimeoutInSeconds": {
+          "type": "integer"
+        },
+        "enableNonTLSHealthChecks": {
           "type": "boolean"
+        },
+        "healthCheckPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "tlsHealthCheckPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "failOnRouterPortConflicts": {
+          "type": "boolean"
+        },
+        "drainWait": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "uaa": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tokenEndpoint": {
+              "type": "string"
+            },
+            "tlsPort": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "routingAPI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "uri": {
+              "type": "string"
+            },
+            "port": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "authDisabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "reservedSystemComponentPorts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "skipSSLValidation": {
+          "type": "boolean"
+        },
+        "metron": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "imagePullPolicy": {
+              "default": "IfNotPresent",
+              "title": "imagePullPolicy",
+              "type": "string"
+            },
+            "repository": {
+              "default": "cf-tcp-router",
+              "title": "repository",
+              "type": "string"
+            },
+            "tag": {
+              "default": "latest",
+              "title": "tag",
+              "type": "string"
+            }
+          },
+          "title": "image",
+          "type": "object"
         },
         "haproxy": {
           "additionalProperties": false,
@@ -413,74 +1421,13 @@
             "resources": {
               "default": "~",
               "title": "resources",
-              "type": ["object", "null"]
+              "type": [
+                "object",
+                "null"
+              ]
             }
           },
           "title": "haproxy",
-          "type": "object"
-        },
-        "image": {
-          "additionalProperties": false,
-          "properties": {
-            "imagePullPolicy": {
-              "default": "IfNotPresent",
-              "title": "imagePullPolicy",
-              "type": "string"
-            },
-            "repository": {
-              "default": "cf-tcp-router",
-              "title": "repository",
-              "type": "string"
-            },
-            "tag": {
-              "default": "latest",
-              "title": "tag",
-              "type": "string"
-            }
-          },
-          "title": "image",
-          "type": "object"
-        },
-        "resources": {
-          "type": ["object", "null"]
-        },
-        "oauthClientsSecret": {
-          "default": "",
-          "title": "oauthClientsSecret",
-          "type": "string"
-        },
-        "startPort": {
-          "default": 32000,
-          "title": "startPort",
-          "type": "integer"
-        },
-        "numPorts": {
-          "default": 20,
-          "title": "numPorts",
-          "type": "integer"
-        },
-        "uaa": {
-          "additionalProperties": false,
-          "properties": {
-            "address": {
-              "type": "string"
-            },
-            "port": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "routingApi": {
-          "additionalProperties": false,
-          "properties": {
-            "address": {
-              "type": "string"
-            },
-            "port": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "nodeSelector": {
@@ -518,10 +1465,14 @@
             ],
             "type": "object"
           }
+        },
+        "resources": {
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      },
-      "title": "tcpRouter",
-      "type": "object"
+      }
     },
     "udpForwarder": {
       "additionalProperties": false,
@@ -566,7 +1517,10 @@
           "type": "object"
         },
         "resources": {
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
       "title": "udpForwarder",
