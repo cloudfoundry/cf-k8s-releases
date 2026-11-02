@@ -4,19 +4,32 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: service-discovery-controller
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: service-discovery-controller
+    app.kubernetes.io/name: service-discovery-controller
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.serviceDiscoveryController.replicas }}
   selector:
     matchLabels:
-      app: service-discovery-controller
+      app.kubernetes.io/name: service-discovery-controller
   template:
     metadata:
       labels:
-        app: service-discovery-controller
+        app.kubernetes.io/name: service-discovery-controller
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.serviceDiscoveryController.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/service-discovery-controller-config: {{ include (print $.Template.BasePath "/service-discovery-controller-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.serviceDiscoveryController.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: service-discovery-controller
@@ -95,13 +108,20 @@ kind: Service
 apiVersion: v1
 metadata:
   name: service-discovery-controller
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.serviceDiscoveryController.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: service-discovery-controller
+    app.kubernetes.io/name: service-discovery-controller
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.serviceDiscoveryController.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ .Values.serviceDiscoveryController.port }}
       targetPort: {{ .Values.serviceDiscoveryController.port }}
       protocol: TCP
   selector:
-    app: service-discovery-controller
+    app.kubernetes.io/name: service-discovery-controller
 {{- end }}

@@ -4,8 +4,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: cloud-controller
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.cloudController.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cloud-controller
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.cloudController.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 9023
@@ -26,8 +33,15 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: cloud-controller
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cloud-controller
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.cloudController.replicas }}
   selector:
@@ -37,11 +51,17 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: cloud-controller
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.cloudController.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cloud-controller-route-registrar-config: {{ include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") . | sha256sum }}
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.cloudController.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds 1 }}
       initContainers:

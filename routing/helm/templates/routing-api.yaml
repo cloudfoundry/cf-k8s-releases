@@ -4,20 +4,33 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: routing-api
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: routing-api
+    app.kubernetes.io/name: routing-api
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: routing-api
+      app.kubernetes.io/name: routing-api
   template:
     metadata:
       labels:
-        app: routing-api
+        app.kubernetes.io/name: routing-api
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routingApi.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/routing-api-config: {{ include (print $.Template.BasePath "/routing-api-config.yaml") . | sha256sum }}
         checksum/routing-api-route-registrar-config: {{ include (print $.Template.BasePath "/routing-api-route-registrar-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routingApi.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       shareProcessNamespace: true
       initContainers:
@@ -120,13 +133,20 @@ kind: Service
 apiVersion: v1
 metadata:
   name: routing-api
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routingApi.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: routing-api
+    app.kubernetes.io/name: routing-api
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routingApi.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - name: https
       port: 3001
       targetPort: 3001
   selector:
-    app: routing-api
+    app.kubernetes.io/name: routing-api
 {{- end }}

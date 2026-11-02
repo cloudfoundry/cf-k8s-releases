@@ -1,4 +1,11 @@
+commonLabels: ~
+commonAnnotations: ~
+
 nfsbroker:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   enabled: false
   certificateSecret: ""
   oauthClientsSecret: ""
@@ -13,6 +20,8 @@ nfsbroker:
 
 
 nfsv3driver:
+  podLabels: ~
+  podAnnotations: ~
   enabled: false
   image:
     repository: ghcr.io/cloudfoundry/k8s/nfsv3driver

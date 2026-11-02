@@ -4,19 +4,32 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: locket
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: locket
+    app.kubernetes.io/name: locket
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.locket.replicas }}
   selector:
     matchLabels:
-      app: locket
+      app.kubernetes.io/name: locket
   template:
     metadata:
       labels:
-        app: locket
+        app.kubernetes.io/name: locket
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.locket.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/locket-config: {{ include (print $.Template.BasePath "/locket-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.locket.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: locket
@@ -73,13 +86,20 @@ kind: Service
 apiVersion: v1
 metadata:
   name: locket
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.locket.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: locket
+    app.kubernetes.io/name: locket
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.locket.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 8891
       targetPort: 8891
       protocol: TCP
   selector:
-    app: locket
+    app.kubernetes.io/name: locket
 {{- end }}

@@ -4,18 +4,32 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: doppler
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: doppler
+    app.kubernetes.io/name: doppler
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   serviceName: doppler
   replicas: {{ .Values.doppler.replicas }}
   selector:
     matchLabels:
-      app: doppler
+      app.kubernetes.io/name: doppler
   template:
     metadata:
+      {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.doppler.podAnnotations | default dict) }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        app: doppler
+        app.kubernetes.io/name: doppler
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.doppler.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: doppler
@@ -69,8 +83,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: doppler
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.doppler.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: doppler
+    app.kubernetes.io/name: doppler
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.doppler.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   clusterIP: None
   ports:
@@ -79,5 +100,5 @@ spec:
       name: https
       protocol: TCP
   selector:
-    app: doppler
+    app.kubernetes.io/name: doppler
 {{- end }}

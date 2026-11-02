@@ -5,18 +5,31 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: loggregator-agents
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: loggregator-agents
+    app.kubernetes.io/name: loggregator-agents
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      app: loggregator-agents
+      app.kubernetes.io/name: loggregator-agents
   template:
     metadata:
       labels:
-        app: loggregator-agents
+        app.kubernetes.io/name: loggregator-agents
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.agents.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/ingress-ports: {{ include (print $.Template.BasePath "/ingress-ports.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.agents.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- if .Values.agents.otelCollector.enabled }}
         checksum/otel-collector-config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
         {{- end }}
@@ -321,8 +334,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: forwarder-agent
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.agents.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: loggregator-agents
+    app.kubernetes.io/name: loggregator-agents
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.agents.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   trafficDistribution: PreferSameNode
   ports:
@@ -330,5 +350,5 @@ spec:
       targetPort: {{ .Values.agents.forwarderAgent.port }}
       protocol: TCP
   selector:
-    app: loggregator-agents
+    app.kubernetes.io/name: loggregator-agents
 {{- end }}

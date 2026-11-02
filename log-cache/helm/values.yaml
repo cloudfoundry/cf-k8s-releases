@@ -1,4 +1,9 @@
+commonLabels: ~
+commonAnnotations: ~
+
 logCacheApi:
+  podLabels: ~
+  podAnnotations: ~
   replicas: 1
   certificateSecrets:
     logcacheTLS: ""
@@ -62,6 +67,10 @@ routeRegistrar:
   resources: ~
 
 logCacheBackend:
+  podLabels: ~
+  podAnnotations: ~
+  serviceLabels: ~
+  serviceAnnotations: ~
   replicas: 1
   systemDomain: "cf.127-0-0-1.nip.io"
   certificateSecrets:

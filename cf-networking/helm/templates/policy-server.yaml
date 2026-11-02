@@ -4,20 +4,33 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: policy-server
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: policy-server
+    app.kubernetes.io/name: policy-server
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.policyServer.replicas }}
   selector:
     matchLabels:
-      app: policy-server
+      app.kubernetes.io/name: policy-server
   template:
     metadata:
       labels:
-        app: policy-server
+        app.kubernetes.io/name: policy-server
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.policyServer.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/policy-server-config: {{ include (print $.Template.BasePath "/policy-server-config.yaml") . | sha256sum }}
         checksum/policy-server-route-registrar-config: {{ include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.policyServer.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       initContainers:
         - name: render-asg-syncer-config
@@ -220,8 +233,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: policy-server
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.policyServer.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: policy-server
+    app.kubernetes.io/name: policy-server
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.policyServer.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
   - port: {{ .Values.policyServer.internal.listenPort }}
@@ -229,5 +249,5 @@ spec:
     targetPort: {{ .Values.policyServer.internal.listenPort }}
     appProtocol: kubernetes.io/h2c
   selector:
-    app: policy-server
+    app.kubernetes.io/name: policy-server
 {{- end }}

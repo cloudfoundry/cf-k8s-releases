@@ -4,20 +4,33 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: cf-tcp-router
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: cf-tcp-router
+    app.kubernetes.io/name: cf-tcp-router
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cf-tcp-router
+      app.kubernetes.io/name: cf-tcp-router
   template:
     metadata:
       labels:
-        app: cf-tcp-router
+        app.kubernetes.io/name: cf-tcp-router
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.tcpRouter.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/cf-tcp-router-config: {{ include (print $.Template.BasePath "/cf-tcp-router-config.yaml") . | sha256sum }}
         checksum/haproxy-config: {{ include (print $.Template.BasePath "/haproxy-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.tcpRouter.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       shareProcessNamespace: true
       initContainers:
@@ -124,13 +137,20 @@ kind: Service
 apiVersion: v1
 metadata:
   name: cf-tcp-router
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.tcpRouter.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: cf-tcp-router
+    app.kubernetes.io/name: cf-tcp-router
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.tcpRouter.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 {{- $startPort := int .Values.tcpRouter.startPort }}
 {{- $numPorts := int .Values.tcpRouter.numPorts }}
 spec:
   selector:
-    app: cf-tcp-router
+    app.kubernetes.io/name: cf-tcp-router
   ports:
     {{- range $index := until $numPorts }}
     - name: tcp-{{ add $index 1 }}

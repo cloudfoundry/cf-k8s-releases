@@ -4,19 +4,32 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: cc-uploader
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: cc-uploader
+    app.kubernetes.io/name: cc-uploader
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.ccUploader.replicas }}
   selector:
     matchLabels:
-      app: cc-uploader
+      app.kubernetes.io/name: cc-uploader
   template:
     metadata:
       labels:
-        app: cc-uploader
+        app.kubernetes.io/name: cc-uploader
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.ccUploader.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/cc-uploader-config: {{ include (print $.Template.BasePath "/cc-uploader-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.ccUploader.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: {{ add (mul .Values.ccUploader.config.ccUploaderDrainTimeoutInMinutes 60) 1 }}
       containers:
@@ -61,8 +74,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: cc-uploader
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.ccUploader.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: cc-uploader
+    app.kubernetes.io/name: cc-uploader
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.ccUploader.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ .Values.ccUploader.config.httpsPort }}
@@ -70,5 +90,5 @@ spec:
       name: tcp
       protocol: TCP
   selector:
-    app: cc-uploader
+    app.kubernetes.io/name: cc-uploader
 {{ end }}

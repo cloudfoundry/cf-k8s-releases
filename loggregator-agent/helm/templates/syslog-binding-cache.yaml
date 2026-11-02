@@ -4,19 +4,32 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: syslog-binding-cache
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.syslogBindingCache.replicas }}
   selector:
     matchLabels:
-      app: syslog-binding-cache
+      app.kubernetes.io/name: syslog-binding-cache
   template:
     metadata:
       labels:
-        app: syslog-binding-cache
+        app.kubernetes.io/name: syslog-binding-cache
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.syslogBindingCache.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/aggregate-drains: {{ include (print $.Template.BasePath "/aggregate-drains.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.syslogBindingCache.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: syslog-binding-cache
@@ -134,8 +147,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: syslog-binding-cache
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.syslogBindingCache.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.syslogBindingCache.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: {{ .Values.syslogBindingCache.externalPort }}
@@ -143,5 +163,5 @@ spec:
       targetPort: {{ .Values.syslogBindingCache.externalPort }}
       protocol: TCP
   selector:
-    app: syslog-binding-cache
+    app.kubernetes.io/name: syslog-binding-cache
 {{- end }}

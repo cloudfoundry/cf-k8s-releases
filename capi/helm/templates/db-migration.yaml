@@ -4,10 +4,17 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: capi-db-migration
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
     "helm.sh/hook-weight": "0"
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
 spec:
   completions: 1
   parallelism: 1
@@ -16,6 +23,14 @@ spec:
   template:
     metadata:
       name: capi-db-migration
+      {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.cloudController.podLabels | default dict) }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.cloudController.podAnnotations | default dict) }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       restartPolicy: OnFailure
       containers:

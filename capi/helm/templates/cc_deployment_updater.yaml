@@ -4,8 +4,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cc-deployment-updater
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
     app.kubernetes.io/name: cc-deployment-updater
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.ccDeploymentUpdater.replicas }}
   selector:
@@ -16,8 +23,14 @@ spec:
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.ccDeploymentUpdater.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         app.kubernetes.io/name: cc-deployment-updater
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.ccDeploymentUpdater.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       initContainers:
         - name: set-lock-owner

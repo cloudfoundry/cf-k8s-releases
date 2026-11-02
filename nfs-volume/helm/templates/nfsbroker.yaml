@@ -4,20 +4,33 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: nfsbroker
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: nfsbroker
+    app.kubernetes.io/name: nfsbroker
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nfsbroker
+      app.kubernetes.io/name: nfsbroker
   template:
     metadata:
       labels:
-        app: nfsbroker
+        app.kubernetes.io/name: nfsbroker
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.nfsbroker.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/nfsbroker-config: {{ include (print $.Template.BasePath "/nfsbroker-config.yaml") . | sha256sum }}
         checksum/nfsbroker-credentials: {{ include (print $.Template.BasePath "/nfsbroker-credentials.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.nfsbroker.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: nfsbroker
@@ -68,11 +81,19 @@ kind: Service
 apiVersion: v1
 metadata:
   name: nfsbroker
+  {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.nfsbroker.serviceLabels | default dict) }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.nfsbroker.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
     - port: 8080
       targetPort: 8080
       protocol: TCP
   selector:
-    app: nfsbroker
+    app.kubernetes.io/name: nfsbroker
 {{- end }}

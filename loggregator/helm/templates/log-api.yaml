@@ -5,19 +5,32 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: log-api
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
   labels:
-    app: log-api
+    app.kubernetes.io/name: log-api
+    {{- if .Values.commonLabels }}
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.logApi.replicas }}
   selector:
     matchLabels:
-      app: log-api
+      app.kubernetes.io/name: log-api
   template:
     metadata:
       labels:
-        app: log-api
+        app.kubernetes.io/name: log-api
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logApi.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         checksum/log-api-route-registrar-config: {{ include (print $.Template.BasePath "/log-api-route-registrar-config.yaml") . | sha256sum }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logApi.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: reverse-log-proxy
@@ -270,8 +283,15 @@ kind: Service
 apiVersion: v1
 metadata:
   name: log-api
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logApi.serviceAnnotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
-    app: log-api
+    app.kubernetes.io/name: log-api
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logApi.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ports:
     - port: 8088
@@ -281,5 +301,5 @@ spec:
       name: trafficcontroller
       targetPort: 8081
   selector:
-    app: log-api
+    app.kubernetes.io/name: log-api
 {{- end }}
