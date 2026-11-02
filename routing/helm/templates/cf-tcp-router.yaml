@@ -14,7 +14,7 @@ metadata:
     {{- toYaml .Values.commonLabels | nindent 4 }}
     {{- end }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.tcpRouter.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cf-tcp-router
@@ -34,7 +34,7 @@ spec:
     spec:
       shareProcessNamespace: true
       initContainers:
-        - name: combine-certificates
+        - name: prepare-config
           image: busybox:latest
           imagePullPolicy: IfNotPresent
           command:
@@ -42,11 +42,20 @@ spec:
             - -c
             - |
               set -e
-              cat /certs/tls.crt /certs/tls.key > /tmp/tls-combined.pem
+              cat /etc/ssl/certs/tcp-health/tls.key /etc/ssl/certs/tcp-health/tls.crt > /tmp/tcp-health.pem
+              {{- if and .Values.tcpRouter.backendTLS.enabled .Values.tcpRouter.certificateSecrets.backendTLS }}
+              cat /etc/ssl/certs/tcp-backend/tls.crt /etc/ssl/certs/tcp-backend/tls.key > /tmp/tcp-backend.pem
+              {{- end }}
               cat /haproxy-original/haproxy.conf > /haproxy/haproxy.conf
           volumeMounts:
-            - name: cf-tcp-router
-              mountPath: /certs
+            - name: tcp-health-check-tls
+              mountPath: /etc/ssl/certs/tcp-health
+              readOnly: true
+            {{- if and .Values.tcpRouter.backendTLS.enabled .Values.tcpRouter.certificateSecrets.backendTLS }}
+            - name: tcp-backend-tls
+              mountPath: /etc/ssl/certs/tcp-backend
+              readOnly: true
+            {{- end }}
             - name: tmp
               mountPath: /tmp
             - name: shared
@@ -59,23 +68,31 @@ spec:
           image: {{ .Values.tcpRouter.image.repository }}:{{ default .Chart.AppVersion .Values.tcpRouter.image.tag }}
           imagePullPolicy: {{ .Values.tcpRouter.image.imagePullPolicy }}
           args:
-          - -logLevel=info
+          - -debugAddr={{ .Values.tcpRouter.debugAddress }}
+          - -logLevel={{ .Values.tcpRouter.logLevel }}
           - -timeFormat=rfc3339
           - -tcpLoadBalancerConfig=/haproxy/haproxy.conf
           - -tcpLoadBalancerBaseConfig=/haproxy-original/haproxy.conf
           - -tcpLoadBalancerStatsUnixSocket=/haproxy/haproxy.sock
           - -haproxyReloader=/usr/local/bin/haproxy_reloader.sh
           - -config=/cf-tcp-router/cf-tcp-router.yaml
-          - -statsCollectionInterval=1m
-          - -dropsondePort=3457
-          - -routingGroupCheckExit=false
+          - -statsCollectionInterval={{ .Values.tcpRouter.tcpStatsCollectionInterval }}
+          - -dropsondePort={{ .Values.tcpRouter.metron.port }}
+          - -routingGroupCheckExit={{ .Values.tcpRouter.failOnRouterPortConflicts }}
           {{- if .Values.tcpRouter.resources }}
           resources:
             {{- toYaml .Values.tcpRouter.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cf-tcp-router
-              mountPath: /etc/ssl/cf-tcp-router
+            - name: tcp-routing-api-tls
+              mountPath: /etc/ssl/certs/tcp-routing-api
+              readOnly: true
+            {{- if .Values.tcpRouter.certificateSecrets.uaaCA }}
+            - name: tcp-uaa-ca
+              mountPath: /etc/ssl/certs/tcp-uaa
+              readOnly: true
+            {{- end }}
+            {{- include "routing.tcpRouterBackendCertMounts" $ | nindent 12 }}
             - name: cf-tcp-router-config
               mountPath: /cf-tcp-router
             - name: shared
@@ -102,14 +119,20 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 80
+              port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
+              scheme: HTTPS
           volumeMounts:
             - name: shared
               mountPath: /haproxy
-            - name: cf-tcp-router
-              mountPath: /etc/ssl/cf-tcp-router
+            {{- include "routing.tcpRouterBackendCertMounts" $ | nindent 12 }}
             - name: tmp
               mountPath: /tmp
+        {{- include "routing.udpForwarder" (dict "root" $ "port" .Values.tcpRouter.metron.port) | nindent 8 }}
       {{- if .Values.tcpRouter.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.tcpRouter.nodeSelector | nindent 8 }}
@@ -119,9 +142,63 @@ spec:
         {{- toYaml .Values.tcpRouter.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: cf-tcp-router
+        - name: udp-forwarder
           secret:
-            secretName: {{ required "tcpRouter.certificateSecret is required" .Values.tcpRouter.certificateSecret }}
+            secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
+        - name: tcp-routing-api-tls
+          secret:
+            secretName: {{ required "tcpRouter.certificateSecrets.routingAPITLS is required" .Values.tcpRouter.certificateSecrets.routingAPITLS }}
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+              - key: ca.crt
+                path: ca.crt
+        {{- if .Values.tcpRouter.certificateSecrets.uaaCA }}
+        - name: tcp-uaa-ca
+          secret:
+            secretName: {{ .Values.tcpRouter.certificateSecrets.uaaCA }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{- end }}
+        {{- if .Values.tcpRouter.backendTLS.enabled }}
+        - name: tcp-backend-ca
+          secret:
+            secretName: {{ required "tcpRouter.certificateSecrets.backendCA is required when tcpRouter.backendTLS.enabled" .Values.tcpRouter.certificateSecrets.backendCA }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{- if .Values.tcpRouter.certificateSecrets.backendTLS }}
+        - name: tcp-backend-tls
+          secret:
+            secretName: {{ .Values.tcpRouter.certificateSecrets.backendTLS }}
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+        {{- end }}
+        {{- end }}
+        - name: tcp-health-check-tls
+          secret:
+            secretName: {{ required "tcpRouter.certificateSecrets.healthCheckTLS is required" .Values.tcpRouter.certificateSecrets.healthCheckTLS }}
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+        {{- range $index, $certificate := .Values.tcpRouter.certificateSecrets.frontendTLS }}
+        - name: tcp-frontend-{{ $index }}
+          secret:
+            secretName: {{ required "tcpRouter.certificateSecrets.frontendTLS[].secretName is required" $certificate.secretName }}
+            items:
+              - key: tls.crt
+                path: certificate.pem
+              - key: tls.key
+                path: certificate.pem.key
+        {{- end }}
         - name: cf-tcp-router-config
           secret:
             secretName: cf-tcp-router-config
@@ -146,15 +223,21 @@ metadata:
     {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.tcpRouter.serviceLabels | default dict) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-{{- $startPort := int .Values.tcpRouter.startPort }}
-{{- $numPorts := int .Values.tcpRouter.numPorts }}
 spec:
   selector:
     app.kubernetes.io/name: cf-tcp-router
   ports:
-    {{- range $index := until $numPorts }}
+    {{- if .Values.tcpRouter.enableNonTLSHealthChecks }}
+    - name: health-http
+      port: {{ .Values.tcpRouter.healthCheckPort }}
+      targetPort: {{ .Values.tcpRouter.healthCheckPort }}
+    {{- end }}
+    - name: health-https
+      port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
+      targetPort: {{ .Values.tcpRouter.tlsHealthCheckPort }}
+    {{- range $index := until (int .Values.tcpRouter.numPorts) }}
     - name: tcp-{{ add $index 1 }}
-      port: {{ add $startPort $index }}
-      targetPort: {{ add $startPort $index }}
+      port: {{ add $.Values.tcpRouter.startPort $index }}
+      targetPort: {{ add $.Values.tcpRouter.startPort $index }}
     {{- end }}
 {{- end }}

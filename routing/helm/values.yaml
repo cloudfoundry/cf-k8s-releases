@@ -2,18 +2,168 @@ commonLabels: ~
 commonAnnotations: ~
 
 gorouter:
+  enabled: false
+  name: gorouter
   podLabels: ~
   podAnnotations: ~
   serviceLabels: ~
   serviceAnnotations: ~
-  enabled: false
-  certificateSecret: ""
-  name: gorouter
+  replicas: 1
+  zone: ""
+  certificateSecrets:
+    statusTLS: ""
+    prometheusTLS: ""
+    serverTLS: []
+    trustedCAs: []
+    clientCA: ""
+    backendsTLS: ""
+    routeServicesTLS: ""
+    natsTLS: ""
+    routingAPITLS: ""
+    uaaCA: ""
+    domainCAs: {}
+  port: 80
+  status:
+    port: 8080
+    user: router-status
+    password: ~
+    enableNonTLSHealthChecks: true
+    enableDeprecatedVarzHealthzEndpoints: false
+    routes:
+      port: 8082
+    tls:
+      port: 8443
+  enableEnvelopeV1Metrics: true
+  prometheus:
+    port: ~
+  requestedRouteRegistrationIntervalInSeconds: 20
+  loadBalancerHealthyThreshold: 20
+  balancingAlgorithm: round-robin
+  balancingAlgorithmAZPreference: none
+  numberOfCPUs: -1
+  debugAddress: 127.0.0.1:17002
+  secureCookies: false
+  stickySessionCookieNames:
+  - JSESSIONID
+  stickySessionsForAuthNegotiate: false
+  drainWait: 20
+  drainTimeout: 900
+  healthcheckUserAgent: HTTP-Monitor/1.1
+  enableSSL: false
+  tlsPort: 443
+  clientCertValidation: request
+  disableHTTP: false
+  enableHTTP2: true
+  enableHTTP1ConcurrentReadWrite: false
+  minTLSVersion: TLSv1.2
+  maxTLSVersion: TLSv1.2
+  onlyTrustClientCACerts: false
+  domains: []
+  backends:
+    maxAttempts: 3
+    maxConns: 500
+  sslSkipValidation: false
+  cipherSuites: ECDHE-RSA-AES128-GCM-SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+  forwardedClientCert: always_forward
+  routeServices:
+    maxAttempts: 3
+    enableWebsockets: true
+    egressBlocklist:
+    - 10.0.0.0/8
+    - 169.254.0.0/16
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  routeServicesSecret: ""
+  routeServicesInternalLookup: false
+  routeServicesInternalLookupAllowlist: []
+  routeServicesInternalServerPort: 7070
+  routeServicesSecretDecryptOnly: ""
+  routeServicesRecommendHTTPS: true
+  routeServicesTimeout: 60
+  routeServicesStrictSignatureValidation: false
+  maxRequestHeaderKB: 1024
+  maxResponseHeaderKB: 0
+  maxRequestHeaders: 0
+  maxResponseHeaders: 0
+  extraHeadersToLog: []
+  loggingLevel: info
+  enableLogAttemptsDetails: false
+  logging:
+    syslogTag: vcap.gorouter
+    syslogMessageLimit: 0
+    syslogAddr: localhost:514
+    syslogNetwork: udp
+    extraAccessLogFields: []
+  enableProxy: false
+  maxIdleConnections: 100
+  keepAliveProbeInterval: 1s
+  keepAlive100ContinueRequests: false
+  forceForwardedProtoHTTPS: false
+  sanitizeForwardedProto: false
+  httpRewrite:
+    responses:
+      addHeadersIfNotPresent: ~
+      removeHeaders: ~
+  hopByHopHeadersToFilter:
+  - X-Forwarded-For
+  - X-Forwarded-Proto
+  - B3
+  - X-B3
+  - X-B3-SpanID
+  - X-B3-TraceID
+  - X-Request-Start
+  - X-Forwarded-Client-Cert
+  frontendIdleTimeout: 900
+  readHeaderTimeout: 0
+  tracing:
+    enableZipkin: false
+    enableW3C: false
+    w3cTenantID: ""
   isolationSegments: []
   routingTableShardingMode: all
+  disableLogForwardedFor: false
+  disableLogSourceIP: false
+  redactQueryParameters: none
+  htmlErrorTemplate: ""
   nats:
-    host: nats.{{ .Release.Namespace }}.svc.cluster.local
+    hostname: nats.{{ .Release.Namespace }}.svc.cluster.local
     port: 4222
+    tlsEnabled: false
+  traceKey: 22
+  requestTimeoutInSeconds: 900
+  http1RequestTimeoutInSeconds: 0
+  http2RequestTimeoutInSeconds: 0
+  endpointDialTimeoutInSeconds: 5
+  websocketDialTimeoutInSeconds: endpoint_dial_timeout_in_seconds
+  tlsHandshakeTimeoutInSeconds: 10
+  metron:
+    port: 3457
+  uaa:
+    clients:
+      gorouter:
+        secret: ~
+    tokenEndpoint: uaa.{{ .Release.Namespace }}.svc.cluster.local
+    ssl:
+      port: 8443
+  routingAPI:
+    enabled: false
+    uri: https://routing-api.{{ .Release.Namespace }}.svc.cluster.local
+    port: 3001
+    authDisabled: false
+  writeAccessLogsLocally: true
+  enableAccessLogStreaming: false
+  suspendPruningIfNatsUnavailable: true
+  forBackwardsCompatibilityOnly:
+    emptyPoolResponseCode503: true
+    emptyPoolTimeout: 0s
+  perAppPrometheusHTTPMetricsReporting: false
+  perRequestMetricsReporting: true
+  sendHTTPStartStopServerEvent: true
+  sendHTTPStartStopClientEvent: true
+  enableVerifyClientCertificateMetadata: false
+  verifyClientCertificateMetadata: []
+  go:
+    httplaxcontentlength: false
   image:
     repository: ghcr.io/cloudfoundry/k8s/gorouter
     tag: ""
@@ -34,30 +184,55 @@ udpForwarder:
     imagePullPolicy: IfNotPresent
   resources: ~
 
-routingApi:
+routingAPI:
   podLabels: ~
   podAnnotations: ~
   serviceLabels: ~
   serviceAnnotations: ~
   enabled: false
-  certificateSecret: ""
-  locketCertificateSecret: ""
-  uaaCertificateSecret: ""
-  systemDomain: "cf.127-0-0-1.nip.io"
-  metronEndpoint:
-    host: forwarder-agent.{{ .Release.Namespace }}.svc.cluster.local
-    port: 3458
+  replicas: 1
+  certificateSecrets:
+    mtlsServer: ""
+    uaaCA: ""
+    locketTLS: ""
+    databaseCA: ""
+  maxTTL: 120s
+  authDisabled: false
+  metricsReportingInterval: 30s
+  statsdEndpoint: localhost:8125
+  debugAddress: 127.0.0.1:17002
+  statsdClientFlushInterval: 300ms
+  systemDomain: ~
+  skipSSLValidation: false
+  logLevel: info
+  port: 3000
+  enabledAPIEndpoints: mtls
+  mtlsPort: 3001
+  metron:
+    host: localhost
+    port: 3457
   sqldb:
+    host: postgresql.{{ .Release.Namespace }}.svc.cluster.local
+    port: ~
+    type: ~
+    schema: ~
+    username: ~
     password: ~
-    user: postgres
-    port: 5432
-    address: postgresql.{{ .Release.Namespace }}.svc.cluster.local
-    caCertificateSecret: ""
-    skipSSLVerify: true
-  locketAddress: locket.{{ .Release.Namespace }}.svc.cluster.local:8891
+    skipHostnameValidation: false
+    maxOpenConnections: 200
+    maxIdleConnections: 10
+    connectionsMaxLifetimeSeconds: 3600
   uaa:
-    address: uaa.{{ .Release.Namespace }}.svc.cluster.local
-    port: 8443
+    tokenEndpoint: uaa.{{ .Release.Namespace }}.svc.cluster.local
+    tlsPort: ~
+  routerGroups: []
+  reservedSystemComponentPorts: [2822, 2825, 3457, 3458, 3459, 3460, 3461, 8853, 9100, 14726, 14727, 14821, 14822, 14823, 14824, 14829, 14830, 14920, 14922, 15821, 17002, 53035, 53080]
+  failOnRouterPortConflicts: false
+  lockTTL: 10s
+  lockRetryInterval: 5s
+  locket:
+    apiLocation: locket.{{ .Release.Namespace }}.svc.cluster.local:8891
+  adminPort: 15897
   image:
     repository: ghcr.io/cloudfoundry/k8s/routing-api
     tag: ""
@@ -72,10 +247,40 @@ tcpRouter:
   serviceLabels: ~
   serviceAnnotations: ~
   enabled: false
-  certificateSecret: ""
-  oauthClientsSecret: ""
+  replicas: 1
+  certificateSecrets:
+    routingAPITLS: ""
+    uaaCA: ""
+    backendTLS: ""
+    backendCA: ""
+    healthCheckTLS: ""
+    frontendTLS: []
   startPort: 32000
   numPorts: 20
+  debugAddress: 127.0.0.1:17002
+  isolationSegments: []
+  logLevel: info
+  tcpStatsCollectionInterval: 1m
+  oauthSecret: ~
+  backendTLS:
+    enabled: false
+  requestTimeoutInSeconds: 300
+  enableNonTLSHealthChecks: true
+  healthCheckPort: 80
+  tlsHealthCheckPort: 443
+  failOnRouterPortConflicts: false
+  drainWait: 20
+  uaa:
+    tokenEndpoint: uaa.{{ .Release.Namespace }}.svc.cluster.local
+    tlsPort: ~
+  routingAPI:
+    uri: https://routing-api.{{ .Release.Namespace }}.svc.cluster.local
+    port: ~
+    authDisabled: false
+  reservedSystemComponentPorts: []
+  skipSSLValidation: false
+  metron:
+    port: 3457
   image:
     repository: ghcr.io/cloudfoundry/k8s/cf-tcp-router
     tag: ""
@@ -83,21 +288,16 @@ tcpRouter:
   haproxy:
     image:
       repository: haproxy
-      tag: "3.3.3-alpine"
+      tag: 3.3.3-alpine
       imagePullPolicy: IfNotPresent
     resources: ~
-  uaa:
-    address: uaa.{{ .Release.Namespace }}.svc.cluster.local
-    port: 8443
-  routingApi:
-    address: https://routing-api.{{ .Release.Namespace }}.svc.cluster.local
-    port: 3001
   nodeSelector: ~
   tolerations: ~
-  isolationSegments: []
   resources: ~
 
 routeRegistrar:
+  certificateSecret: ""
+  loggingLevel: info
   nats:
     address: nats.{{ .Release.Namespace }}.svc.cluster.local:4222
   image:

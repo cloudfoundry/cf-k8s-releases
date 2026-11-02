@@ -1,4 +1,31 @@
 {{- if .Values.gorouter.enabled }}
+{{- $g := .Values.gorouter -}}
+{{- $certs := dict "status-tls" (required "gorouter.certificateSecrets.statusTLS is required" $g.certificateSecrets.statusTLS) -}}
+{{- range $key, $name := dict "clientCA" "client-ca" "backendsTLS" "backends-tls" "routeServicesTLS" "route-services-tls" "uaaCA" "uaa-ca" -}}
+{{- if index $g.certificateSecrets $key -}}
+{{- $_ := set $certs $name (index $g.certificateSecrets $key) -}}
+{{- end -}}
+{{- end -}}
+{{- if $g.nats.tlsEnabled -}}
+{{- $_ := set $certs "nats-tls" (required "gorouter.certificateSecrets.natsTLS is required when gorouter.nats.tlsEnabled is true" $g.certificateSecrets.natsTLS) -}}
+{{- end -}}
+{{- if $g.routingAPI.enabled -}}
+{{- $_ := set $certs "routing-api-tls" (required "gorouter.certificateSecrets.routingAPITLS is required when gorouter.routingAPI.enabled is true" $g.certificateSecrets.routingAPITLS) -}}
+{{- end -}}
+{{- if and (not (kindIs "invalid" $g.prometheus.port)) $g.certificateSecrets.prometheusTLS -}}
+{{- $_ := set $certs "prometheus-tls" $g.certificateSecrets.prometheusTLS -}}
+{{- end -}}
+{{- if $g.enableSSL -}}
+{{- range $index, $secret := $g.certificateSecrets.serverTLS -}}
+{{- $_ := set $certs (printf "server-%d" $index) (required "gorouter.certificateSecrets.serverTLS entries must name a secret" $secret) -}}
+{{- end -}}
+{{- end -}}
+{{- range $index, $secret := $g.certificateSecrets.trustedCAs -}}
+{{- $_ := set $certs (printf "trusted-ca-%d" $index) (required "gorouter.certificateSecrets.trustedCAs entries must name a secret" $secret) -}}
+{{- end -}}
+{{- range $index, $domain := $g.domains -}}
+{{- $_ := set $certs (printf "domain-%d" $index) (required (printf "gorouter.certificateSecrets.domainCAs.%s is required" $domain.name) (index $g.certificateSecrets.domainCAs $domain.name)) -}}
+{{- end -}}
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -14,7 +41,7 @@ metadata:
     {{- toYaml .Values.commonLabels | nindent 4 }}
     {{- end }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.gorouter.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Values.gorouter.name }}
@@ -31,6 +58,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ add .Values.gorouter.drainWait .Values.gorouter.drainTimeout 5 }}
       initContainers:
       - name: gorouter-init
         image: mikefarah/yq:latest
@@ -41,36 +69,51 @@ spec:
         - |
           set -e
           yq '
-            .nats.ca_certs = strenv(CA_CRT) |
-            .nats.cert_chain = strenv(TLS_CRT) |
-            .nats.private_key = strenv(TLS_KEY) |
-            .tls_pem[0].cert_chain = strenv(TLS_CRT) |
-            .tls_pem[0].private_key = strenv(TLS_KEY) |
-            .ca_certs[0] = strenv(CA_CRT) |
-            .client_ca_certs = strenv(CA_CRT) |
-            .backends.cert_chain = strenv(TLS_CRT) |
-            .backends.private_key = strenv(TLS_KEY)' /gorouter/gorouter.yaml > /tmp/gorouter.yaml
+            .status.tls.certificate = load_str("/etc/ssl/certs/gorouter/status-tls/tls.crt") |
+            .status.tls.key = load_str("/etc/ssl/certs/gorouter/status-tls/tls.key") |
+            {{- if $g.nats.tlsEnabled }}
+            .nats.ca_certs = load_str("/etc/ssl/certs/gorouter/nats-tls/ca.crt") |
+            .nats.cert_chain = load_str("/etc/ssl/certs/gorouter/nats-tls/tls.crt") |
+            .nats.private_key = load_str("/etc/ssl/certs/gorouter/nats-tls/tls.key") |
+            {{- end }}
+            {{- if $g.routingAPI.enabled }}
+            .routing_api.ca_certs = load_str("/etc/ssl/certs/gorouter/routing-api-tls/ca.crt") |
+            .routing_api.cert_chain = load_str("/etc/ssl/certs/gorouter/routing-api-tls/tls.crt") |
+            .routing_api.private_key = load_str("/etc/ssl/certs/gorouter/routing-api-tls/tls.key") |
+            {{- end }}
+            {{- if $g.enableSSL }}
+            {{- range $index, $secret := $g.certificateSecrets.serverTLS }}
+            .tls_pem += [{"cert_chain": load_str("/etc/ssl/certs/gorouter/server-{{ $index }}/tls.crt"), "private_key": load_str("/etc/ssl/certs/gorouter/server-{{ $index }}/tls.key")}] |
+            {{- end }}
+            {{- end }}
+            {{- range $index, $secret := $g.certificateSecrets.trustedCAs }}
+            .ca_certs += [load_str("/etc/ssl/certs/gorouter/trusted-ca-{{ $index }}/ca.crt")] |
+            {{- end }}
+            {{- if $g.certificateSecrets.clientCA }}
+            .client_ca_certs = load_str("/etc/ssl/certs/gorouter/client-ca/ca.crt") |
+            {{- end }}
+            {{- if not $g.onlyTrustClientCACerts }}
+            .client_ca_certs = (.client_ca_certs + "\n" + (.ca_certs | join("\n"))) |
+            {{- end }}
+            {{- if $g.certificateSecrets.backendsTLS }}
+            .backends.cert_chain = load_str("/etc/ssl/certs/gorouter/backends-tls/tls.crt") |
+            .backends.private_key = load_str("/etc/ssl/certs/gorouter/backends-tls/tls.key") |
+            {{- end }}
+            {{- if $g.certificateSecrets.routeServicesTLS }}
+            .route_services.cert_chain = load_str("/etc/ssl/certs/gorouter/route-services-tls/tls.crt") |
+            .route_services.private_key = load_str("/etc/ssl/certs/gorouter/route-services-tls/tls.key") |
+            {{- end }}
+            {{- range $index, $domain := $g.domains }}
+            .domains[{{ $index }}].ca_certs = load_str("/etc/ssl/certs/gorouter/domain-{{ $index }}/ca.crt") |
+            {{- end }}
+            .
+          ' /gorouter/gorouter.yaml > /tmp/gorouter.yaml
         volumeMounts:
           - name: "{{ .Values.gorouter.name }}-config"
             mountPath: /gorouter
           - name: tmp
             mountPath: /tmp
-        env:
-          - name: CA_CRT
-            valueFrom:
-              secretKeyRef:
-                name: {{ required "gorouter.certificateSecret is required" .Values.gorouter.certificateSecret }}
-                key: ca.crt
-          - name: TLS_CRT
-            valueFrom:
-              secretKeyRef:
-                name: {{ required "gorouter.certificateSecret is required" .Values.gorouter.certificateSecret }}
-                key: tls.crt
-          - name: TLS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ required "gorouter.certificateSecret is required" .Values.gorouter.certificateSecret }}
-                key: tls.key
+          {{- include "routing.gorouter.certMounts" $certs | nindent 10 }}
       containers:
         - name: gorouter
           image: {{ .Values.gorouter.image.repository }}:{{ default .Chart.AppVersion .Values.gorouter.image.tag }}
@@ -78,42 +121,33 @@ spec:
           args:
           - -c
           - /tmp/gorouter.yaml
+          {{- if .Values.gorouter.go.httplaxcontentlength }}
+          env:
+          - name: GODEBUG
+            value: httplaxcontentlength=1
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /is-process-alive-do-not-use-for-loadbalancing
+              port: {{ .Values.gorouter.status.tls.port }}
+            initialDelaySeconds: {{ add .Values.gorouter.requestedRouteRegistrationIntervalInSeconds .Values.gorouter.loadBalancerHealthyThreshold }}
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /health
+              port: {{ .Values.gorouter.status.tls.port }}
           volumeMounts:
             - name: "{{ .Values.gorouter.name }}-config"
               mountPath: /gorouter
             - name: tmp
               mountPath: /tmp
+            {{- include "routing.gorouter.certMounts" $certs | nindent 12 }}
           {{- if .Values.gorouter.resources }}
           resources:
             {{- toYaml .Values.gorouter.resources | nindent 12 }}
           {{- end }}
-        - name: udp-forwarder
-          image: {{ .Values.udpForwarder.image.repository }}:{{ .Values.udpForwarder.image.tag }}
-          imagePullPolicy: {{ .Values.udpForwarder.image.imagePullPolicy }}
-          {{- if .Values.udpForwarder.resources }}
-          resources:
-            {{- toYaml .Values.udpForwarder.resources | nindent 12 }}
-          {{- end }}
-          env:
-            - name: UDP_PORT
-              value: "3457"
-            - name: LOGGREGATOR_AGENT_CA_FILE_PATH
-              value: /etc/ssl/certs/udp-forwarder/ca.crt
-            - name: LOGGREGATOR_AGENT_CERT_FILE_PATH
-              value: /etc/ssl/certs/udp-forwarder/tls.crt
-            - name: LOGGREGATOR_AGENT_KEY_FILE_PATH
-              value: /etc/ssl/certs/udp-forwarder/tls.key
-            - name: LOGGREGATOR_AGENT_ADDR
-              value: "{{ tpl .Values.udpForwarder.metronEndpoint.host . }}:{{ .Values.udpForwarder.metronEndpoint.port }}"
-            - name: METRICS_CA_FILE_PATH
-              value: /etc/ssl/certs/udp-forwarder/ca.crt
-            - name: METRICS_CERT_FILE_PATH
-              value: /etc/ssl/certs/udp-forwarder/tls.crt
-            - name: METRICS_KEY_FILE_PATH
-              value: /etc/ssl/certs/udp-forwarder/tls.key
-          volumeMounts:
-            - name: udp-forwarder
-              mountPath: /etc/ssl/certs/udp-forwarder
+        {{- include "routing.udpForwarder" (dict "root" $ "port" .Values.gorouter.metron.port) | nindent 8 }}
       {{- if .Values.gorouter.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.gorouter.nodeSelector | nindent 8 }}
@@ -128,6 +162,11 @@ spec:
         - name: "{{ .Values.gorouter.name }}-config"
           secret:
             secretName: "{{ .Values.gorouter.name }}-config"
+        {{- range $name, $secret := $certs }}
+        - name: gorouter-{{ $name }}
+          secret:
+            secretName: {{ $secret | quote }}
+        {{- end }}
         - name: udp-forwarder
           secret:
             secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
@@ -147,10 +186,23 @@ metadata:
     {{- end }}
 spec:
   ports:
-  - port: 443
+  {{- if not .Values.gorouter.disableHTTP }}
+  - port: {{ .Values.gorouter.port }}
+    name: http
+    targetPort: {{ .Values.gorouter.port }}
+    appProtocol: http
+  {{- end }}
+  {{- if .Values.gorouter.enableSSL }}
+  - port: {{ .Values.gorouter.tlsPort }}
     name: https
-    targetPort: 443
+    targetPort: {{ .Values.gorouter.tlsPort }}
     appProtocol: https
+  {{- end }}
+  {{- if not (kindIs "invalid" .Values.gorouter.prometheus.port) }}
+  - port: {{ .Values.gorouter.prometheus.port }}
+    name: prometheus
+    targetPort: {{ .Values.gorouter.prometheus.port }}
+  {{- end }}
   selector:
     app.kubernetes.io/name: {{ .Values.gorouter.name }}
 {{- end }}

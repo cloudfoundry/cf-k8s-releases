@@ -1,0 +1,47 @@
+log_guid: routing_api
+max_ttl: {{ .Values.routingAPI.maxTTL | quote }}
+system_domain: {{ required "routingAPI.systemDomain is required" .Values.routingAPI.systemDomain | quote }}
+metron_config:
+  address: {{ tpl .Values.routingAPI.metron.host . | quote }}
+  port: {{ .Values.routingAPI.metron.port }}
+metrics_reporting_interval: {{ .Values.routingAPI.metricsReportingInterval | quote }}
+statsd_endpoint: {{ tpl .Values.routingAPI.statsdEndpoint . | quote }}
+oauth:
+  token_endpoint: {{ tpl .Values.routingAPI.uaa.tokenEndpoint . | quote }}
+  port: {{ required "routingAPI.uaa.tlsPort is required" .Values.routingAPI.uaa.tlsPort }}
+  skip_ssl_validation: {{ .Values.routingAPI.skipSSLValidation }}
+  {{- if .Values.routingAPI.certificateSecrets.uaaCA }}
+  ca_certs: /etc/ssl/certs/routing-api-uaa/ca.crt
+  {{- end }}
+debug_address: {{ .Values.routingAPI.debugAddress | quote }}
+statsd_client_flush_interval: {{ .Values.routingAPI.statsdClientFlushInterval | quote }}
+router_groups: {{ tpl (toJson .Values.routingAPI.routerGroups) . }}
+reserved_system_component_ports: {{ .Values.routingAPI.reservedSystemComponentPorts | toJson }}
+fail_on_router_port_conflicts: {{ .Values.routingAPI.failOnRouterPortConflicts }}
+uuid: ""
+admin_port: {{ .Values.routingAPI.adminPort }}
+api:
+  listen_port: {{ .Values.routingAPI.port }}
+  http_enabled: {{ eq .Values.routingAPI.enabledAPIEndpoints "both" }}
+  mtls_listen_port: {{ .Values.routingAPI.mtlsPort }}
+  mtls_client_ca_file: /etc/ssl/certs/routing-api-server/ca.crt
+  mtls_server_cert_file: /etc/ssl/certs/routing-api-server/tls.crt
+  mtls_server_key_file: /etc/ssl/certs/routing-api-server/tls.key
+lock_ttl: {{ .Values.routingAPI.lockTTL | quote }}
+retry_interval: {{ .Values.routingAPI.lockRetryInterval | quote }}
+locket:
+  locket_address: {{ tpl .Values.routingAPI.locket.apiLocation . | quote }}
+  locket_ca_cert_file: /etc/ssl/certs/routing-api-locket/ca.crt
+  locket_client_cert_file: /etc/ssl/certs/routing-api-locket/tls.crt
+  locket_client_key_file: /etc/ssl/certs/routing-api-locket/tls.key
+sqldb:
+  host: {{ tpl .Values.routingAPI.sqldb.host . | quote }}
+  port: {{ required "routingAPI.sqldb.port is required" .Values.routingAPI.sqldb.port }}
+  type: {{ required "routingAPI.sqldb.type is required" .Values.routingAPI.sqldb.type | quote }}
+  schema: {{ required "routingAPI.sqldb.schema is required" .Values.routingAPI.sqldb.schema | quote }}
+  username: {{ required "routingAPI.sqldb.username is required" .Values.routingAPI.sqldb.username | quote }}
+  password: {{ required "routingAPI.sqldb.password is required" .Values.routingAPI.sqldb.password | quote }}
+  skip_hostname_validation: {{ .Values.routingAPI.sqldb.skipHostnameValidation }}
+  max_open_connections: {{ .Values.routingAPI.sqldb.maxOpenConnections | int64 }}
+  max_idle_connections: {{ .Values.routingAPI.sqldb.maxIdleConnections | int64 }}
+  connections_max_lifetime_seconds: {{ .Values.routingAPI.sqldb.connectionsMaxLifetimeSeconds | int64 }}

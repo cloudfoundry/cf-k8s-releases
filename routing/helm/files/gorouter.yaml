@@ -1,0 +1,187 @@
+{{- $g := .Values.gorouter -}}
+zone: {{ $g.zone | quote }}
+status:
+  enable_nontls_health_checks: {{ $g.status.enableNonTLSHealthChecks }}
+  enable_deprecated_varz_healthz_endpoints: {{ $g.status.enableDeprecatedVarzHealthzEndpoints }}
+  port: {{ $g.status.port | int64 }}
+  user: {{ $g.status.user | quote }}
+  pass: {{ required "gorouter.status.password is required" $g.status.password | quote }}
+  routes:
+    port: {{ $g.status.routes.port | int64 }}
+  tls:
+    port: {{ $g.status.tls.port | int64 }}
+    certificate: ""
+    key: ""
+tracing:
+  enable_zipkin: {{ $g.tracing.enableZipkin }}
+  enable_w3c: {{ $g.tracing.enableW3C }}
+  {{- if $g.tracing.enableW3C }}
+  w3c_tenant_id: {{ if $g.tracing.w3cTenantID }}{{ $g.tracing.w3cTenantID | quote }}{{ else }}null{{ end }}
+  {{- end }}
+port: {{ $g.port | int64 }}
+go_max_procs: {{ $g.numberOfCPUs | int64 }}
+trace_key: {{ $g.traceKey | toJson }}
+debug_addr: {{ $g.debugAddress | quote }}
+secure_cookies: {{ $g.secureCookies }}
+sticky_session_cookie_names: {{ $g.stickySessionCookieNames | toJson }}
+sticky_sessions_for_auth_negotiate: {{ $g.stickySessionsForAuthNegotiate }}
+access_log:
+  file: {{ if $g.writeAccessLogsLocally }}"/dev/stdout"{{ else }}""{{ end }}
+  enable_streaming: {{ $g.enableAccessLogStreaming }}
+publish_start_message_interval: 30s
+prune_stale_droplets_interval: 30s
+droplet_stale_threshold: 120s
+publish_active_apps_interval: 0s
+suspend_pruning_if_nats_unavailable: {{ $g.suspendPruningIfNatsUnavailable }}
+route_latency_metric_muzzle_duration: 30s
+frontend_idle_timeout: {{ $g.frontendIdleTimeout | int64 }}s
+read_header_timeout: {{ $g.readHeaderTimeout | int64 }}s
+drain_wait: {{ $g.drainWait | int64 }}s
+drain_timeout: {{ $g.drainTimeout | int64 }}s
+healthcheck_user_agent: {{ $g.healthcheckUserAgent | quote }}
+endpoint_timeout: {{ $g.requestTimeoutInSeconds | int64 }}s
+http_1_endpoint_timeout: {{ $g.http1RequestTimeoutInSeconds | int64 }}s
+http_2_endpoint_timeout: {{ $g.http2RequestTimeoutInSeconds | int64 }}s
+endpoint_dial_timeout: {{ $g.endpointDialTimeoutInSeconds | int64 }}s
+websocket_dial_timeout: {{ if eq (toString $g.websocketDialTimeoutInSeconds) "endpoint_dial_timeout_in_seconds" }}{{ $g.endpointDialTimeoutInSeconds | int64 }}{{ else }}{{ $g.websocketDialTimeoutInSeconds | int64 }}{{ end }}s
+tls_handshake_timeout: {{ $g.tlsHandshakeTimeoutInSeconds | int64 }}s
+start_response_delay_interval: {{ $g.requestedRouteRegistrationIntervalInSeconds | int64 }}s
+load_balancer_healthy_threshold: {{ $g.loadBalancerHealthyThreshold | int64 }}s
+balancing_algorithm: {{ $g.balancingAlgorithm | quote }}
+balancing_algorithm_az_preference: {{ $g.balancingAlgorithmAZPreference | quote }}
+only_trust_client_ca_certs: {{ $g.onlyTrustClientCACerts }}
+skip_ssl_validation: {{ $g.sslSkipValidation }}
+cipher_suites: {{ $g.cipherSuites | quote }}
+forwarded_client_cert: {{ $g.forwardedClientCert | quote }}
+isolation_segments: {{ $g.isolationSegments | toJson }}
+routing_table_sharding_mode: {{ $g.routingTableShardingMode | quote }}
+route_services_timeout: {{ $g.routeServicesTimeout | int64 }}s
+route_services_secret: {{ $g.routeServicesSecret | quote }}
+route_services_secret_decrypt_only: {{ $g.routeServicesSecretDecryptOnly | quote }}
+route_services_recommend_https: {{ $g.routeServicesRecommendHTTPS }}
+route_services_hairpinning: {{ $g.routeServicesInternalLookup }}
+route_services_internal_server_port: {{ $g.routeServicesInternalServerPort | int64 }}
+route_services_hairpinning_allowlist: {{ $g.routeServicesInternalLookupAllowlist | toJson }}
+extra_headers_to_log: {{ $g.extraHeadersToLog | toJson }}
+max_request_header_bytes: {{ mul $g.maxRequestHeaderKB 1024 | int64 }}
+max_response_header_bytes: {{ mul $g.maxResponseHeaderKB 1024 | int64 }}
+max_request_headers: {{ $g.maxRequestHeaders | int64 }}
+max_response_headers: {{ $g.maxResponseHeaders | int64 }}
+token_fetcher_max_retries: 3
+token_fetcher_retry_interval: 5s
+token_fetcher_expiration_buffer_time: 30
+enable_proxy: {{ $g.enableProxy }}
+force_forwarded_proto_https: {{ $g.forceForwardedProtoHTTPS }}
+sanitize_forwarded_proto: {{ $g.sanitizeForwardedProto }}
+hop_by_hop_headers_to_filter: {{ $g.hopByHopHeadersToFilter | toJson }}
+empty_pool_response_code_503: {{ $g.forBackwardsCompatibilityOnly.emptyPoolResponseCode503 }}
+enable_envelope_v1_metrics: {{ $g.enableEnvelopeV1Metrics }}
+per_request_metrics_reporting: {{ $g.perRequestMetricsReporting }}
+per_app_prometheus_http_metrics_reporting: {{ $g.perAppPrometheusHTTPMetricsReporting }}
+send_http_start_stop_server_event: {{ $g.sendHTTPStartStopServerEvent }}
+send_http_start_stop_client_event: {{ $g.sendHTTPStartStopClientEvent }}
+empty_pool_timeout: {{ $g.forBackwardsCompatibilityOnly.emptyPoolTimeout | quote }}
+{{- if not (kindIs "invalid" $g.prometheus.port) }}
+prometheus:
+  enabled: true
+  port: {{ $g.prometheus.port | int64 }}
+  {{- if $g.certificateSecrets.prometheusTLS }}
+  cert_path: /etc/ssl/certs/gorouter/prometheus-tls/tls.crt
+  key_path: /etc/ssl/certs/gorouter/prometheus-tls/tls.key
+  ca_path: /etc/ssl/certs/gorouter/prometheus-tls/ca.crt
+  {{- end }}
+{{- end }}
+nats:
+  {{- if $g.nats.tlsEnabled }}
+  tls_enabled: true
+  ca_certs: ""
+  cert_chain: ""
+  private_key: ""
+  {{- end }}
+  hosts:
+  - hostname: {{ tpl $g.nats.hostname $ | quote }}
+    port: {{ $g.nats.port | int64 }}
+{{- if gt (int64 $g.maxIdleConnections) 0 }}
+disable_keep_alives: false
+max_idle_conns: {{ $g.maxIdleConnections | int64 }}
+max_idle_conns_per_host: 100
+endpoint_keep_alive_probe_interval: {{ $g.keepAliveProbeInterval | quote }}
+{{- else }}
+disable_keep_alives: true
+{{- end }}
+keep_alive_100_continue_requests: {{ $g.keepAlive100ContinueRequests }}
+backends:
+  max_attempts: {{ $g.backends.maxAttempts | int64 }}
+  max_conns: {{ $g.backends.maxConns | int64 }}
+  cert_chain: ""
+  private_key: ""
+route_services:
+  max_attempts: {{ $g.routeServices.maxAttempts | int64 }}
+  cert_chain: ""
+  private_key: ""
+  strict_signature_validation: {{ $g.routeServicesStrictSignatureValidation }}
+  enable_websockets: {{ $g.routeServices.enableWebsockets }}
+  egress_blocklist: {{ $g.routeServices.egressBlocklist | toJson }}
+oauth:
+  token_endpoint: {{ tpl $g.uaa.tokenEndpoint . | quote }}
+  client_name: gorouter
+  client_secret: {{ required "gorouter.uaa.clients.gorouter.secret is required" $g.uaa.clients.gorouter.secret | quote }}
+  port: {{ $g.uaa.ssl.port | int64 }}
+  skip_ssl_validation: {{ $g.sslSkipValidation }}
+  {{- if $g.certificateSecrets.uaaCA }}
+  ca_certs: /etc/ssl/certs/gorouter/uaa-ca/ca.crt
+  {{- end }}
+{{- if $g.routingAPI.enabled }}
+routing_api:
+  uri: {{ tpl $g.routingAPI.uri . | quote }}
+  port: {{ $g.routingAPI.port | int64 }}
+  auth_disabled: {{ $g.routingAPI.authDisabled }}
+  private_key: ""
+  ca_certs: ""
+  cert_chain: ""
+{{- end }}
+logging:
+  syslog: {{ $g.logging.syslogTag | quote }}
+  syslog_truncate: {{ $g.logging.syslogMessageLimit | int64 }}
+  syslog_addr: {{ $g.logging.syslogAddr | quote }}
+  syslog_network: {{ $g.logging.syslogNetwork | quote }}
+  level: {{ $g.loggingLevel | quote }}
+  extra_access_log_fields: {{ if $g.enableLogAttemptsDetails }}{{ concat (list "failed_attempts" "failed_attempts_time" "dns_time" "dial_time" "tls_time" "backend_time") $g.logging.extraAccessLogFields | toJson }}{{ else }}{{ $g.logging.extraAccessLogFields | toJson }}{{ end }}
+  loggregator_enabled: true
+  metron_address: "localhost:{{ $g.metron.port | int64 }}"
+  disable_log_forwarded_for: {{ $g.disableLogForwardedFor }}
+  disable_log_source_ip: {{ $g.disableLogSourceIP }}
+  redact_query_params: {{ $g.redactQueryParameters | quote }}
+enable_ssl: {{ $g.enableSSL }}
+{{- if $g.enableSSL }}
+tls_pem: []
+client_cert_validation: {{ $g.clientCertValidation | quote }}
+min_tls_version: {{ $g.minTLSVersion | quote }}
+max_tls_version: {{ $g.maxTLSVersion | quote }}
+ssl_port: {{ $g.tlsPort | int64 }}
+{{- end }}
+disable_http: {{ $g.disableHTTP }}
+enable_http2: {{ $g.enableHTTP2 }}
+enable_http1_concurrent_read_write: {{ $g.enableHTTP1ConcurrentReadWrite }}
+ca_certs: []
+client_ca_certs: ""
+domains: {{ if not $g.domains }}[]{{ end }}
+{{- range $g.domains }}
+- domain: {{ .name | quote }}
+  ca_certs: ""
+  {{- if .forwardedClientCert }}
+  forwarded_client_cert: {{ .forwardedClientCert | quote }}
+  {{- end }}
+  {{- if .xfccFormat }}
+  xfcc_format: {{ .xfccFormat | quote }}
+  {{- end }}
+{{- end }}
+http_rewrite:
+  responses:
+    add_headers_if_not_present: {{ $g.httpRewrite.responses.addHeadersIfNotPresent | toJson }}
+    remove_headers: {{ $g.httpRewrite.responses.removeHeaders | toJson }}
+html_error_template_file: {{ if $g.htmlErrorTemplate }}"/gorouter/error.html"{{ else }}null{{ end }}
+{{- if and $g.enableVerifyClientCertificateMetadata $g.verifyClientCertificateMetadata }}
+enable_verify_client_certificate_metadata: true
+verify_client_certificate_metadata: {{ $g.verifyClientCertificateMetadata | toJson }}
+{{- end }}

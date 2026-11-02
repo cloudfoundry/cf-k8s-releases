@@ -10,5 +10,7 @@ FROM gcr.io/distroless/static:latest
 
 COPY --from=builder /usr/local/bin/gorouter /usr/local/bin/gorouter
 
+STOPSIGNAL SIGUSR1
+
 ENTRYPOINT [ "/usr/local/bin/gorouter" ]
 CMD [ "-c", "/gorouter/gorouter.yaml" ]

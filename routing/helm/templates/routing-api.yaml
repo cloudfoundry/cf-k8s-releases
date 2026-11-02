@@ -1,4 +1,4 @@
-{{- if .Values.routingApi.enabled }}
+{{- if .Values.routingAPI.enabled }}
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -14,7 +14,7 @@ metadata:
     {{- toYaml .Values.commonLabels | nindent 4 }}
     {{- end }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.routingAPI.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: routing-api
@@ -22,13 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: routing-api
-        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routingApi.podLabels | default dict) }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routingAPI.podLabels | default dict) }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/routing-api-config: {{ include (print $.Template.BasePath "/routing-api-config.yaml") . | sha256sum }}
         checksum/routing-api-route-registrar-config: {{ include (print $.Template.BasePath "/routing-api-route-registrar-config.yaml") . | sha256sum }}
-        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routingApi.podAnnotations | default dict) }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routingAPI.podAnnotations | default dict) }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -42,22 +42,27 @@ spec:
             - -c
             - |
               set -e
-              yq '.sqldb.ca_cert = strenv(DB_CA_CRT)' /routing-api/routing-api.yaml > /tmp/routing-api.yaml
+              yq '.uuid = strenv(POD_NAME){{ if .Values.routingAPI.certificateSecrets.databaseCA }} | .sqldb.ca_cert = load_str("/etc/ssl/certs/routing-api-database-ca/ca.crt"){{ end }}' /routing-api/routing-api.yaml > /tmp/routing-api.yaml
           env:
-            - name: DB_CA_CRT
+            - name: POD_NAME
               valueFrom:
-                secretKeyRef:
-                  name: {{ required "routingApi.sqldb.caCertificateSecret is required when routingApi.sqldb.skipSSLVerify is false" .Values.routingApi.sqldb.caCertificateSecret }}
-                  key: ca.crt
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: routing-api-config
               mountPath: /routing-api
+              readOnly: true
             - name: tmpdir
               mountPath: /tmp
+            {{- if .Values.routingAPI.certificateSecrets.databaseCA }}
+            - name: routing-api-database-ca
+              mountPath: /etc/ssl/certs/routing-api-database-ca
+              readOnly: true
+            {{- end }}
       containers:
         - name: routing-api
-          image: {{ .Values.routingApi.image.repository }}:{{ default .Chart.AppVersion .Values.routingApi.image.tag }}
-          imagePullPolicy: {{ .Values.routingApi.image.imagePullPolicy }}
+          image: {{ .Values.routingAPI.image.repository }}:{{ default .Chart.AppVersion .Values.routingAPI.image.tag }}
+          imagePullPolicy: {{ .Values.routingAPI.image.imagePullPolicy }}
           env:
             - name: POD_IP
               valueFrom:
@@ -66,26 +71,38 @@ spec:
           args:
           - -config=/tmp/routing-api.yaml
           - -ip=$(POD_IP)
-          {{- if .Values.routingApi.resources }}
+          - -logLevel={{ .Values.routingAPI.logLevel }}
+          - -timeFormat=rfc3339
+          {{- if .Values.routingAPI.authDisabled }}
+          - -devMode
+          {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.routingAPI.mtlsPort }}
+          {{- if .Values.routingAPI.resources }}
           resources:
-            {{- toYaml .Values.routingApi.resources | nindent 12 }}
+            {{- toYaml .Values.routingAPI.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: routing-api
-              mountPath: /etc/ssl/routing-api
-            - name: uaa
-              mountPath: /etc/ssl/uaa
-            - name: locket
-              mountPath: /etc/ssl/locket
-            - name: routing-api-config
-              mountPath: /routing-api
-            {{- if not .Values.routingApi.sqldb.skipSSLVerify }}
+            - name: routing-api-server
+              mountPath: /etc/ssl/certs/routing-api-server
+              readOnly: true
+            - name: routing-api-locket
+              mountPath: /etc/ssl/certs/routing-api-locket
+              readOnly: true
+            {{- if .Values.routingAPI.certificateSecrets.uaaCA }}
+            - name: routing-api-uaa
+              mountPath: /etc/ssl/certs/routing-api-uaa
+              readOnly: true
+            {{- end }}
             - name: tmpdir
               mountPath: /tmp
-            {{- end }}
         - name: route-registrar
           image: {{ .Values.routeRegistrar.image.repository }}:{{ default .Chart.AppVersion .Values.routeRegistrar.image.tag }}
           imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
+          args:
+            - -timeFormat=rfc3339
+            - -logLevel={{ .Values.routeRegistrar.loggingLevel }}
           env:
           - name: POD_IP
             valueFrom:
@@ -96,36 +113,55 @@ spec:
             {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: routing-api
-              mountPath: /etc/ssl/certs/routing-api
+            - name: route-registrar
+              mountPath: /etc/ssl/certs/route-registrar
+              readOnly: true
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
+              readOnly: true
             - name: tmpdir
               mountPath: /tmp
-      {{- if .Values.routingApi.nodeSelector }}
+        {{- include "routing.udpForwarder" (dict "root" $ "port" .Values.routingAPI.metron.port) | nindent 8 }}
+      {{- if .Values.routingAPI.nodeSelector }}
       nodeSelector:
-        {{- toYaml .Values.routingApi.nodeSelector | nindent 8 }}
+        {{- toYaml .Values.routingAPI.nodeSelector | nindent 8 }}
       {{- end }}
-      {{- if .Values.routingApi.tolerations }}
+      {{- if .Values.routingAPI.tolerations }}
       tolerations:
-        {{- toYaml .Values.routingApi.tolerations | nindent 8 }}
+        {{- toYaml .Values.routingAPI.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: routing-api
+        - name: udp-forwarder
           secret:
-            secretName: {{ required "routingApi.certificateSecret is required" .Values.routingApi.certificateSecret }}
-        - name: uaa
+            secretName: {{ required "udpForwarder.certificateSecret is required" .Values.udpForwarder.certificateSecret }}
+        - name: route-registrar
           secret:
-            secretName: {{ required "routingApi.uaaCertificateSecret is required" .Values.routingApi.uaaCertificateSecret }}
-        - name: locket
+            secretName: {{ required "routeRegistrar.certificateSecret is required" .Values.routeRegistrar.certificateSecret }}
+        - name: routing-api-server
           secret:
-            secretName: {{ required "routingApi.locketCertificateSecret is required" .Values.routingApi.locketCertificateSecret }}
+            secretName: {{ required "routingAPI.certificateSecrets.mtlsServer is required" .Values.routingAPI.certificateSecrets.mtlsServer }}
+        - name: routing-api-locket
+          secret:
+            secretName: {{ required "routingAPI.certificateSecrets.locketTLS is required" .Values.routingAPI.certificateSecrets.locketTLS }}
+        {{- if .Values.routingAPI.certificateSecrets.databaseCA }}
+        - name: routing-api-database-ca
+          secret:
+            secretName: {{ .Values.routingAPI.certificateSecrets.databaseCA }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{- end }}
+        {{- if .Values.routingAPI.certificateSecrets.uaaCA }}
+        - name: routing-api-uaa
+          secret:
+            secretName: {{ .Values.routingAPI.certificateSecrets.uaaCA }}
+        {{- end }}
         - name: routing-api-config
           secret:
             secretName: routing-api-config
         - name: etc-route-registrar
-          configMap:
-            name: routing-api-route-registrar-config
+          secret:
+            secretName: routing-api-route-registrar-config
         - name: tmpdir
           emptyDir: {}
 ---
@@ -133,20 +169,25 @@ kind: Service
 apiVersion: v1
 metadata:
   name: routing-api
-  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routingApi.serviceAnnotations | default dict) }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routingAPI.serviceAnnotations | default dict) }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: routing-api
-    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routingApi.serviceLabels | default dict) }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routingAPI.serviceLabels | default dict) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:
     - name: https
-      port: 3001
-      targetPort: 3001
+      port: {{ .Values.routingAPI.mtlsPort }}
+      targetPort: {{ .Values.routingAPI.mtlsPort }}
+    {{- if eq .Values.routingAPI.enabledAPIEndpoints "both" }}
+    - name: http
+      port: {{ .Values.routingAPI.port }}
+      targetPort: {{ .Values.routingAPI.port }}
+    {{- end }}
   selector:
     app.kubernetes.io/name: routing-api
 {{- end }}

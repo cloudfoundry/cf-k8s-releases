@@ -14,26 +14,38 @@ metadata:
 stringData:
   cf-tcp-router.yaml: |-
     oauth:
-      token_endpoint: {{ tpl .Values.tcpRouter.uaa.address . }}
-      port: {{ .Values.tcpRouter.uaa.port }}
+      token_endpoint: {{ tpl .Values.tcpRouter.uaa.tokenEndpoint . | quote }}
+      port: {{ required "tcpRouter.uaa.tlsPort is required" .Values.tcpRouter.uaa.tlsPort }}
       client_name: "tcp_router"
-      client_secret: {{ .Values.tcpRouter.oauthClientsSecret | quote }}
-      skip_ssl_validation: false
-      ca_certs: "/etc/ssl/cf-tcp-router/ca.crt"
+      client_secret: {{ required "tcpRouter.oauthSecret is required" .Values.tcpRouter.oauthSecret | quote }}
+      skip_ssl_validation: {{ .Values.tcpRouter.skipSSLValidation }}
+      {{- if .Values.tcpRouter.certificateSecrets.uaaCA }}
+      ca_certs: "/etc/ssl/certs/tcp-uaa/ca.crt"
+      {{- end }}
     routing_api:
-      uri: {{ tpl .Values.tcpRouter.routingApi.address . }}
-      port: {{ .Values.tcpRouter.routingApi.port }}
-      auth_disabled: false
-      client_cert_path: "/etc/ssl/cf-tcp-router/tls.crt"
-      ca_cert_path: "/etc/ssl/cf-tcp-router/ca.crt"
-      client_private_key_path: "/etc/ssl/cf-tcp-router/tls.key"
+      uri: {{ tpl .Values.tcpRouter.routingAPI.uri . | quote }}
+      port: {{ required "tcpRouter.routingAPI.port is required" .Values.tcpRouter.routingAPI.port }}
+      auth_disabled: {{ .Values.tcpRouter.routingAPI.authDisabled }}
+      client_cert_path: "/etc/ssl/certs/tcp-routing-api/tls.crt"
+      ca_cert_path: "/etc/ssl/certs/tcp-routing-api/ca.crt"
+      client_private_key_path: "/etc/ssl/certs/tcp-routing-api/tls.key"
     haproxy_pid_file: "/haproxy/haproxy.pid"
-    isolation_segments: {{ .Values.tcpRouter.isolationSegments }}
-    reserved_system_component_ports: []
-    drain_wait: 20s
+    isolation_segments: {{ .Values.tcpRouter.isolationSegments | toJson }}
+    reserved_system_component_ports: {{ .Values.tcpRouter.reservedSystemComponentPorts | toJson }}
+    drain_wait: {{ .Values.tcpRouter.drainWait }}s
     backend_tls:
-      enabled: true
-      ca_cert_path: "/etc/ssl/cf-tcp-router/ca.crt"
-      client_cert_and_key_path: "/tmp/tls-combined.pem"
-    frontend_tls:
+      enabled: {{ .Values.tcpRouter.backendTLS.enabled }}
+      {{- if .Values.tcpRouter.backendTLS.enabled }}
+      ca_cert_path: "/etc/ssl/certs/tcp-backend-ca/ca.crt"
+      {{- if .Values.tcpRouter.certificateSecrets.backendTLS }}
+      client_cert_and_key_path: "/tmp/tcp-backend.pem"
+      {{- end }}
+      {{- end }}
+    {{- if .Values.tcpRouter.certificateSecrets.frontendTLS }}
+    frontend_tls_pem:
+      {{- range .Values.tcpRouter.certificateSecrets.frontendTLS }}
+      - enabled: true
+        cert_path: "/etc/ssl/certs/tcp-frontend/{{ .name }}"
+      {{- end }}
+    {{- end }}
 {{- end }}
