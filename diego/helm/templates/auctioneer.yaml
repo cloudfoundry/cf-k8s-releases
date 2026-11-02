@@ -22,19 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: auctioneer
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.auctioneer.podLabels }}
-        {{- toYaml .Values.auctioneer.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.auctioneer.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/auctioneer-config: {{ include (print $.Template.BasePath "/auctioneer-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.auctioneer.podAnnotations }}
-        {{- toYaml .Values.auctioneer.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.auctioneer.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       initContainers:
@@ -118,22 +112,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: auctioneer
-  {{- if or .Values.commonAnnotations .Values.auctioneer.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.auctioneer.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.auctioneer.serviceAnnotations }}
-    {{- toYaml .Values.auctioneer.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: auctioneer
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.auctioneer.serviceLabels }}
-    {{- toYaml .Values.auctioneer.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.auctioneer.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:

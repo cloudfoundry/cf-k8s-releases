@@ -22,19 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: service-discovery-controller
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.serviceDiscoveryController.podLabels }}
-        {{- toYaml .Values.serviceDiscoveryController.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.serviceDiscoveryController.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/service-discovery-controller-config: {{ include (print $.Template.BasePath "/service-discovery-controller-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.serviceDiscoveryController.podAnnotations }}
-        {{- toYaml .Values.serviceDiscoveryController.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.serviceDiscoveryController.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
@@ -114,22 +108,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: service-discovery-controller
-  {{- if or .Values.commonAnnotations .Values.serviceDiscoveryController.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.serviceDiscoveryController.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.serviceDiscoveryController.serviceAnnotations }}
-    {{- toYaml .Values.serviceDiscoveryController.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: service-discovery-controller
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.serviceDiscoveryController.serviceLabels }}
-    {{- toYaml .Values.serviceDiscoveryController.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.serviceDiscoveryController.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:

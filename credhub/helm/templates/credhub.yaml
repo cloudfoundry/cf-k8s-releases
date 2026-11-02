@@ -22,19 +22,13 @@ spec:
       name: credhub
       labels:
         app.kubernetes.io/name: credhub
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.podLabels }}
-        {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/credhub-config: {{ include (print $.Template.BasePath "/credhub-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.podAnnotations }}
-        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
@@ -102,22 +96,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: credhub
-  {{- if or .Values.commonAnnotations .Values.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.serviceAnnotations }}
-    {{- toYaml .Values.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: credhub
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.serviceLabels }}
-    {{- toYaml .Values.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:

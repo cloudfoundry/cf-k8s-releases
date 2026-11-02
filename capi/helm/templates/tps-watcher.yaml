@@ -22,19 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: tps-watcher
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.tpsWatcher.podLabels }}
-        {{- toYaml .Values.tpsWatcher.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.tpsWatcher.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/tps-watcher-config: {{ include (print $.Template.BasePath "/tps-watcher-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.tpsWatcher.podAnnotations }}
-        {{- toYaml .Values.tpsWatcher.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.tpsWatcher.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       initContainers:

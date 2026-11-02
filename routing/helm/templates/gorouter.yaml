@@ -22,19 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ .Values.gorouter.name }}
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.gorouter.podLabels }}
-        {{- toYaml .Values.gorouter.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.gorouter.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/gorouter-config: {{ include (print $.Template.BasePath "/gorouter-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.gorouter.podAnnotations }}
-        {{- toYaml .Values.gorouter.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.gorouter.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       initContainers:
@@ -142,22 +136,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: {{ .Values.gorouter.name }}
-  {{- if or .Values.commonAnnotations .Values.gorouter.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.gorouter.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.gorouter.serviceAnnotations }}
-    {{- toYaml .Values.gorouter.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: {{ .Values.gorouter.name }}
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.gorouter.serviceLabels }}
-    {{- toYaml .Values.gorouter.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.gorouter.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:

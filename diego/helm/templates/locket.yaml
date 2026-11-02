@@ -22,19 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: locket
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.locket.podLabels }}
-        {{- toYaml .Values.locket.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.locket.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/locket-config: {{ include (print $.Template.BasePath "/locket-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.locket.podAnnotations }}
-        {{- toYaml .Values.locket.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.locket.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
@@ -92,22 +86,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: locket
-  {{- if or .Values.commonAnnotations .Values.locket.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.locket.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.locket.serviceAnnotations }}
-    {{- toYaml .Values.locket.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: locket
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.locket.serviceLabels }}
-    {{- toYaml .Values.locket.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.locket.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:

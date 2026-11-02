@@ -21,19 +21,13 @@ spec:
     metadata:
       annotations:
         checksum/rep-config: {{ include (print $.Template.BasePath "/rep-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.rep.podAnnotations }}
-        {{- toYaml .Values.rep.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.rep.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
         app.kubernetes.io/name: rep
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.rep.podLabels }}
-        {{- toYaml .Values.rep.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.rep.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       serviceAccountName: rep

@@ -22,20 +22,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: nfsbroker
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.nfsbroker.podLabels }}
-        {{- toYaml .Values.nfsbroker.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.nfsbroker.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/nfsbroker-config: {{ include (print $.Template.BasePath "/nfsbroker-config.yaml") . | sha256sum }}
         checksum/nfsbroker-credentials: {{ include (print $.Template.BasePath "/nfsbroker-credentials.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.nfsbroker.podAnnotations }}
-        {{- toYaml .Values.nfsbroker.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.nfsbroker.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
@@ -87,23 +81,13 @@ kind: Service
 apiVersion: v1
 metadata:
   name: nfsbroker
-  {{- if or .Values.commonLabels .Values.nfsbroker.serviceLabels }}
+  {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.nfsbroker.serviceLabels | default dict) }}
   labels:
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.nfsbroker.serviceLabels }}
-    {{- toYaml .Values.nfsbroker.serviceLabels | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- if or .Values.commonAnnotations .Values.nfsbroker.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.nfsbroker.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.nfsbroker.serviceAnnotations }}
-    {{- toYaml .Values.nfsbroker.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   ports:

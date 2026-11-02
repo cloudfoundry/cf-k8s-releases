@@ -24,19 +24,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: log-cache-api
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.logCacheApi.podLabels }}
-        {{- toYaml .Values.logCacheApi.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logCacheApi.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/logcache-route-registrar-config: {{ include (print $.Template.BasePath "/logcache-route-registrar-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.logCacheApi.podAnnotations }}
-        {{- toYaml .Values.logCacheApi.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logCacheApi.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:

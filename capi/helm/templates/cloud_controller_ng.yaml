@@ -4,22 +4,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: cloud-controller
-  {{- if or .Values.commonAnnotations .Values.cloudController.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.cloudController.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.cloudController.serviceAnnotations }}
-    {{- toYaml .Values.cloudController.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: cloud-controller
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.cloudController.serviceLabels }}
-    {{- toYaml .Values.cloudController.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.cloudController.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:
@@ -59,22 +51,16 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: cloud-controller
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.cloudController.podLabels }}
-        {{- toYaml .Values.cloudController.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.cloudController.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cloud-controller-route-registrar-config: {{ include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") . | sha256sum }}
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.cloudController.podAnnotations }}
-        {{- toYaml .Values.cloudController.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.cloudController.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds 1 }}

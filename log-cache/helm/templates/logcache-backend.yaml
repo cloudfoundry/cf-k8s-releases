@@ -27,22 +27,14 @@ spec:
       app.kubernetes.io/name: log-cache
   template:
     metadata:
-      {{- if or .Values.commonAnnotations .Values.logCacheBackend.podAnnotations }}
+      {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logCacheBackend.podAnnotations | default dict) }}
       annotations:
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.logCacheBackend.podAnnotations }}
-        {{- toYaml .Values.logCacheBackend.podAnnotations | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
         app.kubernetes.io/name: log-cache
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.logCacheBackend.podLabels }}
-        {{- toYaml .Values.logCacheBackend.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logCacheBackend.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
@@ -203,22 +195,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: log-cache-syslog
-  {{- if or .Values.commonAnnotations .Values.logCacheBackend.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logCacheBackend.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.logCacheBackend.serviceAnnotations }}
-    {{- toYaml .Values.logCacheBackend.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: log-cache
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.logCacheBackend.serviceLabels }}
-    {{- toYaml .Values.logCacheBackend.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logCacheBackend.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:
@@ -234,22 +218,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: log-cache
-  {{- if or .Values.commonAnnotations .Values.logCacheBackend.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logCacheBackend.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.logCacheBackend.serviceAnnotations }}
-    {{- toYaml .Values.logCacheBackend.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: log-cache
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.logCacheBackend.serviceLabels }}
-    {{- toYaml .Values.logCacheBackend.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logCacheBackend.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:
@@ -263,22 +239,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: log-cache-headless
-  {{- if or .Values.commonAnnotations .Values.logCacheBackend.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.logCacheBackend.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.logCacheBackend.serviceAnnotations }}
-    {{- toYaml .Values.logCacheBackend.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: log-cache
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.logCacheBackend.serviceLabels }}
-    {{- toYaml .Values.logCacheBackend.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.logCacheBackend.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   clusterIP: None

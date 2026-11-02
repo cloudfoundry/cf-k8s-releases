@@ -23,19 +23,13 @@ spec:
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.ccDeploymentUpdater.podAnnotations }}
-        {{- toYaml .Values.ccDeploymentUpdater.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.ccDeploymentUpdater.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
         app.kubernetes.io/name: cc-deployment-updater
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.ccDeploymentUpdater.podLabels }}
-        {{- toYaml .Values.ccDeploymentUpdater.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.ccDeploymentUpdater.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       initContainers:

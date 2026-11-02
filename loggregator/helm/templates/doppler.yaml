@@ -21,22 +21,14 @@ spec:
       app.kubernetes.io/name: doppler
   template:
     metadata:
-      {{- if or .Values.commonAnnotations .Values.doppler.podAnnotations }}
+      {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.doppler.podAnnotations | default dict) }}
       annotations:
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.doppler.podAnnotations }}
-        {{- toYaml .Values.doppler.podAnnotations | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
         app.kubernetes.io/name: doppler
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.doppler.podLabels }}
-        {{- toYaml .Values.doppler.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.doppler.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
@@ -91,22 +83,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: doppler
-  {{- if or .Values.commonAnnotations .Values.doppler.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.doppler.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.doppler.serviceAnnotations }}
-    {{- toYaml .Values.doppler.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: doppler
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.doppler.serviceLabels }}
-    {{- toYaml .Values.doppler.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.doppler.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   clusterIP: None

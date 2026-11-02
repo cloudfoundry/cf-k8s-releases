@@ -22,19 +22,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: loggregator-agents
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.agents.podLabels }}
-        {{- toYaml .Values.agents.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.agents.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/ingress-ports: {{ include (print $.Template.BasePath "/ingress-ports.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.agents.podAnnotations }}
-        {{- toYaml .Values.agents.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.agents.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- if .Values.agents.otelCollector.enabled }}
         checksum/otel-collector-config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
@@ -340,22 +334,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: forwarder-agent
-  {{- if or .Values.commonAnnotations .Values.agents.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.agents.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.agents.serviceAnnotations }}
-    {{- toYaml .Values.agents.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: loggregator-agents
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.agents.serviceLabels }}
-    {{- toYaml .Values.agents.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.agents.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   trafficDistribution: PreferSameNode

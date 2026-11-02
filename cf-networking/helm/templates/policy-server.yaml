@@ -22,20 +22,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: policy-server
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.policyServer.podLabels }}
-        {{- toYaml .Values.policyServer.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.policyServer.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/policy-server-config: {{ include (print $.Template.BasePath "/policy-server-config.yaml") . | sha256sum }}
         checksum/policy-server-route-registrar-config: {{ include (print $.Template.BasePath "/policy-server-route-registrar-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.policyServer.podAnnotations }}
-        {{- toYaml .Values.policyServer.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.policyServer.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       initContainers:
@@ -239,22 +233,14 @@ kind: Service
 apiVersion: v1
 metadata:
   name: policy-server
-  {{- if or .Values.commonAnnotations .Values.policyServer.serviceAnnotations }}
+  {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.policyServer.serviceAnnotations | default dict) }}
   annotations:
-    {{- if .Values.commonAnnotations }}
-    {{- toYaml .Values.commonAnnotations | nindent 4 }}
-    {{- end }}
-    {{- if .Values.policyServer.serviceAnnotations }}
-    {{- toYaml .Values.policyServer.serviceAnnotations | nindent 4 }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
     app.kubernetes.io/name: policy-server
-    {{- if .Values.commonLabels }}
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    {{- end }}
-    {{- if .Values.policyServer.serviceLabels }}
-    {{- toYaml .Values.policyServer.serviceLabels | nindent 4 }}
+    {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.policyServer.serviceLabels | default dict) }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   ports:

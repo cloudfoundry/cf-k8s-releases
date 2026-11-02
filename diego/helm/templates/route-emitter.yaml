@@ -77,19 +77,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: route-emitter
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.routeEmitter.podLabels }}
-        {{- toYaml .Values.routeEmitter.podLabels | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.routeEmitter.podLabels | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         checksum/route-emitter-config: {{ include (print $.Template.BasePath "/route-emitter-config.yaml") . | sha256sum }}
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.routeEmitter.podAnnotations }}
-        {{- toYaml .Values.routeEmitter.podAnnotations | nindent 8 }}
+        {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.routeEmitter.podAnnotations | default dict) }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       serviceAccountName: route-emitter

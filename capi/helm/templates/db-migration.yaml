@@ -23,23 +23,13 @@ spec:
   template:
     metadata:
       name: capi-db-migration
-      {{- if or .Values.commonLabels .Values.cloudController.podLabels }}
+      {{- with mergeOverwrite (dict) (.Values.commonLabels | default dict) (.Values.cloudController.podLabels | default dict) }}
       labels:
-        {{- if .Values.commonLabels }}
-        {{- toYaml .Values.commonLabels | nindent 8 }}
-        {{- end }}
-        {{- if .Values.cloudController.podLabels }}
-        {{- toYaml .Values.cloudController.podLabels | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or .Values.commonAnnotations .Values.cloudController.podAnnotations }}
+      {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.cloudController.podAnnotations | default dict) }}
       annotations:
-        {{- if .Values.commonAnnotations }}
-        {{- toYaml .Values.commonAnnotations | nindent 8 }}
-        {{- end }}
-        {{- if .Values.cloudController.podAnnotations }}
-        {{- toYaml .Values.cloudController.podAnnotations | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       restartPolicy: OnFailure
