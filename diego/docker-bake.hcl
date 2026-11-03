@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "DIEGO_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-  default = "2.151.0"
+  default = "2.152.0"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/diego-release
-  default = "2.151.1-1"
+  default = "2.152.0"
 }
 
 variable "TAR_VERSION" {
