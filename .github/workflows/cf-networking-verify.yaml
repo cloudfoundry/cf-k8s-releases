@@ -38,6 +38,10 @@ jobs:
         if: steps.check.outputs.should_run == 'true'
         working-directory: bosh-dns
         run: docker buildx bake bosh-dns --load
+      - name: Build udp-forwarder image
+        if: steps.check.outputs.should_run == 'true'
+        working-directory: loggregator-agent
+        run: docker buildx bake udp-forwarder --load
       - name: Use images
         id: imgs
         if: steps.check.outputs.should_run == 'true'
@@ -48,6 +52,7 @@ jobs:
           yq -e -i '.boshDnsAdapter.image.repository = "bosh-dns-adapter"' helm/values.yaml
           yq -e -i '.routeRegistrar.image.repository = "route-registrar"' helm/values.yaml
           yq -e -i '.boshDns.image.repository = "bosh-dns"' helm/values.yaml
+          yq -e -i '.udpForwarder.image.repository = "udp-forwarder"' helm/values.yaml
 
           cat >> ${{ github.workspace }}/state-values.yaml <<EOF
           charts:
@@ -58,6 +63,7 @@ jobs:
           list=$(docker buildx bake --print | jq -r '[.target[].tags[]] | join(",")')
           list="$list,$(cd "$GITHUB_WORKSPACE/routing" && docker buildx bake route-registrar --print | jq -r '[.target[].tags[]] | join(",")')"
           list="$list,$(cd "$GITHUB_WORKSPACE/bosh-dns" && docker buildx bake bosh-dns --print | jq -r '[.target[].tags[]] | join(",")')"
+          list="$list,$(cd "$GITHUB_WORKSPACE/loggregator-agent" && docker buildx bake udp-forwarder --print | jq -r '[.target[].tags[]] | join(",")')"
           echo "list=$list" >> "$GITHUB_OUTPUT"
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf@main
         if: steps.check.outputs.should_run == 'true'
