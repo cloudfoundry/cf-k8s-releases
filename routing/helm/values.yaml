@@ -180,7 +180,7 @@ udpForwarder:
   image:
     repository: ghcr.io/cloudfoundry/k8s/udp-forwarder
     # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-agent-release
-    tag: "8.3.31"
+    tag: "8.3.32"
     imagePullPolicy: IfNotPresent
   resources: ~
 
