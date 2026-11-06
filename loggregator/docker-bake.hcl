@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "LOGGREGATOR_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-release
-  default = "107.0.38"
+  default = "107.0.39"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/loggregator-release
-  default = "107.0.38"
+  default = "107.0.39"
 }
 
 group "default" {
