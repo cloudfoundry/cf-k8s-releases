@@ -108,7 +108,7 @@ agents:
     image:
       repository: otel/opentelemetry-collector-k8s
       # renovate: dataSource=github-releases depName=open-telemetry/opentelemetry-collector-releases
-      tag: "0.164.0"
+      tag: "0.165.0"
       imagePullPolicy: IfNotPresent
     port: 4317
     resources: ~
