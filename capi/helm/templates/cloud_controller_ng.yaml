@@ -55,6 +55,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
+        kubectl.kubernetes.io/default-container: cloud-controller
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cloud-controller-route-registrar-config: {{ include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") . | sha256sum }}
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
@@ -63,7 +64,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds 1 }}
+      # Native sidecars stop in reverse order: API, local workers, then Valkey.
+      # Budget nginx drain + API shutdown (20s) + each worker's drain + 10s overhead.
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.nginxDrainTimeout 20 (mul .Values.cloudController.config.jobs.local.numberOfWorkers .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds) 10 }}
       initContainers:
         - name: set-name-index
           image: mikefarah/yq:latest
@@ -84,66 +87,30 @@ spec:
               mountPath: /etc/cloud-controller
             - name: tmpdir
               mountPath: /tmp
-      containers:
-        - name: cloud-controller
-          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
-          imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
-          command: ["bundle", "exec", "bin/cloud_controller", "-c", "/tmp/config.yaml"]
-          envFrom:
-            - secretRef:
-                name: cc-shared
-          env:
-            - name: STORAGE_CLI_PATH
-              value: /usr/local/bin/storage-cli
-            - name: CLOUD_CONTROLLER_NG_CONFIG
-              value: /tmp/config.yaml
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.cloudController.config.publicTLS.port }}
-              scheme: HTTPS
-          {{- if .Values.cloudController.resources }}
+        - name: valkey
+          restartPolicy: Always
+          image: {{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}
+          imagePullPolicy: {{ .Values.valkey.image.imagePullPolicy }}
+          command: ["valkey-server", "--unixsocket", "/var/run/valkey.sock", "--unixsocketperm", "777", "--port", "0", "--save", ""]
+          startupProbe:
+            exec:
+              command: ["valkey-cli", "-s", "/var/run/valkey.sock", "ping"]
+            periodSeconds: 2
+            failureThreshold: 30
+          {{- if .Values.valkey.resources }}
           resources:
-            {{- toYaml .Values.cloudController.resources | nindent 12 }}
+            {{- toYaml .Values.valkey.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
-            - name: etc-cloud-controller
-              mountPath: /etc/cloud-controller
             - name: var-run
               mountPath: /var/run
-            - name: tmpdir
-              mountPath: /tmp
-        - name: route-registrar
-          image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
-          imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.cloudController.config.publicTLS.port }}
-              scheme: HTTPS
-          env:
-          - name: POD_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-          {{- if .Values.routeRegistrar.resources }}
-          resources:
-            {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: route-registrar
-              mountPath: /etc/ssl/certs/route-registrar
-              readOnly: true
-            - name: etc-route-registrar
-              mountPath: /etc/route-registrar-template
-            - name: tmpdir
-              mountPath: /tmp
         {{- range $i := until (int .Values.cloudController.config.jobs.local.numberOfWorkers) }}
         - name: local-worker-{{ add $i 1 }}
+          restartPolicy: Always
           image: {{ $.Values.localWorker.image.repository }}:{{ default $.Chart.AppVersion $.Values.localWorker.image.tag }}
           imagePullPolicy: {{ $.Values.localWorker.image.imagePullPolicy }}
-          command: ["bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(INDEX).{{ add $i 1 }}]"]
+          # No runtime deadline; start the kill timer only when kubelet sends TERM.
+          command: ["timeout", "--foreground", "--preserve-status", "--kill-after={{ $.Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds }}s", "0", "bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(INDEX).{{ add $i 1 }}]"]
           env:
             - name: INDEX
               valueFrom:
@@ -171,6 +138,77 @@ spec:
             - name: tmpdir
               mountPath: /tmp
         {{- end }}
+        - name: cloud-controller
+          restartPolicy: Always
+          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
+          imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
+          # Bound this phase without preStop hooks, which run before sidecar ordering.
+          command: ["timeout", "--foreground", "--preserve-status", "--kill-after=20s", "0", "bundle", "exec", "bin/cloud_controller", "-c", "/tmp/config.yaml"]
+          startupProbe:
+            exec:
+              command:
+                - ruby
+                - -rsocket
+                - -e
+                - |
+                  UNIXSocket.open('/var/run/cloud_controller.sock') do |socket|
+                    socket.write("GET /healthz HTTP/1.0\r\n\r\n")
+                    abort unless socket.gets&.split&.at(1) == '200'
+                  end
+            timeoutSeconds: 5
+            periodSeconds: 5
+            failureThreshold: 60
+          envFrom:
+            - secretRef:
+                name: cc-shared
+          env:
+            - name: STORAGE_CLI_PATH
+              value: /usr/local/bin/storage-cli
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /tmp/config.yaml
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.cloudController.config.publicTLS.port }}
+              scheme: HTTPS
+          {{- if .Values.cloudController.resources }}
+          resources:
+            {{- toYaml .Values.cloudController.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
+            - name: etc-cloud-controller
+              mountPath: /etc/cloud-controller
+            - name: var-run
+              mountPath: /var/run
+            - name: tmpdir
+              mountPath: /tmp
+      containers:
+        - name: route-registrar
+          image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
+          imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.cloudController.config.publicTLS.port }}
+              scheme: HTTPS
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          {{- if .Values.routeRegistrar.resources }}
+          resources:
+            {{- toYaml .Values.routeRegistrar.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: route-registrar
+              mountPath: /etc/ssl/certs/route-registrar
+              readOnly: true
+            - name: etc-route-registrar
+              mountPath: /etc/route-registrar-template
+            - name: tmpdir
+              mountPath: /tmp
         - name: nginx
           image: {{ .Values.nginx.image.repository }}:{{ default .Chart.AppVersion .Values.nginx.image.tag }}
           imagePullPolicy: {{ .Values.nginx.image.imagePullPolicy }}
@@ -224,17 +262,6 @@ spec:
               mountPath: /etc/nginx/prom_scraper_mtls.conf
               subPath: prom_scraper_mtls.conf
             {{- end }}
-        - name: valkey
-          image: {{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}
-          imagePullPolicy: {{ .Values.valkey.image.imagePullPolicy }}
-          command: ["valkey-server", "--unixsocket", "/var/run/valkey.sock", "--unixsocketperm", "777", "--port", "0", "--save", ""]
-          {{- if .Values.valkey.resources }}
-          resources:
-            {{- toYaml .Values.valkey.resources | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: var-run
-              mountPath: /var/run
       {{- if .Values.cloudController.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.cloudController.nodeSelector | nindent 8 }}
