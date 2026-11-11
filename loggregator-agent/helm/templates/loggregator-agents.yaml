@@ -34,9 +34,7 @@ spec:
         checksum/otel-collector-config: {{ include (print $.Template.BasePath "/otel-collector-config.yaml") . | sha256sum }}
         {{- end }}
     spec:
-      {{- if and .Values.agents.otelCollector.enabled }}
       serviceAccountName: loggregator-agents
-      {{- end }}
       containers:
         - name: forwarder-agent
           image: {{ .Values.agents.forwarderAgent.image.repository }}:{{ default .Chart.AppVersion .Values.agents.forwarderAgent.image.tag }}
