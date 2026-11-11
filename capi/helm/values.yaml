@@ -105,8 +105,8 @@ cloudController:
       useYjitCompiler: false
     readinessPort:
       cloudControllerWorker: -1
-      clock: -1
-      deploymentUpdater: -1
+      clock: 9025
+      deploymentUpdater: 9025
     puma:
       automaticWorkerCount: false
       workers: 2

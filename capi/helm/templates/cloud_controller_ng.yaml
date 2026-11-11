@@ -97,6 +97,11 @@ spec:
               value: /usr/local/bin/storage-cli
             - name: CLOUD_CONTROLLER_NG_CONFIG
               value: /tmp/config.yaml
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9024
+              scheme: HTTPS
           {{- if .Values.cloudController.resources }}
           resources:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}

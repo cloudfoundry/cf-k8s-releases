@@ -43,6 +43,11 @@ spec:
           env:
             - name: CLOUD_CONTROLLER_NG_CONFIG
               value: /etc/cloud-controller/config.yaml
+          {{- if gt (int .Values.cloudController.config.readinessPort.clock) 0 }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.cloudController.config.readinessPort.clock }}
+          {{- end }}
           {{- if .Values.ccWorkerClock.resources }}
           resources:
             {{- toYaml .Values.ccWorkerClock.resources | nindent 12 }}

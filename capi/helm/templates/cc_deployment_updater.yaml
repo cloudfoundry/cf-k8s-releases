@@ -63,6 +63,11 @@ spec:
           env:
             - name: CLOUD_CONTROLLER_NG_CONFIG
               value: /tmp/config.yaml
+          {{- if gt (int .Values.cloudController.config.readinessPort.deploymentUpdater) 0 }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.cloudController.config.readinessPort.deploymentUpdater }}
+          {{- end }}
           {{- if .Values.ccDeploymentUpdater.resources }}
           resources:
             {{- toYaml .Values.ccDeploymentUpdater.resources | nindent 12 }}
