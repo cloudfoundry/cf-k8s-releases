@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "CAPI_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/capi-release
-  default = "1.251.0"
+  default = "1.252.0"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/capi-release
-  default = "1.251.0"
+  default = "1.252.0"
 }
 
 group "default" {
