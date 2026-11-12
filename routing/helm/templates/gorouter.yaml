@@ -1,7 +1,7 @@
 {{- if .Values.gorouter.enabled }}
 {{- $g := .Values.gorouter -}}
 {{- $certs := dict "status-tls" (required "gorouter.certificateSecrets.statusTLS is required" $g.certificateSecrets.statusTLS) -}}
-{{- range $key, $name := dict "clientCA" "client-ca" "backendsTLS" "backends-tls" "routeServicesTLS" "route-services-tls" "uaaCA" "uaa-ca" -}}
+{{- range $key, $name := dict "trustedCAs" "trusted-ca" "clientCA" "client-ca" "backendsTLS" "backends-tls" "routeServicesTLS" "route-services-tls" "uaaCA" "uaa-ca" -}}
 {{- if index $g.certificateSecrets $key -}}
 {{- $_ := set $certs $name (index $g.certificateSecrets $key) -}}
 {{- end -}}
@@ -19,9 +19,6 @@
 {{- range $index, $secret := $g.certificateSecrets.serverTLS -}}
 {{- $_ := set $certs (printf "server-%d" $index) (required "gorouter.certificateSecrets.serverTLS entries must name a secret" $secret) -}}
 {{- end -}}
-{{- end -}}
-{{- range $index, $secret := $g.certificateSecrets.trustedCAs -}}
-{{- $_ := set $certs (printf "trusted-ca-%d" $index) (required "gorouter.certificateSecrets.trustedCAs entries must name a secret" $secret) -}}
 {{- end -}}
 {{- range $index, $domain := $g.domains -}}
 {{- $_ := set $certs (printf "domain-%d" $index) (required (printf "gorouter.certificateSecrets.domainCAs.%s is required" $domain.name) (index $g.certificateSecrets.domainCAs $domain.name)) -}}
@@ -59,68 +56,10 @@ spec:
         {{- end }}
     spec:
       terminationGracePeriodSeconds: {{ add .Values.gorouter.drainWait .Values.gorouter.drainTimeout 5 }}
-      initContainers:
-      - name: gorouter-init
-        image: mikefarah/yq:latest
-        imagePullPolicy: IfNotPresent
-        command:
-        - sh
-        - -c
-        - |
-          set -e
-          yq '
-            .status.tls.certificate = load_str("/etc/ssl/certs/gorouter/status-tls/tls.crt") |
-            .status.tls.key = load_str("/etc/ssl/certs/gorouter/status-tls/tls.key") |
-            {{- if $g.nats.tlsEnabled }}
-            .nats.ca_certs = load_str("/etc/ssl/certs/gorouter/nats-tls/ca.crt") |
-            .nats.cert_chain = load_str("/etc/ssl/certs/gorouter/nats-tls/tls.crt") |
-            .nats.private_key = load_str("/etc/ssl/certs/gorouter/nats-tls/tls.key") |
-            {{- end }}
-            {{- if $g.routingAPI.enabled }}
-            .routing_api.ca_certs = load_str("/etc/ssl/certs/gorouter/routing-api-tls/ca.crt") |
-            .routing_api.cert_chain = load_str("/etc/ssl/certs/gorouter/routing-api-tls/tls.crt") |
-            .routing_api.private_key = load_str("/etc/ssl/certs/gorouter/routing-api-tls/tls.key") |
-            {{- end }}
-            {{- if $g.enableSSL }}
-            {{- range $index, $secret := $g.certificateSecrets.serverTLS }}
-            .tls_pem += [{"cert_chain": load_str("/etc/ssl/certs/gorouter/server-{{ $index }}/tls.crt"), "private_key": load_str("/etc/ssl/certs/gorouter/server-{{ $index }}/tls.key")}] |
-            {{- end }}
-            {{- end }}
-            {{- range $index, $secret := $g.certificateSecrets.trustedCAs }}
-            .ca_certs += [load_str("/etc/ssl/certs/gorouter/trusted-ca-{{ $index }}/ca.crt")] |
-            {{- end }}
-            {{- if $g.certificateSecrets.clientCA }}
-            .client_ca_certs = load_str("/etc/ssl/certs/gorouter/client-ca/ca.crt") |
-            {{- end }}
-            {{- if not $g.onlyTrustClientCACerts }}
-            .client_ca_certs = (.client_ca_certs + "\n" + (.ca_certs | join("\n"))) |
-            {{- end }}
-            {{- if $g.certificateSecrets.backendsTLS }}
-            .backends.cert_chain = load_str("/etc/ssl/certs/gorouter/backends-tls/tls.crt") |
-            .backends.private_key = load_str("/etc/ssl/certs/gorouter/backends-tls/tls.key") |
-            {{- end }}
-            {{- if $g.certificateSecrets.routeServicesTLS }}
-            .route_services.cert_chain = load_str("/etc/ssl/certs/gorouter/route-services-tls/tls.crt") |
-            .route_services.private_key = load_str("/etc/ssl/certs/gorouter/route-services-tls/tls.key") |
-            {{- end }}
-            {{- range $index, $domain := $g.domains }}
-            .domains[{{ $index }}].ca_certs = load_str("/etc/ssl/certs/gorouter/domain-{{ $index }}/ca.crt") |
-            {{- end }}
-            .
-          ' /gorouter/gorouter.yaml > /tmp/gorouter.yaml
-        volumeMounts:
-          - name: "{{ .Values.gorouter.name }}-config"
-            mountPath: /gorouter
-          - name: tmp
-            mountPath: /tmp
-          {{- include "routing.gorouter.certMounts" $certs | nindent 10 }}
       containers:
         - name: gorouter
           image: {{ .Values.gorouter.image.repository }}:{{ default .Chart.AppVersion .Values.gorouter.image.tag }}
           imagePullPolicy: {{ .Values.gorouter.image.imagePullPolicy }}
-          args:
-          - -c
-          - /tmp/gorouter.yaml
           {{- if .Values.gorouter.go.httplaxcontentlength }}
           env:
           - name: GODEBUG
@@ -140,8 +79,6 @@ spec:
           volumeMounts:
             - name: "{{ .Values.gorouter.name }}-config"
               mountPath: /gorouter
-            - name: tmp
-              mountPath: /tmp
             {{- include "routing.gorouter.certMounts" $certs | nindent 12 }}
           {{- if .Values.gorouter.resources }}
           resources:
@@ -157,8 +94,6 @@ spec:
         {{- toYaml .Values.gorouter.tolerations | nindent 8 }}
       {{- end }}
       volumes:
-        - name: tmp
-          emptyDir: {}
         - name: "{{ .Values.gorouter.name }}-config"
           secret:
             secretName: "{{ .Values.gorouter.name }}-config"
