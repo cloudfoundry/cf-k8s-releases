@@ -43,8 +43,6 @@ spec:
             tcpSocket:
               port: {{ .Values.serviceDiscoveryController.port }}
             initialDelaySeconds: {{ .Values.serviceDiscoveryController.routeEmitterIntervalSeconds }}
-            periodSeconds: 10
-            failureThreshold: 30
           volumeMounts:
             - name: service-discovery-controller
               mountPath: /etc/ssl/certs/service-discovery-controller
