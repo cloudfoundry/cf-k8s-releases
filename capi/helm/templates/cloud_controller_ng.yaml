@@ -15,12 +15,12 @@ metadata:
     {{- end }}
 spec:
   ports:
-    - port: 9023
+    - port: {{ .Values.cloudController.config.tlsPort }}
       name: https
-      targetPort: 9023
-    - port: 9024
+      targetPort: {{ .Values.cloudController.config.tlsPort }}
+    - port: {{ .Values.cloudController.config.publicTLS.port }}
       name: https-ext
-      targetPort: 9024
+      targetPort: {{ .Values.cloudController.config.publicTLS.port }}
 {{- if .Values.cloudController.config.promMetricsServerEnabled }}
     - port: {{ .Values.cloudController.config.promMetricsServerTlsPort }}
       name: https-metrics
@@ -97,6 +97,11 @@ spec:
               value: /usr/local/bin/storage-cli
             - name: CLOUD_CONTROLLER_NG_CONFIG
               value: /tmp/config.yaml
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.cloudController.config.publicTLS.port }}
+              scheme: HTTPS
           {{- if .Values.cloudController.resources }}
           resources:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}
@@ -115,7 +120,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 9024
+              port: {{ .Values.cloudController.config.publicTLS.port }}
               scheme: HTTPS
           env:
           - name: POD_IP
