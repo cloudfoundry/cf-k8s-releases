@@ -60,6 +60,13 @@ spec:
           args:
           - -config-file
           - /policy-server/policy-server.json
+          startupProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.policyServer.listenPort }}
+              scheme: {{ ternary "HTTPS" "HTTP" .Values.policyServer.enableTls }}
+            failureThreshold: {{ .Values.policyServer.database.connectTimeoutSeconds }}
+            periodSeconds: 1
           volumeMounts:
             - name: policy-server-config
               mountPath: /policy-server
