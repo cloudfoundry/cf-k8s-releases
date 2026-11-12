@@ -10,8 +10,8 @@ status:
     port: {{ $g.status.routes.port | int64 }}
   tls:
     port: {{ $g.status.tls.port | int64 }}
-    certificate: ""
-    key: ""
+    certificate_file: /etc/ssl/certs/gorouter/status-tls/tls.crt
+    key_file: /etc/ssl/certs/gorouter/status-tls/tls.key
 tracing:
   enable_zipkin: {{ $g.tracing.enableZipkin }}
   enable_w3c: {{ $g.tracing.enableW3C }}
@@ -94,9 +94,9 @@ prometheus:
 nats:
   {{- if $g.nats.tlsEnabled }}
   tls_enabled: true
-  ca_certs: ""
-  cert_chain: ""
-  private_key: ""
+  ca_certs_file: /etc/ssl/certs/gorouter/nats-tls/ca.crt
+  cert_chain_file: /etc/ssl/certs/gorouter/nats-tls/tls.crt
+  private_key_file: /etc/ssl/certs/gorouter/nats-tls/tls.key
   {{- end }}
   hosts:
   - hostname: {{ tpl $g.nats.hostname $ | quote }}
@@ -113,12 +113,16 @@ keep_alive_100_continue_requests: {{ $g.keepAlive100ContinueRequests }}
 backends:
   max_attempts: {{ $g.backends.maxAttempts | int64 }}
   max_conns: {{ $g.backends.maxConns | int64 }}
-  cert_chain: ""
-  private_key: ""
+  {{- if $g.certificateSecrets.backendsTLS }}
+  cert_chain_file: /etc/ssl/certs/gorouter/backends-tls/tls.crt
+  private_key_file: /etc/ssl/certs/gorouter/backends-tls/tls.key
+  {{- end }}
 route_services:
   max_attempts: {{ $g.routeServices.maxAttempts | int64 }}
-  cert_chain: ""
-  private_key: ""
+  {{- if $g.certificateSecrets.routeServicesTLS }}
+  cert_chain_file: /etc/ssl/certs/gorouter/route-services-tls/tls.crt
+  private_key_file: /etc/ssl/certs/gorouter/route-services-tls/tls.key
+  {{- end }}
   strict_signature_validation: {{ $g.routeServicesStrictSignatureValidation }}
   enable_websockets: {{ $g.routeServices.enableWebsockets }}
   egress_blocklist: {{ $g.routeServices.egressBlocklist | toJson }}
@@ -136,9 +140,9 @@ routing_api:
   uri: {{ tpl $g.routingAPI.uri . | quote }}
   port: {{ $g.routingAPI.port | int64 }}
   auth_disabled: {{ $g.routingAPI.authDisabled }}
-  private_key: ""
-  ca_certs: ""
-  cert_chain: ""
+  private_key_file: /etc/ssl/certs/gorouter/routing-api-tls/tls.key
+  ca_certs_file: /etc/ssl/certs/gorouter/routing-api-tls/ca.crt
+  cert_chain_file: /etc/ssl/certs/gorouter/routing-api-tls/tls.crt
 {{- end }}
 logging:
   syslog: {{ $g.logging.syslogTag | quote }}
@@ -154,7 +158,11 @@ logging:
   redact_query_params: {{ $g.redactQueryParameters | quote }}
 enable_ssl: {{ $g.enableSSL }}
 {{- if $g.enableSSL }}
-tls_pem: []
+tls_pem: {{ if not $g.certificateSecrets.serverTLS }}[]{{ end }}
+{{- range $index, $secret := $g.certificateSecrets.serverTLS }}
+- cert_chain_file: /etc/ssl/certs/gorouter/server-{{ $index }}/tls.crt
+  private_key_file: /etc/ssl/certs/gorouter/server-{{ $index }}/tls.key
+{{- end }}
 client_cert_validation: {{ $g.clientCertValidation | quote }}
 min_tls_version: {{ $g.minTLSVersion | quote }}
 max_tls_version: {{ $g.maxTLSVersion | quote }}
@@ -163,12 +171,18 @@ ssl_port: {{ $g.tlsPort | int64 }}
 disable_http: {{ $g.disableHTTP }}
 enable_http2: {{ $g.enableHTTP2 }}
 enable_http1_concurrent_read_write: {{ $g.enableHTTP1ConcurrentReadWrite }}
-ca_certs: []
-client_ca_certs: ""
+{{- if $g.certificateSecrets.trustedCAs }}
+ca_certs_file: /etc/ssl/certs/gorouter/trusted-ca/ca.crt
+{{- end }}
+{{- if $g.certificateSecrets.clientCA }}
+client_ca_certs_file: /etc/ssl/certs/gorouter/client-ca/ca.crt
+{{- else if and (not $g.onlyTrustClientCACerts) $g.certificateSecrets.trustedCAs }}
+client_ca_certs_file: /etc/ssl/certs/gorouter/trusted-ca/ca.crt
+{{- end }}
 domains: {{ if not $g.domains }}[]{{ end }}
-{{- range $g.domains }}
+{{- range $index, $domain := $g.domains }}
 - domain: {{ .name | quote }}
-  ca_certs: ""
+  ca_certs_file: /etc/ssl/certs/gorouter/domain-{{ $index }}/ca.crt
   {{- if .forwardedClientCert }}
   forwarded_client_cert: {{ .forwardedClientCert | quote }}
   {{- end }}

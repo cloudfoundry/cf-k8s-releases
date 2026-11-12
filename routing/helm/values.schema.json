@@ -82,10 +82,7 @@
               }
             },
             "trustedCAs": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "type": "string"
             },
             "clientCA": {
               "type": "string"

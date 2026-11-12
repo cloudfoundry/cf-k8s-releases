@@ -14,7 +14,9 @@ gorouter:
     statusTLS: ""
     prometheusTLS: ""
     serverTLS: []
-    trustedCAs: []
+    # ca.crt must contain the complete trusted CA bundle.
+    trustedCAs: ""
+    # When set, ca.crt must also include any trustedCAs needed for client trust.
     clientCA: ""
     backendsTLS: ""
     routeServicesTLS: ""
