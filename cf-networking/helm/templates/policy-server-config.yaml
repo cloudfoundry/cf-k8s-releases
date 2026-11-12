@@ -66,6 +66,7 @@ stringData:
       "log_prefix": "cfnetworking",
       "debug_server_host": "127.0.0.1",
       "debug_server_port": {{ .Values.policyServer.internal.debugPort }},
+      "expose_health_check": true,
       "health_check_port": {{ .Values.policyServer.internal.healthCheckPort }},
       "internal_listen_port": {{ .Values.policyServer.internal.listenPort }},
       "database": {
