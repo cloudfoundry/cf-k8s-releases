@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "CREDHUB_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=pivotal/credhub-release
-  default = "2.16.0"
+  default = "2.16.1"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=pivotal/credhub-release
-  default = "2.16.0"
+  default = "2.16.1"
 }
 
 group "default" {
