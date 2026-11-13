@@ -49,16 +49,17 @@ normal worker operation.
 
 The main worker uses GNU timeout to cap shutdown at
 cloudController.config.jobs.generic.workerGracePeriodSeconds. The sidecar then
-loads the upstream Cloud Controller environment and calls its clear_locks!
-method with the same worker name and thread count. This releases only that
-worker's base and configured thread-owner locks, including during scale-down.
+calls the upstream jobs:clear_pending_locks rake task in a loop for the worker's
+base name and each configured thread owner (base name followed by ` thread:N`).
+The environment loads once, and the cleanup timeout bounds the entire loop.
+If one owner fails, cleanup logs the error and continues with the remaining owners.
+If any owner failed, it reports success and failure counts and exits nonzero
+after all attempts.
+This releases only that worker's locks, including during scale-down.
 It leaves job records and other workers' locks intact.
 
-ccWorker.cleanupTimeoutSeconds bounds application boot and database cleanup
+ccWorker.cleanup.timeoutSeconds bounds application boot and database cleanup
 (default 30 seconds); failures and timeouts are logged and exit nonzero.
-ccWorker.cleanupResources optionally sets the sidecar's resource requests and
-limits. It is idle until shutdown, but needs enough memory to load Cloud
-Controller when cleaning up.
 
 The global-worker Pod grace period is worker drain + cleanup + 10 seconds of
 overhead (55 seconds by default). Worker-only restarts still rely on same-owner
@@ -70,7 +71,8 @@ Run the chart lifecycle regression checks with:
     python3 capi/tests/test_api_lifecycle.py
 
 The checks require Helm and Mike Farah's yq v4.
-Signal and timeout checks use Docker with a stubbed Cloud Controller environment:
+Task-loop checks use local Ruby and Rake. Signal and timeout checks additionally
+use Docker with stubbed Cloud Controller tasks:
 
     python3 capi/tests/test_worker_cleanup.py
 

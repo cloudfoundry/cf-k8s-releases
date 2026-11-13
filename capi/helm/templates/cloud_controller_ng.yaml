@@ -64,9 +64,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      # Native sidecars stop in reverse order: API, local workers, then Valkey.
-      # Budget nginx drain + API shutdown (20s) + each worker's drain + 10s overhead.
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.nginxDrainTimeout 20 (mul .Values.cloudController.config.jobs.local.numberOfWorkers .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds) 10 }}
+      # Budget nginx drain + API shutdown (20s) + local worker's drain.
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.nginxDrainTimeout 20 .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds }}
       initContainers:
         - name: set-name-index
           image: mikefarah/yq:latest
@@ -110,7 +109,11 @@ spec:
           image: {{ $.Values.localWorker.image.repository }}:{{ default $.Chart.AppVersion $.Values.localWorker.image.tag }}
           imagePullPolicy: {{ $.Values.localWorker.image.imagePullPolicy }}
           # No runtime deadline; start the kill timer only when kubelet sends TERM.
-          command: ["timeout", "--foreground", "--preserve-status", "--kill-after={{ $.Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds }}s", "0", "bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(INDEX).{{ add $i 1 }}]"]
+          command: [
+            "timeout", "--foreground", "--preserve-status",
+            "--kill-after={{ $.Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds }}s",
+            "0", "bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(INDEX).{{ add $i 1 }}]"
+          ]
           env:
             - name: INDEX
               valueFrom:

@@ -6,18 +6,28 @@ if ARGV.delete('--cleanup')
     require 'rake'
     Rake.application.init
     Rake.application.load_rakefile
-    Rake::Task['environment'].invoke
-    RakeConfig.context = :worker
-
     worker_name = ENV.fetch('WORKER_NAME')
+    worker_names = [worker_name] + (1..Integer(ENV.fetch('WORKER_THREADS', '0'))).map do |index|
+      "#{worker_name} thread:#{index}"
+    end
     puts "Clearing pending locks for #{worker_name}"
-    # The upstream rake task accepts only a name. Passing num_threads here also
-    # clears each exact thread owner through the upstream clear_locks! method.
-    CloudController::DelayedWorker.new(
-      queues: [],
-      name: worker_name,
-      num_threads: Integer(ENV.fetch('WORKER_THREADS', '0'))
-    ).clear_locks!
+    cleanup = Rake::Task['jobs:clear_pending_locks']
+    failed_names = []
+    worker_names.each do |name|
+      begin
+        # Rake normally runs a task only once. Repeat cleanup for each lock owner
+        # while leaving its environment prerequisite loaded.
+        cleanup.reenable
+        cleanup.invoke(name)
+      rescue StandardError => error
+        warn "Worker lock cleanup failed for #{name}: #{error.class}: #{error.message}"
+        failed_names << name
+      end
+    end
+    unless failed_names.empty?
+      warn "Worker lock cleanup incomplete: #{worker_names.length - failed_names.length} succeeded, #{failed_names.length} failed"
+      exit 1
+    end
     puts "Cleared pending locks for #{worker_name}"
     exit 0
   rescue StandardError => error

@@ -23,7 +23,7 @@ spec:
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
-        checksum/cc-worker-cleanup: {{ include (print $.Template.BasePath "/cc-worker-cleanup.yaml") . | sha256sum }}
+        checksum/cc-worker-cleanup-config: {{ include (print $.Template.BasePath "/cc-worker-cleanup-config.yaml") . | sha256sum }}
         {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.ccWorker.podAnnotations | default dict) }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -34,7 +34,7 @@ spec:
         {{- end }}
     spec:
       # Reserve cleanup time after the main worker has fully stopped.
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds .Values.ccWorker.cleanupTimeoutSeconds 10 }}
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds .Values.ccWorker.cleanup.timeoutSeconds 10 }}
       initContainers:
         - name: set-name-index
           image: mikefarah/yq:latest
@@ -84,7 +84,7 @@ spec:
               mountPath: /etc/cloud-controller
             - name: tmpdir
               mountPath: /tmp
-            - name: cc-worker-cleanup
+            - name: cc-worker-cleanup-config
               mountPath: /etc/cc-worker-cleanup
               readOnly: true
       containers:
@@ -92,7 +92,12 @@ spec:
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
           # Leave the sidecar its cleanup budget even if the worker ignores TERM.
-          command: ["timeout", "--foreground", "--preserve-status", "--kill-after={{ .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds }}s", "0", "bundle", "exec", "rake", "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"]
+          command: [
+            "timeout", "--foreground", "--preserve-status",
+            "--kill-after={{ .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds }}s", "0",
+            "bundle", "exec", "rake",
+            "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"
+          ]
           envFrom:
             - secretRef:
                 name: cc-shared
@@ -130,7 +135,7 @@ spec:
             secretName: cloud-controller-config
         - name: tmpdir
           emptyDir: {}
-        - name: cc-worker-cleanup
+        - name: cc-worker-cleanup-config
           configMap:
-            name: cc-worker-cleanup
+            name: cc-worker-cleanup-config
 {{ end }}

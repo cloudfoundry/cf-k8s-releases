@@ -105,11 +105,10 @@ class ApiLifecycleTest(unittest.TestCase):
                 documents = self.render(
                     f"cloudController.config.jobs.generic.numberOfWorkerThreads={threads}",
                     "cloudController.config.jobs.generic.workerGracePeriodSeconds=3",
-                    "ccWorker.cleanupTimeoutSeconds=7",
-                    "ccWorker.cleanupResources.requests.memory=128Mi",
+                    "ccWorker.cleanup.timeoutSeconds=7",
                 )
                 template = self.resource(documents, "StatefulSet", "cc-worker")["spec"]["template"]
-                self.assertIn("checksum/cc-worker-cleanup", template["metadata"]["annotations"])
+                self.assertIn("checksum/cc-worker-cleanup-config", template["metadata"]["annotations"])
                 pod = template["spec"]
                 self.assertEqual(pod["terminationGracePeriodSeconds"], 20)
                 self.assertEqual([c["name"] for c in pod["initContainers"]], ["set-name-index", "cc-worker-cleanup"])
@@ -121,7 +120,6 @@ class ApiLifecycleTest(unittest.TestCase):
                 self.assertNotIn("livenessProbe", cleanup)
                 self.assertEqual(cleanup["image"], worker["image"])
                 self.assertEqual(cleanup["envFrom"], worker["envFrom"])
-                self.assertEqual(cleanup["resources"]["requests"]["memory"], "128Mi")
                 environment = {item["name"]: item for item in cleanup["env"]}
                 self.assertEqual(environment["WORKER_NAME"]["value"], "cc_global_worker.cc-worker.$(INDEX).1")
                 self.assertEqual(environment["WORKER_THREADS"]["value"], str(threads))
@@ -131,7 +129,7 @@ class ApiLifecycleTest(unittest.TestCase):
                 task = "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1" + (",3,2" if threads else "") + "]"
                 self.assertEqual(worker["command"][-1], task)
                 self.assertEqual(cleanup["volumeMounts"][:-1], worker["volumeMounts"])
-                source = self.resource(documents, "ConfigMap", "cc-worker-cleanup")["data"]["cleanup.rb"]
+                source = self.resource(documents, "ConfigMap", "cc-worker-cleanup-config")["data"]["cleanup.rb"]
                 self.assertEqual(source, (CHART / "files" / "cc-worker-cleanup.rb").read_text().rstrip())
 
     def test_uploader_drain_timeout_reaches_process(self):
@@ -166,7 +164,7 @@ class ApiLifecycleTest(unittest.TestCase):
         ):
             with self.subTest(key=key, value=value):
                 self.assertIn(key.rsplit(".", 1)[-1], self.render(f"cloudController.config.{key}={value}", succeeds=False))
-        self.assertIn("cleanupTimeoutSeconds", self.render("ccWorker.cleanupTimeoutSeconds=0", succeeds=False))
+        self.assertIn("timeoutSeconds", self.render("ccWorker.cleanup.timeoutSeconds=0", succeeds=False))
 
 
 if __name__ == "__main__":

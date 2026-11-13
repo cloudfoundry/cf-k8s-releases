@@ -197,13 +197,16 @@
             "type": "string"
           }
         },
-        "cleanupTimeoutSeconds": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Maximum seconds for worker lock cleanup after the worker stops."
-        },
-        "cleanupResources": {
-          "type": ["object", "null"]
+        "cleanup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum seconds for worker lock cleanup after the worker stops."
+            }
+          }
         },
         "resources": {
           "type": [

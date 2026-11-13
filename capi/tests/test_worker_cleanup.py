@@ -1,6 +1,7 @@
 """Exercise the sidecar's signals and deadlines with a stubbed CC environment.
 
-Requires Docker. CAPI_TEST_IMAGE may select the locally built Cloud Controller image.
+Task checks require Ruby and Rake; signal and timeout checks require Docker.
+CAPI_TEST_IMAGE may select the locally built Cloud Controller image.
 """
 
 import json
@@ -15,39 +16,74 @@ import uuid
 
 SCRIPT = Path(__file__).resolve().parents[1] / "helm/files/cc-worker-cleanup.rb"
 IMAGE = os.environ.get("CAPI_TEST_IMAGE", "ruby:4.0.9-slim")
-FAKE_RAKE = """
+WORKER_NAME = "cc_global_worker.cc-worker.2.1"
+FAKE_RAKEFILE = """
 require 'json'
-module Rake
-  def self.application; self; end
-  def self.init; raise 'unexpected arguments' unless ARGV.empty?; end
-  def self.load_rakefile; end
-  class Task
-    def self.[](name)
-      raise 'wrong task' unless name == 'environment'
-      new
-    end
-    def invoke; end
-  end
+task :environment do
+  puts 'Loaded environment'
 end
-class RakeConfig
-  class << self
-    attr_accessor :context
-  end
-end
-module CloudController
-  class DelayedWorker
-    def initialize(**options); @options = options; end
-    def clear_locks!
-      raise 'wrong context' unless RakeConfig.context == :worker
-      puts JSON.generate(@options)
-      case ENV.fetch('RESULT', 'success')
-      when 'failure' then raise 'database unavailable'
-      when 'stuck' then sleep 60
-      end
+namespace :jobs do
+  task :clear_pending_locks, [:name] => :environment do |_task, args|
+    puts JSON.generate(owner: args.name)
+    if ENV.fetch('FAIL_OWNER', '').empty? || ENV['FAIL_OWNER'] == args.name
+      raise 'database unavailable' if ENV['RESULT'] == 'failure'
+      sleep 60 if ENV['RESULT'] == 'stuck'
     end
+    puts JSON.generate(cleared: args.name)
   end
 end
 """
+
+
+def cleaned_owners(logs):
+    return [json.loads(line)["owner"] for line in logs.splitlines() if line.startswith('{"owner":')]
+
+
+class WorkerCleanupTasksTest(unittest.TestCase):
+    def run_cleanup(self, threads, **environment):
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "Rakefile").write_text(FAKE_RAKEFILE)
+            return subprocess.run(
+                ["ruby", str(SCRIPT), "--cleanup"], cwd=directory,
+                env={**os.environ, "WORKER_NAME": WORKER_NAME, "WORKER_THREADS": str(threads),
+                     "RESULT": "success", "FAIL_OWNER": "", **environment},
+                capture_output=True, text=True, timeout=10,
+            )
+
+    def test_task_runs_for_each_owner_with_one_environment_boot(self):
+        for threads in [0, 3]:
+            with self.subTest(threads=threads):
+                result = self.run_cleanup(threads)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(cleaned_owners(result.stdout), [WORKER_NAME] + [
+                    f"{WORKER_NAME} thread:{index}" for index in range(1, threads + 1)
+                ])
+                self.assertEqual(result.stdout.count("Loaded environment"), 1)
+
+    def test_task_failures_do_not_prevent_remaining_cleanup(self):
+        owners = [WORKER_NAME] + [f"{WORKER_NAME} thread:{index}" for index in range(1, 4)]
+        for fail_owner in [WORKER_NAME, owners[2], owners[3], ""]:
+            with self.subTest(fail_owner=fail_owner):
+                result = self.run_cleanup(3, RESULT="failure", FAIL_OWNER=fail_owner)
+                failed = [fail_owner] if fail_owner else owners
+                successful = [owner for owner in owners if owner not in failed]
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertEqual(cleaned_owners(result.stdout), owners)
+                self.assertEqual([
+                    json.loads(line)["cleared"] for line in result.stdout.splitlines()
+                    if line.startswith('{"cleared":')
+                ], successful)
+                self.assertEqual(result.stdout.count("Loaded environment"), 1)
+                for owner in failed:
+                    self.assertIn(
+                        f"Worker lock cleanup failed for {owner}: RuntimeError: database unavailable",
+                        result.stderr,
+                    )
+                self.assertIn(
+                    f"Worker lock cleanup incomplete: {len(successful)} succeeded, {len(failed)} failed",
+                    result.stderr,
+                )
+                self.assertNotIn("Cleared pending locks", result.stdout)
 
 
 class WorkerCleanupTest(unittest.TestCase):
@@ -62,8 +98,8 @@ class WorkerCleanupTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             fixture = Path(directory)
             fixture.chmod(0o755)
-            (fixture / "rake.rb").write_text(FAKE_RAKE)
-            # Stub only application boot; Ruby, exec, timeout and signals are real.
+            (fixture / "Rakefile").write_text(FAKE_RAKEFILE)
+            # Stub only the CC tasks; Ruby, Rake, exec, timeout and signals are real.
             bundle = fixture / "bundle"
             bundle.write_text('#!/bin/sh\n[ "$1" = exec ] || exit 99\nshift\nexec "$@"\n')
             bundle.chmod(0o755)
@@ -72,8 +108,8 @@ class WorkerCleanupTest(unittest.TestCase):
                     "run", "-d", "--name", name, "--network", "none", "--user", "1000:1000",
                     "--mount", f"type=bind,src={SCRIPT},dst=/cleanup.rb,readonly",
                     "--mount", f"type=bind,src={fixture},dst=/test,readonly",
-                    "-e", "RUBYLIB=/test", "-e", "PATH=/test:/usr/local/bin:/usr/bin:/bin",
-                    "-e", "WORKER_NAME=cc_global_worker.cc-worker.2.1",
+                    "--workdir", "/test", "-e", "PATH=/test:/usr/local/bin:/usr/bin:/bin",
+                    "-e", f"WORKER_NAME={WORKER_NAME}",
                     "-e", f"WORKER_THREADS={threads}", "-e", f"RESULT={result}",
                     "-e", "CLEANUP_TIMEOUT_SECONDS=2", IMAGE, "ruby", "/cleanup.rb",
                     timeout=120,
@@ -89,10 +125,9 @@ class WorkerCleanupTest(unittest.TestCase):
                 status = int(self.docker("wait", name, timeout=10))
                 elapsed = time.monotonic() - start
                 logs = self.docker("logs", name)
-                options = next(json.loads(line) for line in logs.splitlines() if line.startswith('{"queues":'))
-                self.assertEqual(options, {
-                    "queues": [], "name": "cc_global_worker.cc-worker.2.1", "num_threads": threads,
-                })
+                self.assertEqual(cleaned_owners(logs), [WORKER_NAME] + [
+                    f"{WORKER_NAME} thread:{index}" for index in range(1, threads + 1)
+                ])
                 return status, elapsed, logs
             finally:
                 subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=15)
@@ -107,9 +142,10 @@ class WorkerCleanupTest(unittest.TestCase):
         self.assertEqual(status, 0, logs)
 
     def test_cleanup_failure_is_reported(self):
-        status, _, logs = self.exercise(0, "failure")
+        status, _, logs = self.exercise(3, "failure")
         self.assertEqual(status, 1, logs)
-        self.assertIn("Worker lock cleanup failed: RuntimeError: database unavailable", logs)
+        self.assertIn(f"Worker lock cleanup failed for {WORKER_NAME}: RuntimeError: database unavailable", logs)
+        self.assertIn("Worker lock cleanup incomplete: 0 succeeded, 4 failed", logs)
         self.assertNotIn("Cleared pending locks", logs)
 
     def test_cleanup_timeout_is_bounded(self):

@@ -14,7 +14,7 @@ ccWorker:
   podAnnotations: ~
   replicas: 1
   resources: ~
-  # Separate budget and resources for the native sidecar that clears worker locks.
+  # Separate budget for the native sidecar that clears worker locks.
   cleanup:
     timeoutSeconds: 30
   nodeSelector: ~
