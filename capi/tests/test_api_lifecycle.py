@@ -86,7 +86,7 @@ class ApiLifecycleTest(unittest.TestCase):
                     self.assertEqual(sidecar["restartPolicy"], "Always")
                     self.assertNotIn("preStop", sidecar.get("lifecycle", {}))
                 self.assertEqual([c["name"] for c in pod["containers"]], ["route-registrar", "nginx"])
-                self.assertEqual(pod["terminationGracePeriodSeconds"], nginx_seconds + 20 + count * worker_seconds + 10)
+                self.assertEqual(pod["terminationGracePeriodSeconds"], nginx_seconds + 20 + worker_seconds)
                 self.assertIn("ping", init[1]["startupProbe"]["exec"]["command"])
                 self.assertIn("GET /healthz", init[-1]["startupProbe"]["exec"]["command"][-1])
                 for sidecar in init[2:]:
