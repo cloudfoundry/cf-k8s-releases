@@ -1,0 +1,18 @@
+{{ if .Values.cloudController.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cc-worker-cleanup-config
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
+data:
+  cleanup.rb: |-
+    {{- .Files.Get "files/cc-worker-cleanup.rb" | nindent 4 }}
+{{ end }}

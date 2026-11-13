@@ -23,6 +23,7 @@ spec:
       annotations:
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
+        checksum/cc-worker-cleanup-config: {{ include (print $.Template.BasePath "/cc-worker-cleanup-config.yaml") . | sha256sum }}
         {{- with mergeOverwrite (dict) (.Values.commonAnnotations | default dict) (.Values.ccWorker.podAnnotations | default dict) }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -32,7 +33,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}
+      # Reserve cleanup time after the main worker has fully stopped.
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds .Values.ccWorker.cleanup.timeoutSeconds 10 }}
       initContainers:
         - name: set-name-index
           image: mikefarah/yq:latest
@@ -53,11 +55,49 @@ spec:
               mountPath: /etc/cloud-controller
             - name: tmpdir
               mountPath: /tmp
+        - name: cc-worker-cleanup
+          restartPolicy: Always
+          image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
+          imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
+          # Kubelet sends TERM to this sidecar only after the main worker stops.
+          # No restart-triggering probes: their TERM could arrive while it runs.
+          command: ["ruby", "/etc/cc-worker-cleanup/cleanup.rb"]
+          envFrom:
+            - secretRef:
+                name: cc-shared
+          env:
+            - name: INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+            - name: WORKER_NAME
+              value: cc_global_worker.cc-worker.$(INDEX).1
+            - name: WORKER_THREADS
+              value: {{ default 0 .Values.cloudController.config.jobs.generic.numberOfWorkerThreads | quote }}
+            - name: CLEANUP_TIMEOUT_SECONDS
+              value: {{ .Values.ccWorker.cleanup.timeoutSeconds | quote }}
+            - name: CLOUD_CONTROLLER_NG_CONFIG
+              value: /tmp/config.yaml
+          volumeMounts:
+            {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
+            - name: etc-cloud-controller
+              mountPath: /etc/cloud-controller
+            - name: tmpdir
+              mountPath: /tmp
+            - name: cc-worker-cleanup-config
+              mountPath: /etc/cc-worker-cleanup
+              readOnly: true
       containers:
         - name: cc-worker
           image: {{ .Values.cloudController.image.repository }}:{{ default .Chart.AppVersion .Values.cloudController.image.tag }}
           imagePullPolicy: {{ .Values.cloudController.image.imagePullPolicy }}
-          command: ["bundle", "exec", "rake", "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"]
+          # Leave the sidecar its cleanup budget even if the worker ignores TERM.
+          command: [
+            "timeout", "--foreground", "--preserve-status",
+            "--kill-after={{ .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds }}s", "0",
+            "bundle", "exec", "rake",
+            "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"
+          ]
           envFrom:
             - secretRef:
                 name: cc-shared
@@ -95,4 +135,7 @@ spec:
             secretName: cloud-controller-config
         - name: tmpdir
           emptyDir: {}
+        - name: cc-worker-cleanup-config
+          configMap:
+            name: cc-worker-cleanup-config
 {{ end }}

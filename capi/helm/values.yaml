@@ -14,6 +14,9 @@ ccWorker:
   podAnnotations: ~
   replicas: 1
   resources: ~
+  # Separate budget for the native sidecar that clears worker locks.
+  cleanup:
+    timeoutSeconds: 30
   nodeSelector: ~
   tolerations: ~
 
@@ -93,6 +96,8 @@ cloudController:
     requestTimeoutInSeconds: 900
     serverKeepaliveTimeout: 100
     nginxUpstreamKeepaliveTimeout: 15
+    # Mirrors cc.nginx_drain_timeout; part of the Pod's total shutdown budget.
+    nginxDrainTimeout: 30
     nginxErrorLogLevel: error
     nginxAccessLogEscaping: default
     nginxAccessLogFormat: '$host - [$time_local] "$request" $status $bytes_sent "$http_referer" "$http_user_agent" $proxy_add_x_forwarded_for vcap_request_id:$upstream_http_x_vcap_request_id response_time:$upstream_response_time'
@@ -150,6 +155,7 @@ cloudController:
         workerGracePeriodSeconds: 15
       local:
         numberOfWorkers: 2
+        # Per worker. Native sidecars stop sequentially, so the Pod budgets each one.
         localWorkerGracePeriodSeconds: 300
     appUsageEvents:
       cutoffAgeInDays: 31
