@@ -36,6 +36,9 @@ spec:
         - name: cc-uploader
           image: {{ .Values.ccUploader.image.repository }}:{{ default .Chart.AppVersion .Values.ccUploader.image.tag }}
           imagePullPolicy: {{ .Values.ccUploader.image.imagePullPolicy }}
+          args:
+            - "--configPath=/cc-uploader/cc-uploader.json"
+            - "--shutdownTimeoutInMinutes={{ .Values.ccUploader.config.ccUploaderDrainTimeoutInMinutes }}"
           ports:
             - containerPort: {{ .Values.ccUploader.config.httpsPort }}
           {{- if .Values.ccUploader.resources }}

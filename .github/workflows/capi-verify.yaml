@@ -61,6 +61,13 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           load-images: "${{ steps.imgs.outputs.list }}"
           additional-values-files: "${{ github.workspace }}/state-values.yaml"
+      - name: Verify CAPI lifecycle
+        if: steps.check.outputs.should_run == 'true'
+        env:
+          CAPI_TEST_IMAGE: cloud-controller:latest
+        run: |
+          python3 capi/tests/test_api_lifecycle.py
+          python3 capi/tests/test_worker_cleanup.py
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
         with:
