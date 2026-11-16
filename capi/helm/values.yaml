@@ -155,7 +155,7 @@ cloudController:
         workerGracePeriodSeconds: 15
       local:
         numberOfWorkers: 2
-        # Per worker. Native sidecars stop sequentially, so the Pod budgets each one.
+        # Limit after each worker's SIGTERM; the Pod budgets one shared drain period.
         localWorkerGracePeriodSeconds: 300
     appUsageEvents:
       cutoffAgeInDays: 31

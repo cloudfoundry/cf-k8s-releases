@@ -11,14 +11,16 @@ if ARGV.delete('--cleanup')
       "#{worker_name} thread:#{index}"
     end
     puts "Clearing pending locks for #{worker_name}"
-    cleanup = Rake::Task['jobs:clear_pending_locks']
+    Rake::Task[:environment].invoke
+    RakeConfig.context = :worker
+    # The upstream rake task initializes BackgroundJobEnvironment on every call.
+    # Initialize once without a readiness listener for this cleanup-only process.
+    BackgroundJobEnvironment.new(RakeConfig.config).setup_environment
     failed_names = []
     worker_names.each do |name|
       begin
-        # Rake normally runs a task only once. Repeat cleanup for each lock owner
-        # while leaving its environment prerequisite loaded.
-        cleanup.reenable
-        cleanup.invoke(name)
+        # Use the same owner-scoped operation as jobs:clear_pending_locks.
+        Delayed::Job.clear_locks!(name)
       rescue StandardError => error
         warn "Worker lock cleanup failed for #{name}: #{error.class}: #{error.message}"
         failed_names << name
