@@ -34,7 +34,7 @@ spec:
         {{- end }}
     spec:
       # Reserve cleanup time after the main worker has fully stopped.
-      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds .Values.ccWorker.cleanup.timeoutSeconds 10 }}
+      terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds .Values.ccWorker.cleanup.timeoutSeconds 1 }}
       initContainers:
         - name: set-name-index
           image: mikefarah/yq:latest
