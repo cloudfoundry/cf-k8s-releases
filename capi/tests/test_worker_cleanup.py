@@ -17,7 +17,7 @@ import uuid
 SCRIPT = Path(__file__).resolve().parents[1] / "helm/files/cc-worker-cleanup.rb"
 IMAGE = os.environ.get("CAPI_TEST_IMAGE", "ruby:4.0.9-slim")
 WORKER_NAME = "cc_global_worker.cc-worker.1.1"
-FAKE_RAKEFILE = """
+FAKE_RAKEFILE= """
 require 'json'
 require 'socket'
 task :environment do
