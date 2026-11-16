@@ -347,45 +347,7 @@
           }
         },
         "config": {
-          "type": "object",
-          "properties": {
-            "nginxDrainTimeout": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Maximum nginx graceful drain time in seconds (cc.nginx_drain_timeout)."
-            },
-            "jobs": {
-              "type": "object",
-              "properties": {
-                "generic": {
-                  "type": "object",
-                  "properties": {
-                    "workerGracePeriodSeconds": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "numberOfWorkerThreads": {
-                      "type": ["integer", "null"],
-                      "minimum": 0
-                    }
-                  }
-                },
-                "local": {
-                  "type": "object",
-                  "properties": {
-                    "numberOfWorkers": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "localWorkerGracePeriodSeconds": {
-                      "type": "integer",
-                      "minimum": 1
-                    }
-                  }
-                }
-              }
-            }
-          }
+          "type": "object"
         },
         "certificateSecrets": {
           "additionalProperties": false,
