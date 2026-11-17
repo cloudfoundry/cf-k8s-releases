@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "NFS_VOLUME_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
-  default = "7.76.0"
+  default = "7.77.0"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nfs-volume-release
-  default = "7.76.0"
+  default = "7.77.0"
 }
 
 group "default" {
