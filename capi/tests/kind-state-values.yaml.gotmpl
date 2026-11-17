@@ -1,0 +1,8 @@
+# Helmfile environment values; CAPI_CHART must point to this checkout's capi/helm.
+charts:
+  capi:
+    url: {{ requiredEnv "CAPI_CHART" | quote }}
+postgresql:
+  primary:
+    extendedConfiguration: |
+      max_connections = 500

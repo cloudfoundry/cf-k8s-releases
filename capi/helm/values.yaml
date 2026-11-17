@@ -13,6 +13,9 @@ ccWorker:
   podLabels: ~
   podAnnotations: ~
   replicas: 1
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
   resources: ~
   # Separate budget for the native sidecar that clears worker locks.
   cleanup:
@@ -65,6 +68,9 @@ cloudController:
   serviceAnnotations: ~
   enabled: false
   replicas: 1
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
   resources: ~
   certificateSecrets:
     mutualTLS: ""
@@ -109,7 +115,7 @@ cloudController:
     experimental:
       useYjitCompiler: false
     readinessPort:
-      cloudControllerWorker: -1
+      cloudControllerWorker: 9025
       clock: 9025
       deploymentUpdater: 9025
     puma:
