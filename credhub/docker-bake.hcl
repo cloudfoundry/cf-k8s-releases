@@ -3,12 +3,12 @@ variable "REGISTRY_PREFIX" {
 }
 
 variable "CREDHUB_RELEASE_VERSION" {
-  # renovate: dataSource=github-releases depName=pivotal/credhub-release
+  # renovate: dataSource=github-releases depName=Broadcom/credhub-release
   default = "2.16.1"
 }
 
 variable "IMAGE_VERSION" {
-  # renovate: dataSource=github-releases depName=pivotal/credhub-release
+  # renovate: dataSource=github-releases depName=Broadcom/credhub-release
   default = "2.16.1"
 }
 
@@ -21,7 +21,7 @@ target "credhub" {
   tags = [ "${REGISTRY_PREFIX}credhub:latest", "${REGISTRY_PREFIX}credhub:${IMAGE_VERSION}" ]
 
   contexts = {
-    "src" = "https://github.com/pivotal/credhub-release.git#${CREDHUB_RELEASE_VERSION}:src/credhub"
+    "src" = "https://github.com/Broadcom/credhub-release.git#${CREDHUB_RELEASE_VERSION}:src/credhub"
     "files" = "files"
   }
 }
