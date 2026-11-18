@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "UAA_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/uaa-release
-  default = "79.11.0"
+  default = "79.12.0"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/uaa-release
-  default = "79.11.0"
+  default = "79.12.0"
 }
 
 group "default" {
