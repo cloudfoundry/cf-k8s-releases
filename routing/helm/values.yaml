@@ -272,6 +272,7 @@ tcpRouter:
   tlsHealthCheckPort: 443
   failOnRouterPortConflicts: false
   drainWait: 20
+  drainTimeout: 30
   uaa:
     tokenEndpoint: uaa.{{ .Release.Namespace }}.svc.cluster.local
     tlsPort: ~

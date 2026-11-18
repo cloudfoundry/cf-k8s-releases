@@ -12,4 +12,6 @@ FROM ubuntu:latest
 COPY --from=builder /usr/local/bin/cf-tcp-router /usr/local/bin
 ADD --chmod=0755 files/haproxy_reloader.sh /usr/local/bin/haproxy_reloader.sh
 
+STOPSIGNAL SIGUSR2
+
 ENTRYPOINT [ "/usr/local/bin/cf-tcp-router" ]
