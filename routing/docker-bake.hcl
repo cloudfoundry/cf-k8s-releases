@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "ROUTING_RELEASE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
-  default = "0.399.0"
+  default = "0.400.0"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
-  default = "0.399.0"
+  default = "0.400.0"
 }
 
 group "default" {
