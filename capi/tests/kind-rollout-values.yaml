@@ -1,0 +1,24 @@
+# Chart values for the deferred small KinD rollout test, not production sizing.
+cloudController:
+  replicas: 4
+  rollingUpdate:
+    maxSurge: 2
+    maxUnavailable: 0
+  config:
+    readinessPort:
+      cloudControllerWorker: 9025
+    puma:
+      workers: 1
+      maxThreads: 2
+      maxDbConnectionsPerProcess: 2
+    jobs:
+      local:
+        numberOfWorkers: 1
+ccWorker:
+  replicas: 3
+  rollingUpdate:
+    maxSurge: 2
+    maxUnavailable: 0
+ccdb:
+  maxConnections: 5
+  maxConnectionsPerLocalWorker: 2

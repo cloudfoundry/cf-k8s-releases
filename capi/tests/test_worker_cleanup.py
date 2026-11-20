@@ -111,6 +111,17 @@ class WorkerCleanupTasksTest(unittest.TestCase):
         self.assertIn("Worker lock cleanup failed: RuntimeError: environment setup failed", result.stderr)
         self.assertNotIn("Cleared pending locks", result.stdout)
 
+    def test_cleanup_is_scoped_to_the_requested_pod_uid(self):
+        owners_by_pod = []
+        for uid in ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"]:
+            owner = f"cc_global_worker.cc-worker.{uid}.1"
+            result = self.run_cleanup(2, WORKER_NAME=owner)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            owners = cleaned_owners(result.stdout)
+            self.assertEqual(owners, [owner, f"{owner} thread:1", f"{owner} thread:2"])
+            owners_by_pod.append(set(owners))
+        self.assertTrue(owners_by_pod[0].isdisjoint(owners_by_pod[1]))
+
     def test_task_failures_do_not_prevent_remaining_cleanup(self):
         owners = [WORKER_NAME] + [f"{WORKER_NAME} thread:{index}" for index in range(1, 4)]
         for fail_owner in [WORKER_NAME, owners[2], owners[3], ""]:
