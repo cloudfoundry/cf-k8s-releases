@@ -4,12 +4,12 @@ variable "REGISTRY_PREFIX" {
 
 variable "BUILDPACK_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nginx-buildpack
-  default = "1.2.41"
+  default = "1.2.42"
 }
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/nginx-buildpack
-  default = "1.2.41"
+  default = "1.2.42"
 }
 
 group "default" {
