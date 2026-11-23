@@ -125,6 +125,80 @@ class ApiLifecycleTest(unittest.TestCase):
                 source = self.resource(documents, "ConfigMap", "cc-worker-cleanup-config")["data"]["cleanup.rb"]
                 self.assertEqual(source, (CHART / "files" / "cc-worker-cleanup.rb").read_text().rstrip())
 
+    def test_api_liveness_checks_status_independently_of_nginx(self):
+        documents = self.render("cloudController.config.promMetricsServerEnabled=false")
+        template = self.resource(documents, "StatefulSet", "cloud-controller")["spec"]["template"]
+        self.assertIn("checksum/cloud-controller-healthcheck-config", template["metadata"]["annotations"])
+        pod = template["spec"]
+        cc = next(c for c in pod["initContainers"] if c["name"] == "cloud-controller")
+        self.assertEqual(cc["livenessProbe"], {
+            "exec": {"command": ["ruby", "/etc/cloud-controller-healthcheck/livenesscheck.rb"]},
+            "periodSeconds": 10, "timeoutSeconds": 5, "failureThreshold": 1,
+        })
+        self.assertEqual(cc["startupProbe"], {
+            "exec": {"command": ["ruby", "/etc/cloud-controller-healthcheck/startupcheck.rb"]},
+            "periodSeconds": 5, "timeoutSeconds": 5, "failureThreshold": 60,
+        })
+        self.assertIn({
+            "name": "cloud-controller-healthcheck", "mountPath": "/etc/cloud-controller-healthcheck",
+            "readOnly": True,
+        }, cc["volumeMounts"])
+        self.assertIn({
+            "name": "cloud-controller-healthcheck",
+            "configMap": {"name": "cloud-controller-healthcheck-config"},
+        }, pod["volumes"])
+        registrar = next(c for c in pod["containers"] if c["name"] == "route-registrar")
+        self.assertNotIn("livenessProbe", registrar)
+        source = self.resource(documents, "ConfigMap", "cloud-controller-healthcheck-config")["data"]["livenesscheck.rb"]
+        self.assertEqual(source, (CHART / "files" / "cc-livenesscheck.rb").read_text().rstrip())
+        startup_source = self.resource(documents, "ConfigMap", "cloud-controller-healthcheck-config")["data"]["startupcheck.rb"]
+        self.assertEqual(startup_source, (CHART / "files" / "cc-startupcheck.rb").read_text().rstrip())
+
+    def test_nginx_readiness_checks_the_serving_path_on_the_configured_port(self):
+        for port in [9024, 9443]:
+            with self.subTest(port=port):
+                documents = self.render(f"cloudController.config.publicTLS.port={port}")
+                pod = self.resource(documents, "StatefulSet", "cloud-controller")["spec"]["template"]["spec"]
+                nginx = next(c for c in pod["containers"] if c["name"] == "nginx")
+                self.assertEqual(nginx["readinessProbe"], {
+                    "httpGet": {"path": "/healthz", "port": port, "scheme": "HTTPS"},
+                    "periodSeconds": 5, "failureThreshold": 2,
+                })
+                self.assertNotIn("livenessProbe", nginx)
+                registrar = next(c for c in pod["containers"] if c["name"] == "route-registrar")
+                self.assertNotIn("livenessProbe", registrar)
+
+    def test_api_route_registration_is_health_gated(self):
+        for port in [9024, 9443]:
+            with self.subTest(port=port):
+                documents = self.render(f"cloudController.config.publicTLS.port={port}")
+                template = self.resource(documents, "StatefulSet", "cloud-controller")["spec"]["template"]
+                self.assertIn("checksum/cloud-controller-route-registrar-config", template["metadata"]["annotations"])
+                registrar = next(c for c in template["spec"]["containers"] if c["name"] == "route-registrar")
+                environment = {item["name"]: item for item in registrar["env"]}
+                self.assertEqual(environment["POD_IP"]["valueFrom"]["fieldRef"]["fieldPath"], "status.podIP")
+                data = self.resource(documents, "ConfigMap", "cloud-controller-route-registrar-config")["data"]
+                config = json.loads(data["route-registrar.json"])
+                route = config["routes"][0]
+                self.assertEqual(route["health_check"], {
+                    "name": "api-health-check", "script_path": "/etc/route-registrar-template/check-cc-health.sh",
+                    "timeout": "6s",
+                })
+                self.assertEqual(route["registration_interval"], "10s")
+                self.assertEqual(route["tls_port"], port)
+                source = (CHART / "files" / "check-cc-health.sh").read_text().replace(
+                    "{{ .Values.cloudController.config.publicTLS.port }}", str(port),
+                ).rstrip()
+                self.assertEqual(data["check-cc-health.sh"], source)
+                volume = next(v for v in template["spec"]["volumes"] if v["name"] == "etc-route-registrar")
+                self.assertEqual(volume["configMap"]["items"], [
+                    {"key": "route-registrar.json", "path": "route-registrar.json"},
+                    {"key": "check-cc-health.sh", "path": "check-cc-health.sh", "mode": 0o555},
+                ])
+                self.assertIn({
+                    "name": "etc-route-registrar", "mountPath": "/etc/route-registrar-template", "readOnly": True,
+                }, registrar["volumeMounts"])
+
     def test_uploader_drain_timeout_reaches_process(self):
         for minutes in [5, 15, 20]:
             with self.subTest(minutes=minutes):
@@ -142,6 +216,7 @@ class ApiLifecycleTest(unittest.TestCase):
     def test_disabled_api_has_no_workload(self):
         documents = self.render("cloudController.enabled=false")
         self.assertFalse(any(d and d.get("metadata", {}).get("name") == "cloud-controller" for d in documents))
+        self.assertFalse(any(d and d.get("metadata", {}).get("name") == "cloud-controller-healthcheck-config" for d in documents))
 
 
 if __name__ == "__main__":

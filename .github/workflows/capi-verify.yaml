@@ -20,6 +20,9 @@ jobs:
           filters: |
             should_run:
               - 'capi/**'
+              - 'routing/route-registrar.Dockerfile'
+              - 'routing/docker-bake.hcl'
+              - 'routing/files/**'
               - '.github/workflows/capi-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init
@@ -67,7 +70,9 @@ jobs:
           CAPI_TEST_IMAGE: cloud-controller:latest
         run: |
           python3 capi/tests/test_api_lifecycle.py
+          python3 capi/tests/test_cc_livenesscheck.py
           python3 capi/tests/test_worker_cleanup.py
+          python3 capi/tests/test_cc_route_registrar_healthcheck.py
       - uses: cloudfoundry/kind-deployment/.github/actions/setup-cf-tests@main
         if: steps.check.outputs.should_run == 'true'
         with:

@@ -1,0 +1,20 @@
+{{ if .Values.cloudController.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloud-controller-healthcheck-config
+  {{- if .Values.commonLabels }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
+data:
+  startupcheck.rb: |-
+    {{- .Files.Get "files/cc-startupcheck.rb" | nindent 4 }}
+  livenesscheck.rb: |-
+    {{- .Files.Get "files/cc-livenesscheck.rb" | nindent 4 }}
+{{ end }}

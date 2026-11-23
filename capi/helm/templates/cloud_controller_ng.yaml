@@ -57,6 +57,7 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: cloud-controller
         checksum/cloud-controller-config: {{ include (print $.Template.BasePath "/cloud-controller-config.yaml") . | sha256sum }}
+        checksum/cloud-controller-healthcheck-config: {{ include (print $.Template.BasePath "/cloud-controller-healthcheck-config.yaml") . | sha256sum }}
         checksum/cloud-controller-route-registrar-config: {{ include (print $.Template.BasePath "/cloud-controller-route-registrar-config.yaml") . | sha256sum }}
         checksum/nginx-config: {{ include (print $.Template.BasePath "/nginx-config.yaml") . | sha256sum }}
         checksum/cc-shared: {{ include (print $.Template.BasePath "/cc-shared.yaml") . | sha256sum }}
@@ -149,15 +150,7 @@ spec:
           command: ["timeout", "--foreground", "--preserve-status", "--kill-after=20s", "0", "bundle", "exec", "bin/cloud_controller", "-c", "/tmp/config.yaml"]
           startupProbe:
             exec:
-              command:
-                - ruby
-                - -rsocket
-                - -e
-                - |
-                  UNIXSocket.open('/var/run/cloud_controller.sock') do |socket|
-                    socket.write("GET /healthz HTTP/1.0\r\n\r\n")
-                    abort unless socket.gets&.split&.at(1) == '200'
-                  end
+              command: ["ruby", "/etc/cloud-controller-healthcheck/startupcheck.rb"]
             timeoutSeconds: 5
             periodSeconds: 5
             failureThreshold: 60
@@ -170,16 +163,20 @@ spec:
             - name: CLOUD_CONTROLLER_NG_CONFIG
               value: /tmp/config.yaml
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.cloudController.config.publicTLS.port }}
-              scheme: HTTPS
+            exec:
+              command: ["ruby", "/etc/cloud-controller-healthcheck/livenesscheck.rb"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 1
           {{- if .Values.cloudController.resources }}
           resources:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
             {{- include "capi.ccCertVolumeMounts" $ | nindent 12 }}
+            - name: cloud-controller-healthcheck
+              mountPath: /etc/cloud-controller-healthcheck
+              readOnly: true
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
             - name: var-run
@@ -190,11 +187,6 @@ spec:
         - name: route-registrar
           image: {{ .Values.routeRegistrar.image.repository }}:{{ .Values.routeRegistrar.image.tag }}
           imagePullPolicy: {{ .Values.routeRegistrar.image.imagePullPolicy }}
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.cloudController.config.publicTLS.port }}
-              scheme: HTTPS
           env:
           - name: POD_IP
             valueFrom:
@@ -210,11 +202,19 @@ spec:
               readOnly: true
             - name: etc-route-registrar
               mountPath: /etc/route-registrar-template
+              readOnly: true
             - name: tmpdir
               mountPath: /tmp
         - name: nginx
           image: {{ .Values.nginx.image.repository }}:{{ default .Chart.AppVersion .Values.nginx.image.tag }}
           imagePullPolicy: {{ .Values.nginx.image.imagePullPolicy }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.cloudController.config.publicTLS.port }}
+              scheme: HTTPS
+            periodSeconds: 5
+            failureThreshold: 2
           ports:
             - name: http
               containerPort: 80
@@ -289,9 +289,18 @@ spec:
         - name: etc-cloud-controller
           secret:
             secretName: cloud-controller-config
+        - name: cloud-controller-healthcheck
+          configMap:
+            name: cloud-controller-healthcheck-config
         - name: etc-route-registrar
           configMap:
             name: cloud-controller-route-registrar-config
+            items:
+              - key: route-registrar.json
+                path: route-registrar.json
+              - key: check-cc-health.sh
+                path: check-cc-health.sh
+                mode: 365 # 0555: read and execute, without YAML octal ambiguity.
         - name: nginx-config
           configMap:
             name: nginx-config
