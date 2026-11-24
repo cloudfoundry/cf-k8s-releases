@@ -20,9 +20,6 @@ jobs:
           filters: |
             should_run:
               - 'capi/**'
-              - 'routing/route-registrar.Dockerfile'
-              - 'routing/docker-bake.hcl'
-              - 'routing/files/**'
               - '.github/workflows/capi-verify.yaml'
               - '.github/actions/**'
       - uses: ./.github/actions/init
