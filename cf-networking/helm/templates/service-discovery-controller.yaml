@@ -39,6 +39,10 @@ spec:
           resources:
             {{- toYaml .Values.serviceDiscoveryController.resources | nindent 12 }}
           {{- end }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.serviceDiscoveryController.port }}
+            initialDelaySeconds: {{ .Values.serviceDiscoveryController.routeEmitterIntervalSeconds }}
           volumeMounts:
             - name: service-discovery-controller
               mountPath: /etc/ssl/certs/service-discovery-controller
