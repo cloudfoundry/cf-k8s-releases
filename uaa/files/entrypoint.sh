@@ -20,10 +20,5 @@ JAVA_OPTS="$JAVA_OPTS -Dstatsd.enabled=true"
 JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=$APPLICATION_YAML"
 JAVA_OPTS="$JAVA_OPTS -DLOGIN_CONFIG_URL=file://$UAA_CONFIG_FILE"
 
-trap 'kill -TERM "$java_pid"' SIGTERM SIGINT
-
 cd $BOOT_RUN_LOCATION
-java $JAVA_OPTS -jar /boot/uaa-boot.war &
-java_pid=$!
-
-wait "$java_pid"
+exec java $JAVA_OPTS -jar /boot/uaa-boot.war &
