@@ -21,4 +21,4 @@ JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=$APPLICATION_YAML"
 JAVA_OPTS="$JAVA_OPTS -DLOGIN_CONFIG_URL=file://$UAA_CONFIG_FILE"
 
 cd $BOOT_RUN_LOCATION
-exec java $JAVA_OPTS -jar /boot/uaa-boot.war &
+exec java $JAVA_OPTS -jar /boot/uaa-boot.war
