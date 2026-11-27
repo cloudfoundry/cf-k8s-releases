@@ -1307,7 +1307,8 @@
         },
         "drainWait": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Seconds the TCP router waits after HAProxy starts returning HTTP 503 from /health. HAProxy continues accepting and serving TCP connections during this wait, allowing load balancers time to withdraw the router."
         },
         "uaa": {
           "type": "object",

@@ -290,6 +290,7 @@ tcpRouter:
   haproxy:
     image:
       repository: haproxy
+      # renovate: dataSource=docker depName=haproxy
       tag: 3.3.3-alpine
       imagePullPolicy: IfNotPresent
     resources: ~

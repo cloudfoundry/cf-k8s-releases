@@ -1,5 +1,9 @@
 {{- if .Values.gorouter.enabled }}
 {{- $g := .Values.gorouter -}}
+{{- $effectiveDrainTimeout := $g.drainTimeout -}}
+{{- if eq (int64 $effectiveDrainTimeout) 0 -}}
+{{- $effectiveDrainTimeout = $g.requestTimeoutInSeconds -}}
+{{- end -}}
 {{- $certs := dict "status-tls" (required "gorouter.certificateSecrets.statusTLS is required" $g.certificateSecrets.statusTLS) -}}
 {{- range $key, $name := dict "trustedCAs" "trusted-ca" "clientCA" "client-ca" "backendsTLS" "backends-tls" "routeServicesTLS" "route-services-tls" "uaaCA" "uaa-ca" -}}
 {{- if index $g.certificateSecrets $key -}}
@@ -55,7 +59,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      terminationGracePeriodSeconds: {{ add .Values.gorouter.drainWait .Values.gorouter.drainTimeout 5 }}
+      terminationGracePeriodSeconds: {{ add $g.drainWait $effectiveDrainTimeout 5 }}
       containers:
         - name: gorouter
           image: {{ .Values.gorouter.image.repository }}:{{ default .Chart.AppVersion .Values.gorouter.image.tag }}

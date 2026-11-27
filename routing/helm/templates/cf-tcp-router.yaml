@@ -33,6 +33,7 @@ spec:
         {{- end }}
     spec:
       shareProcessNamespace: true
+      terminationGracePeriodSeconds: {{ add .Values.tcpRouter.drainWait 1 }}
       initContainers:
         - name: prepare-config
           image: busybox:latest
@@ -63,6 +64,37 @@ spec:
             - name: haproxy-config
               mountPath: /haproxy-original/haproxy.conf
               subPath: haproxy.conf
+        - name: haproxy
+          restartPolicy: Always
+          image: {{ .Values.tcpRouter.haproxy.image.repository }}:{{ .Values.tcpRouter.haproxy.image.tag }}
+          imagePullPolicy: {{ .Values.tcpRouter.haproxy.image.imagePullPolicy }}
+          args:
+            - -W
+            - -db
+            - -S
+            - /haproxy/master.sock,mode,600
+            - -p
+            - /haproxy/haproxy.pid
+            - -f
+            - /haproxy/haproxy.conf
+          {{- if .Values.tcpRouter.haproxy.resources }}
+          resources:
+            {{- toYaml .Values.tcpRouter.haproxy.resources | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
+              scheme: HTTPS
+          volumeMounts:
+            - name: shared
+              mountPath: /haproxy
+            {{- include "routing.tcpRouterBackendCertMounts" $ | nindent 12 }}
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: cf-tcp-router
           image: {{ .Values.tcpRouter.image.repository }}:{{ default .Chart.AppVersion .Values.tcpRouter.image.tag }}
@@ -100,36 +132,6 @@ spec:
             - name: haproxy-config
               mountPath: /haproxy-original/haproxy.conf
               subPath: haproxy.conf
-            - name: tmp
-              mountPath: /tmp
-        - name: haproxy
-          image: {{ .Values.tcpRouter.haproxy.image.repository }}:{{ .Values.tcpRouter.haproxy.image.tag }}
-          imagePullPolicy: {{ .Values.tcpRouter.haproxy.image.imagePullPolicy }}
-          args:
-            - -W
-            - -db
-            - -p
-            - /haproxy/haproxy.pid
-            - -f
-            - /haproxy/haproxy.conf
-          {{- if .Values.tcpRouter.haproxy.resources }}
-          resources:
-            {{- toYaml .Values.tcpRouter.haproxy.resources | nindent 12 }}
-          {{- end }}
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
-              scheme: HTTPS
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
-              scheme: HTTPS
-          volumeMounts:
-            - name: shared
-              mountPath: /haproxy
-            {{- include "routing.tcpRouterBackendCertMounts" $ | nindent 12 }}
             - name: tmp
               mountPath: /tmp
         {{- include "routing.udpForwarder" (dict "root" $ "port" .Values.tcpRouter.metron.port) | nindent 8 }}
