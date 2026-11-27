@@ -9,7 +9,7 @@ variable "ROUTING_RELEASE_VERSION" {
 
 variable "IMAGE_VERSION" {
   # renovate: dataSource=github-releases depName=cloudfoundry/routing-release
-  default = "0.400.0"
+  default = "0.400.1-1"
 }
 
 group "default" {

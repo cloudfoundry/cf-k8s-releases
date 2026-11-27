@@ -1308,12 +1308,7 @@
         "drainWait": {
           "type": "integer",
           "minimum": 0,
-          "description": "Seconds the TCP router waits during SIGUSR2 drain while Kubernetes endpoint removal propagates. The native HAProxy sidecar keeps listening until the TCP router exits."
-        },
-        "drainTimeout": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Kubernetes shutdown budget in seconds for HAProxy connections after drainWait. The Pod grace period includes an additional five-second margin. This is independent of requestTimeoutInSeconds and has no equivalent BOSH tcp_router property."
+          "description": "Seconds the TCP router waits after HAProxy starts returning HTTP 503 from /health. HAProxy continues accepting and serving TCP connections during this wait, allowing load balancers time to withdraw the router."
         },
         "uaa": {
           "type": "object",

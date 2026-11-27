@@ -33,7 +33,7 @@ spec:
         {{- end }}
     spec:
       shareProcessNamespace: true
-      terminationGracePeriodSeconds: {{ add .Values.tcpRouter.drainWait .Values.tcpRouter.drainTimeout 1 }}
+      terminationGracePeriodSeconds: {{ add .Values.tcpRouter.drainWait 1 }}
       initContainers:
         - name: prepare-config
           image: busybox:latest
@@ -65,13 +65,14 @@ spec:
               mountPath: /haproxy-original/haproxy.conf
               subPath: haproxy.conf
         - name: haproxy
-          # Keep HAProxy running until the TCP router has finished draining and exited.
           restartPolicy: Always
           image: {{ .Values.tcpRouter.haproxy.image.repository }}:{{ .Values.tcpRouter.haproxy.image.tag }}
           imagePullPolicy: {{ .Values.tcpRouter.haproxy.image.imagePullPolicy }}
           args:
             - -W
             - -db
+            - -S
+            - /haproxy/master.sock,mode,600
             - -p
             - /haproxy/haproxy.pid
             - -f
@@ -81,10 +82,8 @@ spec:
             {{- toYaml .Values.tcpRouter.haproxy.resources | nindent 12 }}
           {{- end }}
           livenessProbe:
-            httpGet:
-              path: /health
+            tcpSocket:
               port: {{ .Values.tcpRouter.tlsHealthCheckPort }}
-              scheme: HTTPS
           readinessProbe:
             httpGet:
               path: /health

@@ -9,6 +9,8 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/local/bin/c
 
 FROM ubuntu:latest
 
+RUN apt-get update && apt-get install -y --no-install-recommends socat && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /usr/local/bin/cf-tcp-router /usr/local/bin
 ADD --chmod=0755 files/haproxy_reloader.sh /usr/local/bin/haproxy_reloader.sh
 
