@@ -30,7 +30,7 @@ spec:
     app.kubernetes.io/name: cloud-controller
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: cloud-controller
   {{- if .Values.commonAnnotations }}
@@ -44,6 +44,10 @@ metadata:
     {{- end }}
 spec:
   replicas: {{ .Values.cloudController.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      {{- include "capi.rollingUpdate" (dict "settings" .Values.cloudController.rollingUpdate "replicas" .Values.cloudController.replicas "component" "cloudController") | nindent 6 }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cloud-controller
@@ -67,7 +71,7 @@ spec:
       # Budget nginx drain + API shutdown (20s) + local worker's drain.
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.nginxDrainTimeout 20 .Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds }}
       initContainers:
-        - name: set-name-index
+        - name: set-pod-identity
           image: mikefarah/yq:latest
           imagePullPolicy: IfNotPresent
           command:
@@ -75,12 +79,13 @@ spec:
             - -c
             - |
               set -e
-              yq '.index = env(INDEX) | .name = "api"' /etc/cloud-controller/config.yaml > /tmp/config.yaml
+              : "${POD_UID:?POD_UID is required}"
+              yq '.index = 0 | .name = "api-" + strenv(POD_UID)' /etc/cloud-controller/config.yaml > /tmp/config.yaml
           env:
-            - name: INDEX
+            - name: POD_UID
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+                  fieldPath: metadata.uid
           volumeMounts:
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
@@ -112,13 +117,13 @@ spec:
           command: [
             "timeout", "--foreground", "--preserve-status",
             "--kill-after={{ $.Values.cloudController.config.jobs.local.localWorkerGracePeriodSeconds }}s",
-            "0", "bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(INDEX).{{ add $i 1 }}]"
+            "0", "bundle", "exec", "rake", "jobs:local[cc_api_worker.api.$(POD_UID).{{ add $i 1 }}]"
           ]
           env:
-            - name: INDEX
+            - name: POD_UID
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+                  fieldPath: metadata.uid
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
             - name: CLOUD_CONTROLLER_NG_CONFIG
@@ -174,6 +179,12 @@ spec:
               path: /healthz
               port: {{ .Values.cloudController.config.publicTLS.port }}
               scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.cloudController.config.publicTLS.port }}
+              scheme: HTTPS
+            timeoutSeconds: 5
           {{- if .Values.cloudController.resources }}
           resources:
             {{- toYaml .Values.cloudController.resources | nindent 12 }}

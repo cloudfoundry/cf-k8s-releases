@@ -1,7 +1,7 @@
 {{ if .Values.cloudController.enabled }}
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: cc-worker
   {{- if .Values.commonAnnotations }}
@@ -15,6 +15,10 @@ metadata:
     {{- end }}
 spec:
   replicas: {{ .Values.ccWorker.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      {{- include "capi.rollingUpdate" (dict "settings" .Values.ccWorker.rollingUpdate "replicas" .Values.ccWorker.replicas "component" "ccWorker") | nindent 6 }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cc-worker
@@ -36,7 +40,7 @@ spec:
       # Reserve cleanup time after the main worker has fully stopped.
       terminationGracePeriodSeconds: {{ add .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds .Values.ccWorker.cleanup.timeoutSeconds 1 }}
       initContainers:
-        - name: set-name-index
+        - name: set-pod-identity
           image: mikefarah/yq:latest
           imagePullPolicy: IfNotPresent
           command:
@@ -44,12 +48,13 @@ spec:
             - -c
             - |
               set -e
-              yq '.index = env(INDEX) | .name = "cc-worker"' /etc/cloud-controller/config.yaml > /tmp/config.yaml
+              : "${POD_UID:?POD_UID is required}"
+              yq '.index = 0 | .name = "cc-worker-" + strenv(POD_UID)' /etc/cloud-controller/config.yaml > /tmp/config.yaml
           env:
-            - name: INDEX
+            - name: POD_UID
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+                  fieldPath: metadata.uid
           volumeMounts:
             - name: etc-cloud-controller
               mountPath: /etc/cloud-controller
@@ -66,12 +71,12 @@ spec:
             - secretRef:
                 name: cc-shared
           env:
-            - name: INDEX
+            - name: POD_UID
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+                  fieldPath: metadata.uid
             - name: WORKER_NAME
-              value: cc_global_worker.cc-worker.$(INDEX).1
+              value: cc_global_worker.cc-worker.$(POD_UID).1
             - name: WORKER_THREADS
               value: {{ default 0 .Values.cloudController.config.jobs.generic.numberOfWorkerThreads | quote }}
             - name: CLEANUP_TIMEOUT_SECONDS
@@ -96,20 +101,27 @@ spec:
             "timeout", "--foreground", "--preserve-status",
             "--kill-after={{ .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds }}s", "0",
             "bundle", "exec", "rake",
-            "jobs:generic[cc_global_worker.cc-worker.$(INDEX).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"
+            "jobs:generic[cc_global_worker.cc-worker.$(POD_UID).1{{ if .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ .Values.cloudController.config.jobs.generic.numberOfWorkerThreads }},{{ sub .Values.cloudController.config.jobs.generic.workerGracePeriodSeconds 1 }}{{ end }}]"
           ]
           envFrom:
             - secretRef:
                 name: cc-shared
           env:
-            - name: INDEX
+            - name: POD_UID
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+                  fieldPath: metadata.uid
+            # Upstream uses INDEX as the worker process ordinal, not pod identity.
+            - name: INDEX
+              value: "1"
             - name: STORAGE_CLI_PATH
               value: /usr/local/bin/storage-cli
             - name: CLOUD_CONTROLLER_NG_CONFIG
               value: /tmp/config.yaml
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.cloudController.config.readinessPort.cloudControllerWorker }}
+            periodSeconds: 5
           {{- if .Values.ccWorker.resources }}
           resources:
             {{- toYaml .Values.ccWorker.resources | nindent 12 }}

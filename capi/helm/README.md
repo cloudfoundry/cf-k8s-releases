@@ -5,6 +5,66 @@ Requires Kubernetes 1.29 or newer with the SidecarContainers feature enabled
 Overrides of the Cloud Controller and local-worker images must include GNU timeout, as the
 default Cloud Controller image does.
 
+## Deployments, identity, and rolling updates
+
+Cloud Controller and global workers run as Deployments, without persistent volumes
+or ordered pod names. The configuration initializer reads `metadata.uid` through
+the Downward API and sets `name` to `api-<UID>` or `cc-worker-<UID>` and integer
+`index` to `0`. All containers in an API pod read that same configuration, so
+upstream `Jobs::Queues.local` selects `cc-api-<UID>-0` for both producers and
+local workers. Local-worker owners are `cc_api_worker.api.<UID>.<process>`;
+global-worker owners are `cc_global_worker.cc-worker.<UID>.1`. The cleanup
+sidecar uses the exact same global-worker owner, including its thread suffixes.
+Container restarts retain identity; replacement pods receive a new UID. Old and
+new pods therefore cannot consume each other's local files or clear each other's
+worker locks during a rollout.
+
+Local uploads depend on pod-local files. Graceful drain remains essential;
+force deletion or node loss can strand local jobs and lose their files. A new
+pod does not adopt the old UID's local queue. Global jobs remain on the shared
+queue and rely on existing lock expiry if owner cleanup cannot run.
+
+The cloud_controller_ng code requires integer `index` in API and worker schemas.
+Its runtime uses that component index for local queue naming and Loggregator's
+API `instance_id`. 
+In BOSH, DB migration runs on the api instance with index 0; this chart already 
+runs migration and seeding in a separate `pre-install,pre-upgrade` hook Job. 
+No BOSH or image change is needed for the workload conversion.
+Loggregator API logs retain instance index `0` on every pod; it is not a unique pod identifier. 
+Use Kubernetes pod metadata for pod-level attribution.
+Application instance indexes are unaffected.
+
+Each workload has independent rolling-update budgets:
+
+```yaml
+cloudController:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+ccWorker:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+```
+
+Budgets accept nonnegative integers or whole percentages from `0%` to `100%`.
+Surge percentages round up and unavailable percentages round down. The chart
+rejects budgets that both resolve to zero for a nonzero replica count. Defaults
+keep existing capacity while one replacement starts **per Deployment**. Reserve
+CPU, memory, and database connections for the additional pods; terminating pods
+can temporarily increase resource consumption beyond the surge budget. These
+settings do not limit the migration Job or coordinate the two Deployments.
+
+API readiness checks HTTPS `/healthz` through nginx. Global-worker readiness
+checks the TCP listener opened after upstream background environment setup.
+`cloudController.config.readinessPort.cloudControllerWorker` now defaults to
+`9025` and must be a valid positive port. The global worker sets `INDEX=1` as
+the upstream worker **process ordinal**, enabling readiness and worker metrics;
+it is unrelated to pod identity. The cleanup sidecar opens neither listener.
+
+Transition from StatefulSets (up to CAPI app version 1.252.0 in cf-k8s-releases)
+is not supported. Shutdown the old cluster and start from scratch.
+
 ## API startup and shutdown
 
 The API Pod starts its configuration initializer, then Valkey, local workers,
@@ -80,8 +140,8 @@ It leaves job records and other workers' locks intact.
 ccWorker.cleanup.timeoutSeconds bounds application boot and database cleanup
 (default 30 seconds); failures and timeouts are logged and exit nonzero.
 
-The global-worker Pod grace period is worker drain + cleanup + 10 seconds of
-overhead (55 seconds by default). Worker-only restarts still rely on same-owner
+The global-worker Pod grace period is worker drain + cleanup + 1 second of
+overhead (46 seconds by default). Worker-only restarts still rely on same-owner
 job reclaim. Force deletion, node loss, or a database outage can prevent cleanup;
 the queue's existing lock expiry remains the fallback in those cases.
 

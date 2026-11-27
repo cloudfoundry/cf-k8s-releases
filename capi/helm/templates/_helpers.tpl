@@ -164,3 +164,23 @@ database_encryption:
   pbkdf2_hmac_iterations: {{ $enc.experimentalPbkdf2HmacIterations }}
 {{- end -}}
 {{- end -}}
+{{/* Validate percentage rounding as well as explicit zero rollout budgets. */}}
+{{- define "capi.rollingUpdate" -}}
+{{- $surge := .settings.maxSurge -}}
+{{- $unavailable := .settings.maxUnavailable -}}
+{{- $surgeValue := int (trimSuffix "%" (toString $surge)) -}}
+{{- $unavailableValue := int (trimSuffix "%" (toString $unavailable)) -}}
+{{- $surgeCount := $surgeValue -}}
+{{- $unavailableCount := $unavailableValue -}}
+{{- if kindIs "string" $surge -}}
+  {{- $surgeCount = div (add (mul (int .replicas) $surgeValue) 99) 100 -}}
+{{- end -}}
+{{- if kindIs "string" $unavailable -}}
+  {{- $unavailableCount = div (mul (int .replicas) $unavailableValue) 100 -}}
+{{- end -}}
+{{- if and (eq $surgeCount 0) (eq $unavailableCount 0) (or (gt (int .replicas) 0) (and (eq $surgeValue 0) (eq $unavailableValue 0))) -}}
+  {{- fail (printf "%s.rollingUpdate: maxSurge and maxUnavailable must allow at least one pod to be replaced" .component) -}}
+{{- end -}}
+maxSurge: {{ $surge | toYaml }}
+maxUnavailable: {{ $unavailable | toYaml }}
+{{- end -}}
