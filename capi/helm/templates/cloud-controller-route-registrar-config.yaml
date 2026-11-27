@@ -32,6 +32,11 @@ data:
           "name": "api",
           "tls_port": {{ .Values.cloudController.config.publicTLS.port }},
           "registration_interval": "10s",
+          "health_check": {
+            "name": "api-health-check",
+            "script_path": "/etc/route-registrar-template/check-cc-health.sh",
+            "timeout": "6s"
+          },
           "server_cert_domain_san": "{{ .Values.cloudController.config.externalHost }}.{{ .Values.cloudController.config.systemDomain }}",
           "tags": {
             "component": "CloudController"
@@ -42,4 +47,6 @@ data:
         }
       ]
     }
+  check-cc-health.sh: |-
+    {{- tpl (.Files.Get "files/check-cc-health.sh") . | nindent 4 }}
 {{ end }}

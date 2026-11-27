@@ -12,6 +12,6 @@ FROM ubuntu:latest
 COPY --from=builder /usr/local/bin/route-registrar /usr/local/bin
 COPY --from=files start-route-registrar.sh /usr/local/bin/
 
-RUN apt update && apt install -y jq && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y jq curl && rm -rf /var/lib/apt/lists/*
 
 ENTRYPOINT [ "/usr/local/bin/start-route-registrar.sh" ]
